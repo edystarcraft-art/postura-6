@@ -1,0 +1,131 @@
+[3/26/2026 9:54 AM] Cosmin Preda: <!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <title>Zen Posture Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
+    <style>
+        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        h1 { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.3); margin: 20px 0; font-size: 1.8rem; }
+        .main-container { display: flex; gap: 30px; padding: 20px; flex-wrap: wrap; justify-content: center; }
+        #camera-container { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.5); background: #000; }
+        .stats-panel { width: 320px; display: flex; flex-direction: column; gap: 20px; }
+        .card { background: #111122; border-radius: 15px; padding: 25px; border-left: 5px solid #00ff88; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; }
+        .card.bad { border-left-color: #ff4444; background: #1a1122; }
+        .label { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
+        .val { font-size: 1.5rem; font-weight: bold; color: #00ff88; }
+        .val.bad { color: #ff4444; }
+        #loading-msg { margin-top: 10px; color: #888; font-style: italic; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <h1>ZEN POSTURE <span style="color:white">PRO ANALYTICS</span></h1>
+    
+    <div id="loading-msg">Așteaptă descărcarea AI-ului... (Dă un click oriunde pe ecran)</div>
+    
+    <div class="main-container">
+        <div id="camera-container"></div>
+        
+        <div class="stats-panel">
+            <div class="card" id="card-scor">
+                <div class="label">Scor Sănătate</div>
+                <div id="ui-scor" class="val">0%</div>
+            </div>
+            
+            <div class="card" id="card-gat">
+                <div class="label">Postură Gât</div>
+                <div id="ui-gat" class="val">SCANARE...</div>
+            </div>
+            
+            <div class="card" id="card-ochi">
+                <div class="label">Distanță Ecran</div>
+                <div id="ui-ochi" class="val">SCANARE...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let video, bodyPose, poses = [];
+        let timpDrept = 0, timpTotal = 0;
+
+        function preload() {
+            bodyPose = ml5.bodyPose();
+        }
+
+        function setup() {
+            let canvas = createCanvas(640, 480);
+            canvas.parent('camera-container');
+            
+            video = createCapture(VIDEO);
+            video.size(640, 480);
+            video.hide();
+            
+            bodyPose.detectStart(video, results => {
+                poses = results;
+                document.getElementById('loading-msg').innerText = "Sistem Activ. Monitorizare Live.";
+                document.getElementById('loading-msg').style.color = "#00ff88";
+            });
+        }
+
+        function draw() {
+            image(video, 0, 0, 640, 480);
+            
+            if (poses.length > 0) {
+                let pose = poses[0];
+                
+                if (pose.nose && pose.left_shoulder && pose.right_shoulder && pose.left_eye && pose.right_eye) {
+                    
+                    // 1. Calcul Postură Gât (Distanța de la nas la umeri)
+                    let dV = ((pose.left_shoulder.y + pose.right_shoulder.y) / 2) - pose.nose.y; 
+                    
+                    // 2. Calcul Proximitate (Distanța între ochi)
+                    let distOchi = dist(pose.left_eye.x, pose.left_eye.y, pose.right_eye.x, pose.right_eye.y);
+[3/26/2026 9:54 AM] Cosmin Preda: timpTotal++;
+                    
+                    // PRAGURI DE SENSIBILITATE (Le poți modifica de aici)
+                    let posturaOk = dV > 80;    // Modifică la 90 pentru a fi mai strict cu spatele
+                    let distantaOk = distOchi < 50; // Modifică la 40 sau 45 dacă încă e prea îngăduitor cu ecranul
+
+                    if (posturaOk && distantaOk) {
+                        timpDrept++;
+                    }
+
+                    // --- ACTUALIZARE INTERFAȚĂ (DASHBOARD) ---
+                    let scor = (timpDrept / timpTotal) * 100;
+                    document.getElementById('ui-scor').innerText = Math.floor(scor) + "%";
+                    
+                    // Status Gât
+                    let uiGat = document.getElementById('ui-gat');
+                    let cardGat = document.getElementById('card-gat');
+                    uiGat.innerText = posturaOk ? "CORECT ✅" : "APLECAT ⚠️";
+                    uiGat.className = posturaOk ? "val" : "val bad";
+                    cardGat.className = posturaOk ? "card" : "card bad";
+
+                    // Status Distanță (Ochi)
+                    let uiOchi = document.getElementById('ui-ochi');
+                    let cardOchi = document.getElementById('card-ochi');
+                    uiOchi.innerText = distantaOk ? "OPTIMĂ ✅" : "PREA APROAPE 🚨";
+                    uiOchi.className = distantaOk ? "val" : "val bad";
+                    cardOchi.className = distantaOk ? "card" : "card bad";
+
+                    // --- DESENARE FEEDBACK PE VIDEO ---
+                    // Linia umerilor verde sau roșie în funcție de postura spatelui
+                    stroke(posturaOk ? "#00ff88" : "#ff4444");
+                    strokeWeight(5);
+                    line(pose.left_shoulder.x, pose.left_shoulder.y, pose.right_shoulder.x, pose.right_shoulder.y);
+
+                    // Avertizare vizuală pentru ochi (desenează cercuri roșii pe ochi dacă ești prea aproape)
+                    if (!distantaOk) {
+                        stroke("#ff4444");
+                        noFill();
+                        strokeWeight(3);
+                        ellipse(pose.left_eye.x, pose.left_eye.y, 40, 40);
+                        ellipse(pose.right_eye.x, pose.right_eye.y, 40, 40);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
