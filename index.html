@@ -76,7 +76,13 @@
                 poses = results;
             });
         }
-}
+
+        function draw() {
+            background(0); // Fundal negru până apare imaginea
+            
+            if (video && video.loadedmetadata) {
+                image(video, 0, 0, 640, 480);
+[3/26/2026 10:08 AM] Cosmin Preda: }
             
             if (poses.length > 0) {
                 let pose = poses[0];
@@ -131,8 +137,3 @@
     </script>
 </body>
 </html>
-        function draw() {
-            background(0); // Fundal negru până apare imaginea
-            
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480);
