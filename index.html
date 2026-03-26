@@ -101,12 +101,10 @@
             let cnv = createCanvas(640, 480);
             cnv.parent('camera-wrapper');
         }
-
-        function initSistem() {
+function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
             document.getElementById('status-msg').innerText = "Pas 1: Permite notificările și camera...";
             
-            // --- NOU: Cerem permisiunea pentru Notificări Desktop ---
             if ("Notification" in window) {
                 Notification.requestPermission();
             }
@@ -114,6 +112,18 @@
             try {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 contextAudio = new AudioContext();
+                
+                // --- NOU: HACK ANTI-SLEEP (GHOST AUDIO) ---
+                // Generăm un sunet continuu cu volum aproape zero.
+                // Asta forțează browserul să țină tab-ul treaz chiar și când e ascuns!
+                let silentOsc = contextAudio.createOscillator();
+                let silentGain = contextAudio.createGain();
+                silentGain.gain.value = 0.0001; // Inaudibil
+                silentOsc.connect(silentGain);
+                silentGain.connect(contextAudio.destination);
+                silentOsc.start();
+                // ------------------------------------------
+
             } catch (e) {
                 console.warn("Audio indisponibil.");
             }
