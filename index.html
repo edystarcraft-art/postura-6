@@ -2,48 +2,26 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Analytics Edition</title>
+    <title>Zen Posture Pro - Smart Alerts</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { 
-            background: #050508; color: #e0e0e0; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
-        }
-        
+        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
-        
         .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
-        
-        button {
-            border: none; padding: 12px 20px; font-size: 0.95rem; font-weight: bold; 
-            border-radius: 50px; cursor: pointer; transition: 0.3s;
-        }
+        button { border: none; padding: 12px 20px; font-size: 0.95rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); }
         #btn-audio { background: #333; color: #fff; display: none; }
         #btn-audio.activ { background: #00ff88; color: #000; }
         #btn-pip { background: #00b8ff; color: #000; display: none; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
         #btn-analytics { background: #ffaa00; color: #000; display: none; box-shadow: 0 5px 20px rgba(255,170,0,0.3); }
-
         button:hover { transform: scale(1.05); }
-
         #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
-
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
-
-        #camera-wrapper { 
-            border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
-            border-radius: 20px; overflow: hidden; background: #000;
-            width: 640px; height: 480px; position: relative;
-        }
+        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; position: relative; }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
-        #camera-wrapper video.feed {
-            display: block; width: 640px; height: 480px; position: absolute; top: 0; left: 0; z-index: 1;
-            filter: blur(20px) brightness(0.6); transform: scale(1.1);
-        }
-
+        #camera-wrapper video.feed { display: block; width: 640px; height: 480px; position: absolute; top: 0; left: 0; z-index: 1; filter: blur(20px) brightness(0.6); transform: scale(1.1); }
         .panel { display: flex; flex-direction: column; gap: 20px; width: 300px; }
         .card { background: #111122; border-radius: 15px; padding: 25px; border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
         .card.ok { border-left-color: #00ff88; }
@@ -53,41 +31,29 @@
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
 
-        /* --- STILURI PENTRU MODALUL DE ANALYTICS --- */
-        #modal-analytics {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5,5,8,0.95); z-index: 999; justify-content: center; align-items: center;
-        }
-        .modal-content {
-            background: #111122; border: 2px solid #ffaa00; border-radius: 20px;
-            padding: 30px; width: 90%; max-width: 700px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
+        /* Modal Analytics */
+        #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.95); z-index: 999; justify-content: center; align-items: center; }
+        .modal-content { background: #111122; border: 2px solid #ffaa00; border-radius: 20px; padding: 30px; width: 90%; max-width: 700px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         .modal-content h2 { color: #ffaa00; margin-top: 0; }
-        .chart-container {
-            display: flex; justify-content: space-evenly; align-items: flex-end;
-            height: 250px; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;
-        }
+        .chart-container { display: flex; justify-content: space-evenly; align-items: flex-end; height: 250px; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
         .bar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 50px; }
         .bar { width: 100%; background: linear-gradient(0deg, #006633, #00ff88); border-radius: 5px 5px 0 0; transition: height 1s ease-out; }
         .bar.low { background: linear-gradient(0deg, #660000, #ff4444); }
         .bar-label { font-size: 0.8rem; color: #aaa; }
         .bar-score { font-size: 1rem; font-weight: bold; color: #fff; }
         #btn-close-modal { background: #333; color: #fff; margin-top: 30px; }
-        #btn-close-modal:hover { background: #555; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
-        
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
             <button id="btn-pip" onclick="activeazaModFundal()">📺 MOD FUNDAL</button>
-            <button id="btn-analytics" onclick="deschideAnalytics()">📊 RAPORT ANALYTICS</button>
+            <button id="btn-analytics" onclick="deschideAnalytics()">📊 RAPORT</button>
         </div>
-        
         <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
     </div>
     
@@ -105,9 +71,7 @@
     <div id="modal-analytics">
         <div class="modal-content">
             <h2>Evoluția Sănătății Tale</h2>
-            <p style="color: #888;">Monitorizare pe ultimele zile</p>
-            <div class="chart-container" id="chart-area">
-                </div>
+            <div class="chart-container" id="chart-area"></div>
             <button id="btn-close-modal" onclick="inchideAnalytics()">Închide Raportul</button>
         </div>
     </div>
@@ -119,29 +83,34 @@
         let contextAudio = null;
         let alarmeActive = true;
         let ultimulAvertisment = 0; 
-        const COOLDOWN_NOTIFICARE = 6000; 
+        const COOLDOWN_NOTIFICARE = 5000; 
 
-        const PRAG_POSTURA = 100;  
-        const PRAG_DISTANTA = 110; 
+        const PRAG_POSTURA = 120;  
+        const PRAG_DISTANTA = 130; 
         
         let pipVideoElement;
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
+
+        // Variabile pentru noile mesaje vizuale
+        let bannerVizual = "";
+        let timerBanner = 0;
+        let intervalTitluTab = null;
 
         function setup() {
             let cnv = createCanvas(640, 480);
             cnv.parent('camera-wrapper');
             pipVideoElement = document.getElementById('pip-video');
             pipVideoElement.srcObject = cnv.elt.captureStream(30);
-
-            // Inserăm date demo pentru Analytics dacă e prima oară când deschide aplicația
-            initializareDateDemo();
+            
+            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory'));
+            if (!istoric || Object.keys(istoric).length === 0) {
+                localStorage.setItem('zenPostureHistory', JSON.stringify({"Luni": 65, "Marți": 72, "Miercuri": 88}));
+            }
         }
 
         function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "Pas 1: Permite notificările...";
-            
-            if ("Notification" in window) Notification.requestPermission();
+            document.getElementById('status-msg').innerText = "Se pregătește sistemul...";
 
             try {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -154,7 +123,7 @@
             } catch (e) {}
             
             video = createCapture(VIDEO, () => {
-                document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI...";
+                document.getElementById('status-msg').innerText = "Se descarcă AI-ul...";
                 video.addClass('feed'); 
                 
                 bodyPose = ml5.bodyPose(() => {
@@ -163,12 +132,10 @@
                     
                     document.getElementById('btn-audio').style.display = 'block'; 
                     document.getElementById('btn-pip').style.display = 'block'; 
-                    document.getElementById('btn-analytics').style.display = 'block'; // Arătăm butonul Analytics
+                    document.getElementById('btn-analytics').style.display = 'block'; 
                     
                     pipVideoElement.play();
                     bodyPose.detectStart(video, (results) => { poses = results; });
-                    
-                    // Salvăm datele automat la fiecare 5 secunde
                     setInterval(salveazaProgresul, 5000);
                 });
             });
@@ -176,61 +143,27 @@
             video.hide(); 
         }
 
-        // --- SISTEMUL DE SALVARE (ANALYTICS) ---
         function salveazaProgresul() {
-            if (cadreTotale < 50) return; // Nu salva dacă abia a pornit
+            if (cadreTotale < 50) return; 
             let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
-            
-            // Extragem istoricul din memorie
             let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
-            // Actualizăm ziua de azi
             istoric[dataCurenta] = scorCurent;
-            // Salvăm la loc în memoria browserului
             localStorage.setItem('zenPostureHistory', JSON.stringify(istoric));
         }
 
-        function initializareDateDemo() {
-            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory'));
-            if (!istoric || Object.keys(istoric).length === 0) {
-                // Dacă nu există date, punem niște date de test ca să arate bine graficul
-                istoric = {
-                    "Luni": 65,
-                    "Marți": 72,
-                    "Miercuri": 88,
-                    "Joi": 81
-                };
-                localStorage.setItem('zenPostureHistory', JSON.stringify(istoric));
-            }
-        }
-
-        // --- LOGICA PENTRU MODALUL GRAFIC ---
         function deschideAnalytics() {
             let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
             let chartArea = document.getElementById('chart-area');
-            chartArea.innerHTML = ""; // Curățăm graficul vechi
-
-            // Generăm barele pentru fiecare zi salvată
+            chartArea.innerHTML = ""; 
             for (const [ziua, scorul] of Object.entries(istoric)) {
-                let clasaCuloare = scorul < 80 ? "bar low" : "bar"; // Roșu dacă e sub 80%
-                
-                let htmlBara = `
-                    <div class="bar-wrapper">
-                        <div class="bar-score">${scorul}%</div>
-                        <div class="${clasaCuloare}" style="height: ${scorul * 2}px;"></div>
-                        <div class="bar-label">${ziua === dataCurenta ? "Azi" : ziua}</div>
-                    </div>
-                `;
-                chartArea.innerHTML += htmlBara;
+                let clasaCuloare = scorul < 80 ? "bar low" : "bar"; 
+                chartArea.innerHTML += `<div class="bar-wrapper"><div class="bar-score">${scorul}%</div><div class="${clasaCuloare}" style="height: ${scorul * 2}px;"></div><div class="bar-label">${ziua === dataCurenta ? "Azi" : ziua}</div></div>`;
             }
-
             document.getElementById('modal-analytics').style.display = "flex";
         }
 
-        function inchideAnalytics() {
-            document.getElementById('modal-analytics').style.display = "none";
-        }
+        function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; }
 
-        // --- RESTUL FUNCȚIILOR (Neschimbate) ---
         async function activeazaModFundal() {
             try {
                 if (document.pictureInPictureElement) await document.exitPictureInPicture();
@@ -238,15 +171,39 @@
             } catch (error) { alert("Folosește o fereastră separată de browser pentru fundal."); }
         }
 
+        // --- NOU: LOGICA PENTRU CLIPEALA TAB-ULUI ---
+        function clipesteTitluTab(mesaj) {
+            if (intervalTitluTab) return; // Dacă deja clipește, nu mai porni altul
+            let titluOriginal = "Zen Posture Pro";
+            let arataMesaj = true;
+            
+            intervalTitluTab = setInterval(() => {
+                document.title = arataMesaj ? mesaj : titluOriginal;
+                arataMesaj = !arataMesaj;
+            }, 800); // Schimbă titlul la fiecare 0.8 secunde
+
+            // Oprește clipeala după 5 secunde
+            setTimeout(() => {
+                clearInterval(intervalTitluTab);
+                intervalTitluTab = null;
+                document.title = titluOriginal;
+            }, 5000);
+        }
+
         function declanseazaAlarma(tipEroare) {
             if (!alarmeActive) return;
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
-            if ("Notification" in window && Notification.permission === "granted") {
-                let titlu = tipEroare === 'gat' ? "⚠️ Postură Incorectă" : "🚨 Prea aproape!";
-                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele." : "Distanțează-te de ecran.";
-                new Notification(titlu, { body: mesaj });
-            }
+
+            // 1. SETĂM BANNERUL PENTRU CANVAS
+            bannerVizual = tipEroare === 'gat' ? "⚠️ ÎNDREAPTĂ SPATELE!" : "🚨 PREA APROAPE DE ECRAN!";
+            timerBanner = millis(); // Pornim cronometrul bannerului
+
+            // 2. PORNEȘTE CLIPEALA ÎN TAB
+            let mesajTab = tipEroare === 'gat' ? "⚠️ POSTURĂ!" : "🚨 DISTANȚĂ!";
+            clipesteTitluTab(mesajTab);
+
+            // 3. SUNETUL (Rămâne ca backup)
             try {
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
                 let oscilator = contextAudio.createOscillator();
@@ -306,7 +263,7 @@
                     stroke(gatCorect ? "#00ff88" : "#ffaa00"); strokeWeight(4);
                     line(p.nose.x, p.nose.y, centruUmeriX, centruUmeriY);
 
-                    noStroke(); fill(255); textSize(24); textStyle(BOLD);
+                    noStroke(); fill(255); textSize(24); textStyle(BOLD); textAlign(LEFT);
                     text(Math.floor(distantaGat) + " px", centruUmeriX + 15, centruUmeriY - 20);
 
                     if (!distantaCorecta) {
@@ -314,6 +271,20 @@
                         ellipse(p.left_eye.x, p.left_eye.y, 40); ellipse(p.right_eye.x, p.right_eye.y, 40);
                     }
                 }
+            }
+
+            // --- NOU: AFIȘARE BANNER DE ALERTĂ PESTE VIDEO (Pentru PIP Mode) ---
+            if (bannerVizual !== "" && millis() - timerBanner < 4000) { // Afișează timp de 4 secunde
+                rectMode(CENTER);
+                fill(255, 68, 68, 220); // Roșu transparent
+                noStroke();
+                rect(320, 60, 480, 60, 15); // Dreptunghi rotunjit sus
+                
+                fill(255);
+                textSize(26);
+                textAlign(CENTER, CENTER);
+                textStyle(BOLD);
+                text(bannerVizual, 320, 60);
             }
         }
     </script>
