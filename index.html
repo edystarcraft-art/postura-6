@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Safe Audio</title>
+    <title>Zen Posture Pro - Background Active</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
@@ -32,10 +32,17 @@
 
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
 
+        /* Privacy Blur CSS inclus */
         #camera-wrapper { 
-            border: 3px solid #1a1a2e; border-radius: 20px; overflow: hidden; 
-            background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+            border-radius: 20px; overflow: hidden; background: #000;
             width: 640px; height: 480px; position: relative;
+        }
+        #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
+        #camera-wrapper video {
+            display: block; width: 640px; height: 480px;
+            position: absolute; top: 0; left: 0; z-index: 1;
+            filter: blur(20px) brightness(0.6); transform: scale(1.1);
         }
 
         .panel { display: flex; flex-direction: column; gap: 20px; width: 300px; }
@@ -60,10 +67,10 @@
         
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">INIȚIALIZARE SISTEM</button>
-            <button id="btn-audio" class="activ" onclick="toggleAudio()">🔔 ALARME AUDIO: ON</button>
+            <button id="btn-audio" class="activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
         </div>
         
-        <div id="status-msg">Sistemul este pregătit. Apasă butonul pentru activare.</div>
+        <div id="status-msg">Apasă butonul pentru a porni AI-ul și notificările de sistem.</div>
     </div>
     
     <div class="dashboard">
@@ -80,15 +87,15 @@
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
         
-        // --- SETĂRI AUDIO ÎN SIGURANȚĂ ---
         let contextAudio = null;
-        let sunetActivat = true;
-        let ultimulBeep = 0; 
-        const COOLDOWN_SUNET = 4000; 
+        let alarmeActive = true;
+        let ultimulAvertisment = 0; 
+        
+        // Pauză de 6 secunde între notificări pentru a nu face spam
+        const COOLDOWN_NOTIFICARE = 6000; 
 
-        // --- CALIBRARE SENSIBILITATE ---
         const PRAG_POSTURA = 100;  
-        const PRAG_DISTANTA = 110; // Am crescut la 65 ca să nu fie prea sensibil cu apropierea
+        const PRAG_DISTANTA = 110; 
 
         function setup() {
             let cnv = createCanvas(640, 480);
@@ -97,24 +104,26 @@
 
         function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "Pas 1: Se conectează camera...";
+            document.getElementById('status-msg').innerText = "Pas 1: Permite notificările și camera...";
             
-            // Încercăm să pornim sunetul fără să blocăm restul aplicației
+            // --- NOU: Cerem permisiunea pentru Notificări Desktop ---
+            if ("Notification" in window) {
+                Notification.requestPermission();
+            }
+
             try {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 contextAudio = new AudioContext();
             } catch (e) {
-                console.warn("Sistemul audio a fost blocat de browser, dar monitorizarea vizuală va continua.");
+                console.warn("Audio indisponibil.");
             }
             
             video = createCapture(VIDEO, () => {
-                document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI (te rog așteaptă)...";
-                document.getElementById('camera-wrapper').style.borderColor = "#ffaa00";
+                document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI...";
                 
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = "SISTEM ACTIV. MONITORIZARE LIVE ✅";
+                    document.getElementById('status-msg').innerText = "SISTEM ACTIV. POȚI MINIMIZA BROWSERUL ✅";
                     document.getElementById('status-msg').style.color = "#00ff88";
-                    document.getElementById('camera-wrapper').style.borderColor = "#00ff88";
                     document.getElementById('btn-audio').style.display = 'block'; 
                     
                     bodyPose.detectStart(video, (results) => {
@@ -127,14 +136,22 @@
         }
 
         function declanseazaAlarma(tipEroare) {
-            // Dacă sunetul e oprit sau a dat eroare la inițializare, ieșim fără să blocăm aplicația
-            if (!sunetActivat || !contextAudio) return;
+            if (!alarmeActive) return;
             
-            if (millis() - ultimulBeep < COOLDOWN_SUNET) return; 
-            ultimulBeep = millis();
+            if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
+            ultimulAvertisment = millis();
 
+            // 1. Notificare Desktop (Apare peste alte aplicații)
+            if ("Notification" in window && Notification.permission === "granted") {
+                let titlu = tipEroare === 'gat' ? "⚠️ Postură Incorectă" : "🚨 Prea aproape!";
+                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele și relaxează umerii." : "Distanțează-te de ecran pentru a proteja ochii.";
+                
+                new Notification(titlu, { body: mesaj });
+            }
+
+            // 2. Sunet Audio (dacă e disponibil)
             try {
-                if (contextAudio.state === 'suspended') contextAudio.resume();
+                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
                 
                 let oscilator = contextAudio.createOscillator();
                 let volum = contextAudio.createGain();
@@ -142,34 +159,26 @@
                 oscilator.connect(volum);
                 volum.connect(contextAudio.destination);
 
-                if (tipEroare === 'gat') {
-                    oscilator.type = 'sine'; 
-                    oscilator.frequency.value = 350; 
-                } else if (tipEroare === 'distanta') {
-                    oscilator.type = 'triangle'; 
-                    oscilator.frequency.value = 600; 
-                }
+                oscilator.type = tipEroare === 'gat' ? 'sine' : 'triangle'; 
+                oscilator.frequency.value = tipEroare === 'gat' ? 350 : 600; 
 
                 volum.gain.setValueAtTime(0.1, contextAudio.currentTime);
                 volum.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3); 
 
                 oscilator.start();
                 oscilator.stop(contextAudio.currentTime + 0.3);
-            } catch (e) {
-                console.warn("Eroare la redarea sunetului.");
-            }
+            } catch (e) {}
         }
 
         function toggleAudio() {
-            sunetActivat = !sunetActivat;
+            alarmeActive = !alarmeActive;
             let btn = document.getElementById('btn-audio');
-            if (sunetActivat) {
+            if (alarmeActive) {
                 btn.className = "activ";
-                btn.innerText = "🔔 ALARME AUDIO: ON";
-                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
+                btn.innerText = "🔔 ALARME: ON";
             } else {
                 btn.className = "";
-                btn.innerText = "🔕 ALARME AUDIO: OFF";
+                btn.innerText = "🔕 ALARME: OFF";
             }
         }
 
@@ -197,14 +206,14 @@
 
                     if (gatCorect && distantaCorecta) cadreCorecte++;
 
-                    // Avertizari Audio
+                    // Avertizari (Sunet + Notificare Desktop)
                     if (!gatCorect) {
                         declanseazaAlarma('gat');
                     } else if (!distantaCorecta) {
                         declanseazaAlarma('distanta');
                     }
 
-                    // --- ACTUALIZARE UI ---
+                    // UI
                     let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
                     document.getElementById('v-scor').innerText = scorCurent + "%";
                     document.getElementById('c-scor').className = scorCurent > 80 ? "card ok" : "card bad";
@@ -213,7 +222,7 @@
                     actualizeazaCard('c-gat', 'v-gat', gatCorect, "OPTIMĂ", "APLECAT ⚠️");
                     actualizeazaCard('c-ochi', 'v-ochi', distantaCorecta, "SIGURĂ", "PREA APROAPE 🚨");
 
-                    // --- DESEN GRAFIC PE VIDEO ---
+                    // Desenare schelet PESTE blur
                     stroke(gatCorect ? "#00ff88" : "#ff4444");
                     strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
@@ -230,7 +239,11 @@
                         ellipse(p.left_eye.x, p.left_eye.y, 40);
                         ellipse(p.right_eye.x, p.right_eye.y, 40);
                     }
+                } else {
+                    if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
                 }
+            } else {
+                if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
             }
         }
 
