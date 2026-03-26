@@ -66,31 +66,33 @@
             video.hide();
         }
 
-       function draw() {
+        function draw() {
             background(0);
+            if (video) image(video, 0, 0, 640, 480);
             
-            // Verificăm dacă video-ul este gata și îl afișăm
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480);
-            } else if (video) {
-                // Variantă de rezervă pentru anumite browsere
-                image(video, 0, 0, 640, 480);
-            }
-            
-            if (poses && poses.length > 0) {
+            if (poses.length > 0) {
                 let p = poses[0];
-                if (p.nose && p.left_shoulder && p.right_shoulder) {
-                    // ... restul codului de desenare rămâne la fel ...
+                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye) {
+                    // Calcule
                     let dGat = ((p.left_shoulder.y + p.right_shoulder.y) / 2) - p.nose.y;
-                    let posturaOk = dGat > 85; 
+                    let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     
-                    stroke(posturaOk ? "#0f8" : "#f44");
-                    strokeWeight(6);
-                    line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                }
-            }
-        }
-                 
+                    tTot++;
+                    let posturaOk = dGat > 85; 
+                    let distantaOk = dOchi < 50; 
+                    
+                    if (posturaOk && distantaOk) tOk++;
+
+                    // Alerta sonoră (dacă stai prost 3 secunde - aprox 180 frame-uri)
+                    if (!posturaOk || !distantaOk) {
+                        alertTimer++;
+                        if (alertTimer > 180) { 
+                            osc.freq(440); osc.amp(0.1, 0.1); 
+                        }
+                    } else {
+                        alertTimer = 0;
+                        osc.amp(0, 0.5);
+                    }
 
                     // Actualizare interfață
                     updateCard('c-postura', 'v-postura', posturaOk, posturaOk ? "CORECTĂ" : "APLECATĂ");
