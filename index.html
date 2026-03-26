@@ -2,64 +2,51 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro v1.0</title>
+    <title>Zen Posture Final Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        :root { --neon: #00ff88; --bad: #ff4444; --bg: #050508; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .header { padding: 20px; text-align: center; }
-        #btn-start { background: var(--neon); color: #000; border: none; padding: 15px 40px; font-size: 1.1rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.3); margin-bottom: 10px; }
-        #btn-start:hover { transform: scale(1.05); }
-        .main { display: flex; gap: 20px; padding: 10px; flex-wrap: wrap; justify-content: center; }
-        #canvas-p { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; background: #000; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .panel { width: 320px; display: flex; flex-direction: column; gap: 15px; }
-        .card { background: #111122; border-radius: 15px; padding: 20px; border-left: 6px solid var(--neon); transition: 0.3s; }
-        .card.bad { border-left-color: var(--bad); background: #1a1122; }
-        .lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .val { font-size: 1.6rem; font-weight: bold; color: var(--neon); margin-top: 5px; }
-        .val.bad { color: var(--bad); }
-        #msg { color: #888; font-style: italic; height: 20px; }
+        body { background: #050508; color: #fff; font-family: sans-serif; text-align: center; margin: 0; }
+        #canvas-container { margin: 20px auto; border: 3px solid #00ff88; width: 640px; height: 480px; border-radius: 15px; overflow: hidden; }
+        .stats { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        .card { background: #111122; padding: 15px; border-radius: 10px; min-width: 150px; border-bottom: 4px solid #00ff88; }
+        #btn-start { background: #00ff88; border: none; padding: 15px 30px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
-        <button id="btn-start" onclick="initApp()">ACTIVEAZĂ MONITORIZAREA</button>
-        <div id="msg">Sistem în așteptare...</div>
-    </div>
+    <h1>ZEN POSTURE PRO</h1>
+    <button id="btn-start" onclick="startApp()">PORNEȘTE ACUM</button>
+    <div id="canvas-container"></div>
     
-    <div class="main">
-        <div id="canvas-p"></div>
-        <div class="panel">
-            <div class="card" id="c-scor"><div class="lbl">Scor Sănătate</div><div id="v-scor" class="val">0%</div></div>
-            <div class="card" id="c-postura"><div class="lbl">Postură Gât</div><div id="v-postura" class="val">---</div></div>
-            <div class="card" id="c-dist"><div class="lbl">Distanță Ecran</div><div id="v-dist" class="val">---</div></div>
-        </div>
+    <div class="stats">
+        <div class="card">POSTURĂ: <span id="p-status">---</span></div>
+        <div class="card">SCOR: <span id="p-score">0%</span></div>
     </div>
 
     <script>
-        let video, ai, poses = [], tOk = 0, tTot = 0, alertTimer = 0;
-        let osc; // Pentru sunet
+        let video;
+        let bodyPose;
+        let poses = [];
+        let okFrames = 0;
+        let totalFrames = 0;
 
         function setup() {
             let cnv = createCanvas(640, 480);
-            cnv.parent('canvas-p');
-            // Pregătim sunetul
-            osc = new p5.Oscillator('sine');
-            osc.amp(0);
-            osc.start();
+            cnv.parent('canvas-container');
         }
 
-        function initApp() {
+        function startApp() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('msg').innerText = "Se conectează camera...";
             
+            // 1. Inițializează Camera
             video = createCapture(VIDEO, () => {
-                document.getElementById('msg').innerText = "AI-ul analizează corpul...";
-                ai = ml5.bodyPose(video, () => {
-                    document.getElementById('msg').innerText = "MONITORIZARE ACTIVĂ ✅";
-                    ai.detectStart(video, r => { poses = r; });
+                console.log("Camera e gata");
+                // 2. Inițializează AI-ul abia după ce camera e gata
+                bodyPose = ml5.bodyPose(video, () => {
+                    console.log("AI gata");
+                    bodyPose.detectStart(video, (results) => {
+                        poses = results;
+                    });
                 });
             });
             video.size(640, 480);
@@ -68,54 +55,35 @@
 
         function draw() {
             background(0);
-            if (video) image(video, 0, 0, 640, 480);
             
+            // Afișează imaginea video manual pentru a fi siguri că apare
+            if (video) {
+                image(video, 0, 0, 640, 480);
+            }
+
             if (poses.length > 0) {
                 let p = poses[0];
-                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye) {
-                    // Calcule
-                    let dGat = ((p.left_shoulder.y + p.right_shoulder.y) / 2) - p.nose.y;
-                    let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
+                if (p.nose && p.left_shoulder && p.right_shoulder) {
+                    totalFrames++;
                     
-                    tTot++;
-                    let posturaOk = dGat > 85; 
-                    let distantaOk = dOchi < 50; 
+                    // Calcul postură (nas față de linia umerilor)
+                    let shoulderY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
+                    let diff = shoulderY - p.nose.y;
                     
-                    if (posturaOk && distantaOk) tOk++;
+                    let isOk = diff > 80;
+                    if (isOk) okFrames++;
 
-                    // Alerta sonoră (dacă stai prost 3 secunde - aprox 180 frame-uri)
-                    if (!posturaOk || !distantaOk) {
-                        alertTimer++;
-                        if (alertTimer > 180) { 
-                            osc.freq(440); osc.amp(0.1, 0.1); 
-                        }
-                    } else {
-                        alertTimer = 0;
-                        osc.amp(0, 0.5);
-                    }
+                    // Update UI
+                    document.getElementById('p-status').innerText = isOk ? "CORECTĂ" : "APLECATĂ";
+                    document.getElementById('p-status').style.color = isOk ? "#0f8" : "#f44";
+                    document.getElementById('p-score').innerText = Math.floor((okFrames/totalFrames)*100) + "%";
 
-                    // Actualizare interfață
-                    updateCard('c-postura', 'v-postura', posturaOk, posturaOk ? "CORECTĂ" : "APLECATĂ");
-                    updateCard('c-dist', 'v-dist', distantaOk, distantaOk ? "OPTIMĂ" : "PREA APROAPE");
-                    document.getElementById('v-scor').innerText = Math.floor((tOk/tTot)*100) + "%";
-
-                    // Feedback vizual pe cameră
-                    stroke(posturaOk ? "#0f8" : "#f44");
-                    strokeWeight(6);
+                    // Desenează linia umerilor peste video
+                    stroke(isOk ? 0, 255, 136 : 255, 68, 68);
+                    strokeWeight(8);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                    
-                    if (!distantaOk) {
-                        noFill(); stroke("#f44");
-                        ellipse(p.left_eye.x, p.left_eye.y, 40);
-                    }
                 }
             }
-        }
-
-        function updateCard(cId, vId, ok, txt) {
-            document.getElementById(cId).className = ok ? "card" : "card bad";
-            document.getElementById(vId).className = ok ? "val" : "val bad";
-            document.getElementById(vId).innerText = txt;
         }
     </script>
 </body>
