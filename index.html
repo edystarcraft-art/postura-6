@@ -1,64 +1,53 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Ultra Stability</title>
+    <title>Zen Posture Pro - Final Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { background: #050508; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .header { margin: 20px; text-align: center; }
-        #btn-start { background: #00ff88; color: #000; border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.4); margin-bottom: 20px; }
-        #btn-start:hover { transform: scale(1.05); background: #00cc6e; }
-        .main-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-        #video-holder { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; }
-        .panel { width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        .card { background: #111122; border-radius: 15px; padding: 20px; border-left: 5px solid #00ff88; }
+        body { background: #050508; color: #fff; font-family: sans-serif; text-align: center; margin: 0; }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        #btn-start { background: #00ff88; color: #000; border: none; padding: 15px 40px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; margin-bottom: 20px; box-shadow: 0 0 15px #00ff88; }
+        #v-holder { border: 2px solid #1a1a2e; border-radius: 15px; overflow: hidden; background: #000; width: 640px; height: 480px; }
+        .stats { display: flex; gap: 15px; margin-top: 20px; }
+        .card { background: #111122; padding: 15px; border-radius: 10px; border-left: 5px solid #00ff88; width: 200px; text-align: left; }
         .card.bad { border-left-color: #ff4444; }
-        .val { font-size: 1.4rem; font-weight: bold; color: #00ff88; }
+        .val { font-size: 1.2rem; font-weight: bold; color: #00ff88; }
         .val.bad { color: #ff4444; }
-        #status-text { color: #aaa; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>ZEN POSTURE <span style="color:#00ff88">PRO</span></h1>
-        <button id="btn-start" onclick="activareSistem()">PORNEȘTE CAMERA</button>
-        <div id="status-text">Sistemul este în așteptare...</div>
-    </div>
-    
-    <div class="main-container">
-        <div id="video-holder"></div>
-        <div class="panel">
-            <div class="card" id="card-scor"><div>SCOR ZILNIC</div><div id="v-scor" class="val">0%</div></div>
-            <div class="card" id="card-postura"><div>POSTURĂ GÂT</div><div id="v-postura" class="val">---</div></div>
-            <div class="card" id="card-dist"><div>DISTANȚĂ ECRAN</div><div id="v-dist" class="val">---</div></div>
+    <div class="container">
+        <h1>ZEN POSTURE <span style="color:#0f8">PRO</span></h1>
+        <button id="btn-start" onclick="pornesteTotul()">PORNEȘTE CAMERA</button>
+        <p id="msg" style="color:#aaa">Așteptare comandă...</p>
+        
+        <div id="v-holder"></div>
+        
+        <div class="stats">
+            <div class="card" id="c-postura"><div>GÂT</div><div id="v-postura" class="val">---</div></div>
+            <div class="card" id="c-dist"><div>DISTANȚĂ</div><div id="v-dist" class="val">---</div></div>
+            <div class="card" id="c-scor"><div>SCOR</div><div id="v-scor" class="val">0%</div></div>
         </div>
     </div>
 
     <script>
-        let video, bPose, poses = [], tOk = 0, tTot = 0;
-        let modelIncarcat = false;
+        let video, ai, poses = [], tOk = 0, tTot = 0;
 
         function setup() {
             let cnv = createCanvas(640, 480);
-            cnv.parent('video-holder');
-            background(0);
+            cnv.parent('v-holder');
         }
 
-        function activareSistem() {
+        function pornesteTotul() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-text').innerText = "Se accesează camera...";
+            document.getElementById('msg').innerText = "Se inițializează camera și AI-ul...";
             
-            // Pornire Cameră
             video = createCapture(VIDEO, () => {
-                document.getElementById('status-text').innerText = "Se încarcă Inteligența Artificială...";
-                
-                // Pornire AI
-                bPose = ml5.bodyPose(video, () => {
-                    document.getElementById('status-text').innerText = "SISTEM ACTIV ✅";
-                    modelIncarcat = true;
-                    bPose.detectStart(video, results => { poses = results; });
+                ai = ml5.bodyPose(video, () => {
+                    document.getElementById('msg').innerText = "SISTEM ACTIV ✅";
+                    ai.detectStart(video, r => { poses = r; });
                 });
             });
             video.size(640, 480);
@@ -71,42 +60,30 @@
             
             if (poses.length > 0) {
                 let p = poses[0];
-                // VERIFICARE STRICTĂ: Dacă nu vede toate punctele, nu face calcule (evită blocarea)
-                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
-                    
+                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye) {
                     let dV = ((p.left_shoulder.y + p.right_shoulder.y) / 2) - p.nose.y;
-                    let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
+                    let dO = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     
                     tTot++;
-                    let pOk = dV > 80; 
-                    let dOk = dOchi < 55; // Limita de apropiere
-[3/26/2026 10:30 AM] Cosmin Preda: if (pOk && dOk) tOk++;
+                    let pOk = dV > 80;
+                    let dOk = dO < 55;
+                    if (pOk && dOk) tOk++;
 
-                    // Update UI
+                    // Update UI text
+                    document.getElementById('v-postura').innerText = pOk ? "CORECT" : "APLECAT";
+                    document.getElementById('v-dist').innerText = dOk ? "OPTIM" : "APROAPE";
                     document.getElementById('v-scor').innerText = Math.floor((tOk/tTot)*100) + "%";
-                    
-                    actualizareCard('card-postura', 'v-postura', pOk, pOk ? "CORECTĂ ✅" : "APLECATĂ ⚠️");
-                    actualizareCard('card-dist', 'v-dist', dOk, dOk ? "OPTIMĂ ✅" : "PREA APROAPE 🚨");
 
-                    // Desenare linii feedback
+                    // Update culori carduri
+                    document.getElementById('c-postura').className = pOk ? "card" : "card bad";
+                    document.getElementById('c-dist').className = dOk ? "card" : "card bad";
+
+                    // Desen pe video
                     stroke(pOk ? "#0f8" : "#f44");
                     strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                    
-                    if(!dOk) {
-                        noFill(); stroke("#f44"); strokeWeight(3);
-                        ellipse(p.left_eye.x, p.left_eye.y, 40);
-                        ellipse(p.right_eye.x, p.right_eye.y, 40);
-                    }
                 }
             }
-        }
-
-        function actualizareCard(cId, vId, esteOk, text) {
-            document.getElementById(cId).className = esteOk ? "card" : "card bad";
-            let v = document.getElementById(vId);
-            v.className = esteOk ? "val" : "val bad";
-            v.innerText = text;
         }
     </script>
 </body>
