@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Background Active</title>
+    <title>Zen Posture Pro - Background Mode</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
@@ -16,10 +16,10 @@
         .header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
-        .controale { display: flex; gap: 15px; justify-content: center; margin-bottom: 10px; }
+        .controale { display: flex; gap: 15px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
         
         button {
-            border: none; padding: 15px 30px; font-size: 1rem; font-weight: bold; 
+            border: none; padding: 12px 25px; font-size: 1rem; font-weight: bold; 
             border-radius: 50px; cursor: pointer; transition: 0.3s;
         }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); }
@@ -28,18 +28,22 @@
         #btn-audio { background: #333; color: #fff; display: none; }
         #btn-audio.activ { background: #00ff88; color: #000; }
 
+        /* Butonul nou pentru fundal */
+        #btn-pip { background: #00b8ff; color: #000; display: none; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
+        #btn-pip:hover { transform: scale(1.05); }
+
         #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
 
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
 
-        /* Privacy Blur CSS inclus */
+        /* Privacy Blur CSS */
         #camera-wrapper { 
             border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
             border-radius: 20px; overflow: hidden; background: #000;
             width: 640px; height: 480px; position: relative;
         }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
-        #camera-wrapper video {
+        #camera-wrapper video.feed {
             display: block; width: 640px; height: 480px;
             position: absolute; top: 0; left: 0; z-index: 1;
             filter: blur(20px) brightness(0.6); transform: scale(1.1);
@@ -66,11 +70,12 @@
         <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
         
         <div class="controale">
-            <button id="btn-start" onclick="initSistem()">INIȚIALIZARE SISTEM</button>
+            <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
+            <button id="btn-pip" onclick="activeazaModFundal()">📺 MOD FUNDAL (PIP)</button>
         </div>
         
-        <div id="status-msg">Apasă butonul pentru a porni AI-ul și notificările de sistem.</div>
+        <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
     </div>
     
     <div class="dashboard">
@@ -83,6 +88,8 @@
         </div>
     </div>
 
+    <video id="pip-video" muted autoplay playsinline style="display:none;"></video>
+
     <script>
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
@@ -90,20 +97,25 @@
         let contextAudio = null;
         let alarmeActive = true;
         let ultimulAvertisment = 0; 
-        
-        // Pauză de 6 secunde între notificări pentru a nu face spam
         const COOLDOWN_NOTIFICARE = 6000; 
 
-        const PRAG_POSTURA = 100;  
-        const PRAG_DISTANTA = 110; 
+        const PRAG_POSTURA = 75;  
+        const PRAG_DISTANTA = 65; 
+        
+        let pipVideoElement;
 
         function setup() {
             let cnv = createCanvas(640, 480);
             cnv.parent('camera-wrapper');
+            
+            // Pregătim video-ul pentru modul Picture-in-Picture
+            pipVideoElement = document.getElementById('pip-video');
+            pipVideoElement.srcObject = cnv.elt.captureStream(30); // Capturăm imaginea la 30fps
         }
-function initSistem() {
+
+        function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "Pas 1: Permite notificările și camera...";
+            document.getElementById('status-msg').innerText = "Pas 1: Permite notificările...";
             
             if ("Notification" in window) {
                 Notification.requestPermission();
@@ -112,71 +124,68 @@ function initSistem() {
             try {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 contextAudio = new AudioContext();
-                
-                // --- NOU: HACK ANTI-SLEEP (GHOST AUDIO) ---
-                // Generăm un sunet continuu cu volum aproape zero.
-                // Asta forțează browserul să țină tab-ul treaz chiar și când e ascuns!
-                let silentOsc = contextAudio.createOscillator();
-                let silentGain = contextAudio.createGain();
-                silentGain.gain.value = 0.0001; // Inaudibil
-                silentOsc.connect(silentGain);
-                silentGain.connect(contextAudio.destination);
-                silentOsc.start();
-                // ------------------------------------------
-
-            } catch (e) {
-                console.warn("Audio indisponibil.");
-            }
+            } catch (e) {}
             
             video = createCapture(VIDEO, () => {
                 document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI...";
+                video.addClass('feed'); // Clasa pentru blur
                 
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = "SISTEM ACTIV. POȚI MINIMIZA BROWSERUL ✅";
+                    document.getElementById('status-msg').innerText = "SISTEM ACTIV ✅ Pentru a lucra în alt tab, apasă MOD FUNDAL.";
                     document.getElementById('status-msg').style.color = "#00ff88";
-                    document.getElementById('btn-audio').style.display = 'block'; 
                     
+                    document.getElementById('btn-audio').style.display = 'block'; 
+                    document.getElementById('btn-pip').style.display = 'block'; // Arătăm butonul albastru
+                    
+                    // Pornim mini-playerul în fundal
+                    pipVideoElement.play();
+
                     bodyPose.detectStart(video, (results) => {
                         poses = results;
                     });
                 });
             });
             video.size(640, 480);
-            video.hide();
+            video.hide(); // Ascundem video-ul original brut, lăsăm doar canvas-ul + video-ul cu blur
+        }
+
+        // FUNCȚIA MAGICĂ PENTRU FUNDAL
+        async function activeazaModFundal() {
+            try {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else {
+                    // Trimiterea imaginii într-o fereastră flotantă forțează browserul să NU mai înghețe tab-ul!
+                    await pipVideoElement.requestPictureInPicture();
+                    document.getElementById('status-msg').innerText = "Mod Fundal Activ! Acum poți schimba tab-ul sau minimiza browserul. 🚀";
+                }
+            } catch (error) {
+                console.error("Modul fundal nu este suportat complet pe acest browser.", error);
+                alert("Browserul tău blochează modul flotant. O altă soluție este să tragi acest tab într-o fereastră separată (nu minimizată).");
+            }
         }
 
         function declanseazaAlarma(tipEroare) {
             if (!alarmeActive) return;
-            
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
 
-            // 1. Notificare Desktop (Apare peste alte aplicații)
             if ("Notification" in window && Notification.permission === "granted") {
                 let titlu = tipEroare === 'gat' ? "⚠️ Postură Incorectă" : "🚨 Prea aproape!";
-                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele și relaxează umerii." : "Distanțează-te de ecran pentru a proteja ochii.";
-                
+                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele și relaxează umerii." : "Distanțează-te de ecran.";
                 new Notification(titlu, { body: mesaj });
             }
 
-            // 2. Sunet Audio (dacă e disponibil)
             try {
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                
                 let oscilator = contextAudio.createOscillator();
                 let volum = contextAudio.createGain();
-                
-                oscilator.connect(volum);
-                volum.connect(contextAudio.destination);
-
+                oscilator.connect(volum); volum.connect(contextAudio.destination);
                 oscilator.type = tipEroare === 'gat' ? 'sine' : 'triangle'; 
                 oscilator.frequency.value = tipEroare === 'gat' ? 350 : 600; 
-
                 volum.gain.setValueAtTime(0.1, contextAudio.currentTime);
                 volum.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3); 
-
-                oscilator.start();
-                oscilator.stop(contextAudio.currentTime + 0.3);
+                oscilator.start(); oscilator.stop(contextAudio.currentTime + 0.3);
             } catch (e) {}
         }
 
@@ -184,17 +193,16 @@ function initSistem() {
             alarmeActive = !alarmeActive;
             let btn = document.getElementById('btn-audio');
             if (alarmeActive) {
-                btn.className = "activ";
-                btn.innerText = "🔔 ALARME: ON";
+                btn.className = "activ"; btn.innerText = "🔔 ALARME: ON";
             } else {
-                btn.className = "";
-                btn.innerText = "🔕 ALARME: OFF";
+                btn.className = ""; btn.innerText = "🔕 ALARME: OFF";
             }
         }
 
         function draw() {
             background(0);
             
+            // Desenăm fundalul blured (Privacy Blur)
             if (video && video.loadedmetadata) {
                 image(video, 0, 0, 640, 480);
             }
@@ -216,14 +224,10 @@ function initSistem() {
 
                     if (gatCorect && distantaCorecta) cadreCorecte++;
 
-                    // Avertizari (Sunet + Notificare Desktop)
-                    if (!gatCorect) {
-                        declanseazaAlarma('gat');
-                    } else if (!distantaCorecta) {
-                        declanseazaAlarma('distanta');
-                    }
+                    if (!gatCorect) declanseazaAlarma('gat');
+                    else if (!distantaCorecta) declanseazaAlarma('distanta');
 
-                    // UI
+                    // UI Update
                     let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
                     document.getElementById('v-scor').innerText = scorCurent + "%";
                     document.getElementById('c-scor').className = scorCurent > 80 ? "card ok" : "card bad";
@@ -232,13 +236,11 @@ function initSistem() {
                     actualizeazaCard('c-gat', 'v-gat', gatCorect, "OPTIMĂ", "APLECAT ⚠️");
                     actualizeazaCard('c-ochi', 'v-ochi', distantaCorecta, "SIGURĂ", "PREA APROAPE 🚨");
 
-                    // Desenare schelet PESTE blur
-                    stroke(gatCorect ? "#00ff88" : "#ff4444");
-                    strokeWeight(6);
+                    // Scheletul pe imagine
+                    stroke(gatCorect ? "#00ff88" : "#ff4444"); strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
 
-                    stroke(gatCorect ? "#00ff88" : "#ffaa00");
-                    strokeWeight(4);
+                    stroke(gatCorect ? "#00ff88" : "#ffaa00"); strokeWeight(4);
                     line(p.nose.x, p.nose.y, centruUmeriX, centruUmeriY);
 
                     noStroke(); fill(255); textSize(24); textStyle(BOLD);
@@ -246,14 +248,9 @@ function initSistem() {
 
                     if (!distantaCorecta) {
                         noFill(); stroke("#ff4444"); strokeWeight(4);
-                        ellipse(p.left_eye.x, p.left_eye.y, 40);
-                        ellipse(p.right_eye.x, p.right_eye.y, 40);
+                        ellipse(p.left_eye.x, p.left_eye.y, 40); ellipse(p.right_eye.x, p.right_eye.y, 40);
                     }
-                } else {
-                    if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
                 }
-            } else {
-                if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
             }
         }
 
