@@ -2,57 +2,47 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Zen Posture Pro v10</title>
+    <title>Zen Posture Pro Fix</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { background: #050508; color: #e0e0e0; font-family: sans-serif; text-align: center; }
-        .main-container { display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; }
-        #canvas-box { border: 3px solid #1a1a2e; border-radius: 15px; background: #000; width: 640px; height: 480px; }
-        .card { background: #111122; padding: 20px; border-radius: 10px; border-left: 5px solid #0f8; width: 280px; margin-bottom: 15px; text-align: left; }
-        .bad { border-left-color: #f44; }
-        .val { font-size: 1.4rem; font-weight: bold; color: #0f8; }
-        .val.bad { color: #f44; }
-        #status-top { color: #fa0; font-weight: bold; margin: 10px; }
+        body { background: #050508; color: #fff; font-family: sans-serif; text-align: center; }
+        #canvas-holder { border: 4px solid #333; margin: 20px auto; width: 640px; height: 480px; display: block; }
+        .info { color: #0f8; font-size: 1.2rem; margin: 10px; }
     </style>
 </head>
 <body>
-    <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
-    <div id="status-top">PASUL 1: DĂ UN CLICK ORIUNDE PE ECRAN</div>
-    
-    <div class="main-container">
-        <div id="canvas-box"></div>
-        <div class="panel">
-            <div class="card" id="c1"><div>SCOR</div><div id="v1" class="val">0%</div></div>
-            <div class="card" id="c2"><div>POSTURĂ</div><div id="v2" class="val">AȘTEPTARE...</div></div>
-            <div class="card" id="c3"><div>DISTANȚĂ</div><div id="v3" class="val">AȘTEPTARE...</div></div>
-        </div>
-    </div>
+    <h1>ZEN POSTURE FIX</h1>
+    <p id="msg" class="info">Apasă tasta "S" pentru a porni camera dacă nu pornește automat</p>
+    <div id="canvas-holder"></div>
 
     <script>
-        let video, bPose, poses = [], tOk = 0, tTot = 0;
+        let video, bPose, poses = [];
 
         function setup() {
             let cnv = createCanvas(640, 480);
-            cnv.parent('canvas-box');
+            cnv.parent('canvas-holder');
             
-            // Forțăm pornirea camerei la primul click
-            cnv.mousePressed(() => {
-                if (!video) {
-                    document.getElementById('status-top').innerText = "PASUL 2: PERMITE ACCESUL LA CAMERĂ...";
-                    video = createCapture(VIDEO, () => {
-                        document.getElementById('status-top').innerText = "PASUL 3: SE ÎNCARCĂ AI-UL...";
-                        bPose = ml5.bodyPose(video, () => {
-                            document.getElementById('status-top').innerText = "SISTEM ACTIV ✅";
-                            document.getElementById('status-top').style.color = "#0f8";
-                            bPose.detectStart(video, r => { poses = r; });
-                        });
+            // Încercăm pornirea automată
+            startCam();
+        }
+
+        function startCam() {
+            video = createCapture(VIDEO, (stream) => {
+                if(stream) {
+                    document.getElementById('msg').innerText = "Cameră activă! Se încarcă AI...";
+                    bPose = ml5.bodyPose(video, () => {
+                        document.getElementById('msg').innerText = "SISTEM ACTIV ✅";
+                        bPose.detectStart(video, r => { poses = r; });
                     });
-                    video.size(640, 480);
-                    video.hide();
                 }
             });
+            video.size(640, 480);
+            video.hide();
+        }
+
+        function keyPressed() {
+            if (key === 's' || key === 'S') startCam();
         }
 
         function draw() {
@@ -61,26 +51,11 @@
             
             if (poses.length > 0) {
                 let p = poses[0];
-                if (p.nose && p.left_shoulder && p.left_eye) {
-                    let dV = ((p.left_shoulder.y + p.right_shoulder.y)/2) - p.nose.y;
-                    let dO = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
-                    
-                    tTot++;
-                    let pOk = dV > 85; 
-                    let dOk = dO < 50;
-                    if (pOk && dOk) tOk++;
-
-                    document.getElementById('v1').innerText = Math.floor((tOk/tTot)*100) + "%";
-                    
-                    document.getElementById('v2').innerText = pOk ? "CORECT" : "APLECAT";
-                    document.getElementById('c2').className = pOk ? "card" : "card bad";
-                    document.getElementById('v2').className = pOk ? "val" : "val bad";
-
-                    document.getElementById('v3').innerText = dOk ? "OPTIMĂ" : "PREA APROAPE";
-                    document.getElementById('c3').className = dOk ? "card" : "card bad";
-                    document.getElementById('v3').className = dOk ? "val" : "val bad";
-[3/26/2026 10:15 AM] Cosmin Preda: stroke(pOk ? "#0f8" : "#f44");
-                    strokeWeight(4);
+                if (p.nose && p.left_shoulder) {
+                    let dV = p.left_shoulder.y - p.nose.y;
+                    let pOk = dV > 80;
+                    stroke(pOk ? "#0f8" : "#f44");
+                    strokeWeight(10);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
                 }
             }
