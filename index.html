@@ -2,66 +2,118 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture - Functional</title>
+    <title>Zen Posture Pro Analytics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { background: #050508; color: #fff; font-family: sans-serif; text-align: center; margin: 0; }
-        #btn-start { background: #00ff88; color: #000; border: none; padding: 15px 30px; font-weight: bold; font-size: 1.2rem; border-radius: 5px; cursor: pointer; margin-top: 20px; box-shadow: 0 0 15px rgba(0,255,136,0.5); }
-        #status-msg { margin: 15px; font-size: 1.1rem; color: #aaa; font-style: italic; }
-        #canvas-container { margin: 0 auto 20px auto; width: 640px; height: 480px; border: 3px solid #333; border-radius: 15px; overflow: hidden; background: #000; }
-        .stats { display: flex; justify-content: center; gap: 20px; }
-        .card { background: #111122; padding: 15px 25px; border-radius: 10px; border-bottom: 4px solid #333; min-width: 150px; }
-        .card.ok { border-bottom-color: #00ff88; }
-        .card.bad { border-bottom-color: #ff4444; }
-        .val { font-size: 1.5rem; font-weight: bold; margin-top: 5px; }
+        body { 
+            background: #050508; color: #e0e0e0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; 
+        }
+        
+        .header { text-align: center; margin-bottom: 20px; }
+        h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
+        
+        #btn-start { 
+            background: linear-gradient(135deg, #00ff88, #00cc6e); 
+            color: #050508; border: none; padding: 15px 40px; 
+            font-size: 1.1rem; font-weight: bold; border-radius: 50px; 
+            cursor: pointer; box-shadow: 0 5px 20px rgba(0,255,136,0.3);
+            transition: transform 0.2s;
+        }
+        #btn-start:hover { transform: scale(1.05); }
+        
+        #status-msg { margin-top: 15px; font-size: 1rem; color: #888; font-style: italic; }
+
+        .dashboard { 
+            display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; 
+            max-width: 1000px; width: 100%;
+        }
+
+        #camera-wrapper { 
+            border: 3px solid #1a1a2e; border-radius: 20px; 
+            overflow: hidden; background: #000; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 640px; height: 480px;
+            position: relative;
+        }
+
+        .panel { display: flex; flex-direction: column; gap: 20px; width: 300px; }
+
+        .card { 
+            background: #111122; border-radius: 15px; padding: 25px; 
+            border-left: 5px solid #333; /* Culoare default */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            transition: all 0.3s ease;
+        }
+        .card.ok { border-left-color: #00ff88; }
+        .card.bad { border-left-color: #ff4444; background: #1a1122; }
+
+        .lbl { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .val { font-size: 1.6rem; font-weight: bold; color: #fff; }
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
     </style>
 </head>
 <body>
-    <h1>ZEN POSTURE PRO</h1>
+
+    <div class="header">
+        <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
+        <button id="btn-start" onclick="initSistem()">INIȚIALIZARE SISTEM</button>
+        <div id="status-msg">Așteptare comandă utilizator...</div>
+    </div>
     
-    <button id="btn-start" onclick="pornesteSistemul()">1. DĂ CLICK AICI SĂ PORNEȘTI</button>
-    <div id="status-msg">Sistemul așteaptă pornirea...</div>
-    
-    <div id="canvas-container"></div>
-    
-    <div class="stats">
-        <div class="card" id="card-post">
-            <div>POSTURĂ GÂT</div>
-            <div id="val-post" class="val">---</div>
-        </div>
-        <div class="card" id="card-scor">
-            <div>SCOR SĂNĂTATE</div>
-            <div id="val-scor" class="val">0%</div>
+    <div class="dashboard">
+        <div id="camera-wrapper"></div>
+        
+        <div class="panel">
+            <div class="card" id="c-scor">
+                <div class="lbl">Scor Sănătate Zilnic</div>
+                <div id="v-scor" class="val">0%</div>
+            </div>
+            
+            <div class="card" id="c-gat">
+                <div class="lbl">Tensiune Cervicală (Gât)</div>
+                <div id="v-gat" class="val">---</div>
+            </div>
+            
+            <div class="card" id="c-ochi">
+                <div class="lbl">Distanță Monitor</div>
+                <div id="v-ochi" class="val">---</div>
+            </div>
         </div>
     </div>
 
     <script>
-        let video, bodyPose, poses = [];
-        let framesOk = 0, framesTotal = 0;
+        let video;
+        let bodyPose;
+        let poses = [];
+        let cadreCorecte = 0;
+        let cadreTotale = 0;
+
+        // Limite de sensibilitate (le poți ajusta ulterior)
+        const PRAG_POSTURA = 80;  // Mai mare = mai strict cu spatele drept
+        const PRAG_DISTANTA = 55; // Mai mic = trebuie să stai mai departe de ecran
 
         function setup() {
             let cnv = createCanvas(640, 480);
-            cnv.parent('canvas-container');
+            cnv.parent('camera-wrapper');
         }
 
-        function pornesteSistemul() {
-            // 1. Ascundem butonul
+        function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "2. Se cere acces la cameră...";
+            document.getElementById('status-msg').innerText = "Pas 1: Se conectează camera...";
             
-            // 2. Pornim camera
             video = createCapture(VIDEO, () => {
-                document.getElementById('status-msg').innerText = "3. Camera merge! Se descarcă AI-ul (10-20 secunde)...";
-                document.getElementById('canvas-container').style.borderColor = "#ffaa00"; // Chenar portocaliu de așteptare
+                document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI (te rog așteaptă)...";
+                document.getElementById('camera-wrapper').style.borderColor = "#ffaa00"; // Feedback vizual de așteptare
                 
-                // 3. Pornim AI-ul doar după ce camera e gata
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = "MONITORIZARE ACTIVĂ ✅";
+                    document.getElementById('status-msg').innerText = "SISTEM ACTIV. MONITORIZARE LIVE ✅";
                     document.getElementById('status-msg').style.color = "#00ff88";
-                    document.getElementById('canvas-container').style.borderColor = "#00ff88"; // Chenar verde de succes
+                    document.getElementById('camera-wrapper').style.borderColor = "#00ff88"; // Feedback vizual de succes
                     
                     bodyPose.detectStart(video, (results) => {
                         poses = results;
@@ -75,40 +127,74 @@
         function draw() {
             background(0);
             
-            // Afișăm feed-ul video pe ecran
+            // Desenăm feed-ul video
             if (video && video.loadedmetadata) {
                 image(video, 0, 0, 640, 480);
             }
 
-            // Calculăm postura
+            // Analizăm postura
             if (poses.length > 0) {
                 let p = poses[0];
-                if (p.nose && p.left_shoulder && p.right_shoulder) {
-                    framesTotal++;
+                
+                // Verificare de siguranță: facem calcule doar dacă vedem toate punctele necesare
+                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
+                    cadreTotale++;
                     
-                    let umeriY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
-                    let distanta = umeriY - p.nose.y;
+                    // 1. Calcul Postură Gât
+                    let centruUmeriY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
+                    let distantaGat = centruUmeriY - p.nose.y;
+                    let gatCorect = distantaGat > PRAG_POSTURA;
                     
-                    let esteCorect = distanta > 80;
-                    if (esteCorect) framesOk++;
+                    // 2. Calcul Distanță Ecran (distanța între ochi)
+                    let distantaOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
+                    let distantaCorecta = distantaOchi < PRAG_DISTANTA;
 
-                    // --- Actualizare Carduri Interfață ---
-                    let cardPost = document.getElementById('card-post');
-                    let valPost = document.getElementById('val-post');
-                    
-                    valPost.innerText = esteCorect ? "CORECTĂ" : "APLECATĂ";
-                    valPost.className = esteCorect ? "val ok" : "val bad";
-                    cardPost.className = esteCorect ? "card ok" : "card bad";
-                    
-                    document.getElementById('val-scor').innerText = Math.floor((framesOk / framesTotal) * 100) + "%";
-                    document.getElementById('val-scor').className = "val ok";
+                    // Scor Global
+                    if (gatCorect && distantaCorecta) {
+                        cadreCorecte++;
+                    }
 
-                    // --- Desen pe video ---
-                    stroke(esteCorect ? "#00ff88" : "#ff4444");
-                    strokeWeight(8);
+                    // --- ACTUALIZARE INTERFAȚĂ (DASHBOARD) ---
+                    
+                    // Update Scor
+                    let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
+                    document.getElementById('v-scor').innerText = scorCurent + "%";
+                    document.getElementById('c-scor').className = scorCurent > 80 ? "card ok" : "card bad";
+                    document.getElementById('v-scor').className = scorCurent > 80 ? "val ok" : "val bad";
+
+                    // Update Card Gât
+                    actualizeazaCard('c-gat', 'v-gat', gatCorect, "OPTIMĂ", "APLECAT ⚠️");
+                    
+                    // Update Card Distanță
+                    actualizeazaCard('c-ochi', 'v-ochi', distantaCorecta, "SIGURĂ", "PREA APROAPE 🚨");
+
+                    // --- FEEDBACK VIZUAL PE VIDEO ---
+                    
+                    // Linia umerilor
+                    stroke(gatCorect ? "#00ff88" : "#ff4444");
+                    strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
+
+                    // Avertizare ochi (cercuri roșii dacă ești prea aproape)
+                    if (!distantaCorecta) {
+                        noFill();
+                        stroke("#ff4444");
+                        strokeWeight(4);
+                        ellipse(p.left_eye.x, p.left_eye.y, 40);
+                        ellipse(p.right_eye.x, p.right_eye.y, 40);
+                    }
                 }
             }
+        }
+
+        // Funcție ajutătoare pentru a schimba culorile și textul cardurilor
+        function actualizeazaCard(idCard, idValoare, esteOk, textOk, textBad) {
+            let card = document.getElementById(idCard);
+            let val = document.getElementById(idValoare);
+            
+            card.className = esteOk ? "card ok" : "card bad";
+            val.className = esteOk ? "val ok" : "val bad";
+            val.innerText = esteOk ? textOk : textBad;
         }
     </script>
 </body>
