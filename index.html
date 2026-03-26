@@ -2,135 +2,86 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Zen Posture Pro v10</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        h1 { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.3); margin: 20px 0; font-size: 1.8rem; }
-        .main-container { display: flex; gap: 30px; padding: 20px; flex-wrap: wrap; justify-content: center; }
-        #camera-container { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 40px rgba(0,0,0,0.5); background: #000; width: 640px; height: 480px; }
-        .stats-panel { width: 320px; display: flex; flex-direction: column; gap: 20px; }
-        .card { background: #111122; border-radius: 15px; padding: 25px; border-left: 5px solid #00ff88; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; }
-        .card.bad { border-left-color: #ff4444; background: #1a1122; }
-        .label { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px; }
-        .val { font-size: 1.5rem; font-weight: bold; color: #00ff88; }
-        .val.bad { color: #ff4444; }
-        #loading-msg { margin-top: 10px; color: #ffaa00; font-style: italic; font-size: 1.1rem; }
+        body { background: #050508; color: #e0e0e0; font-family: sans-serif; text-align: center; }
+        .main-container { display: flex; justify-content: center; gap: 20px; padding: 20px; flex-wrap: wrap; }
+        #canvas-box { border: 3px solid #1a1a2e; border-radius: 15px; background: #000; width: 640px; height: 480px; }
+        .card { background: #111122; padding: 20px; border-radius: 10px; border-left: 5px solid #0f8; width: 280px; margin-bottom: 15px; text-align: left; }
+        .bad { border-left-color: #f44; }
+        .val { font-size: 1.4rem; font-weight: bold; color: #0f8; }
+        .val.bad { color: #f44; }
+        #status-top { color: #fa0; font-weight: bold; margin: 10px; }
     </style>
 </head>
 <body>
-    <h1>ZEN POSTURE <span style="color:white">PRO ANALYTICS</span></h1>
-    
-    <div id="loading-msg">Se inițializează camera... (Dă un click pe ecran)</div>
+    <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
+    <div id="status-top">PASUL 1: DĂ UN CLICK ORIUNDE PE ECRAN</div>
     
     <div class="main-container">
-        <div id="camera-container"></div>
-        
-        <div class="stats-panel">
-            <div class="card" id="card-scor">
-                <div class="label">Scor Sănătate</div>
-                <div id="ui-scor" class="val">0%</div>
-            </div>
-            
-            <div class="card" id="card-gat">
-                <div class="label">Postură Gât</div>
-                <div id="ui-gat" class="val">AȘTEPTARE...</div>
-            </div>
-            
-            <div class="card" id="card-ochi">
-                <div class="label">Distanță Ecran</div>
-                <div id="ui-ochi" class="val">AȘTEPTARE...</div>
-            </div>
+        <div id="canvas-box"></div>
+        <div class="panel">
+            <div class="card" id="c1"><div>SCOR</div><div id="v1" class="val">0%</div></div>
+            <div class="card" id="c2"><div>POSTURĂ</div><div id="v2" class="val">AȘTEPTARE...</div></div>
+            <div class="card" id="c3"><div>DISTANȚĂ</div><div id="v3" class="val">AȘTEPTARE...</div></div>
         </div>
     </div>
 
     <script>
-        let video;
-        let bodyPose;
-        let poses = [];
-        let timpDrept = 0, timpTotal = 0;
+        let video, bPose, poses = [], tOk = 0, tTot = 0;
 
         function setup() {
-            // 1. Creăm spațiul pentru video imediat
-            let canvas = createCanvas(640, 480);
-            canvas.parent('camera-container');
+            let cnv = createCanvas(640, 480);
+            cnv.parent('canvas-box');
             
-            // 2. Cerem permisiunea pentru cameră PRIMA DATĂ
-            video = createCapture(VIDEO, function() {
-                // Camera a pornit cu succes
-                document.getElementById('loading-msg').innerText = "Camera pornită! Se descarcă AI-ul, te rog așteaptă...";
-                
-                // 3. Abia ACUM începem să descărcăm modelul AI
-                bodyPose = ml5.bodyPose(modelGata);
-            });
-            video.size(640, 480);
-            video.hide();
-        }
-
-        // 4. Această funcție se rulează când AI-ul e gata 100%
-        function modelGata() {
-            document.getElementById('loading-msg').innerText = "Sistem Activ. Monitorizare Live.";
-            document.getElementById('loading-msg').style.color = "#00ff88";
-            bodyPose.detectStart(video, function(results) {
-                poses = results;
+            // Forțăm pornirea camerei la primul click
+            cnv.mousePressed(() => {
+                if (!video) {
+                    document.getElementById('status-top').innerText = "PASUL 2: PERMITE ACCESUL LA CAMERĂ...";
+                    video = createCapture(VIDEO, () => {
+                        document.getElementById('status-top').innerText = "PASUL 3: SE ÎNCARCĂ AI-UL...";
+                        bPose = ml5.bodyPose(video, () => {
+                            document.getElementById('status-top').innerText = "SISTEM ACTIV ✅";
+                            document.getElementById('status-top').style.color = "#0f8";
+                            bPose.detectStart(video, r => { poses = r; });
+                        });
+                    });
+                    video.size(640, 480);
+                    video.hide();
+                }
             });
         }
 
         function draw() {
-            background(0); // Fundal negru până apare imaginea
-            
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480);
-[3/26/2026 10:08 AM] Cosmin Preda: }
+            background(0);
+            if (video) image(video, 0, 0, 640, 480);
             
             if (poses.length > 0) {
-                let pose = poses[0];
-                
-                if (pose.nose && pose.left_shoulder && pose.right_shoulder && pose.left_eye && pose.right_eye) {
+                let p = poses[0];
+                if (p.nose && p.left_shoulder && p.left_eye) {
+                    let dV = ((p.left_shoulder.y + p.right_shoulder.y)/2) - p.nose.y;
+                    let dO = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     
-                    // Calcul Gât
-                    let dV = ((pose.left_shoulder.y + pose.right_shoulder.y) / 2) - pose.nose.y; 
-                    // Calcul Distanță
-                    let distOchi = dist(pose.left_eye.x, pose.left_eye.y, pose.right_eye.x, pose.right_eye.y);
+                    tTot++;
+                    let pOk = dV > 85; 
+                    let dOk = dO < 50;
+                    if (pOk && dOk) tOk++;
 
-                    timpTotal++;
+                    document.getElementById('v1').innerText = Math.floor((tOk/tTot)*100) + "%";
                     
-                    let posturaOk = dV > 80;    
-                    let distantaOk = distOchi < 50; 
+                    document.getElementById('v2').innerText = pOk ? "CORECT" : "APLECAT";
+                    document.getElementById('c2').className = pOk ? "card" : "card bad";
+                    document.getElementById('v2').className = pOk ? "val" : "val bad";
 
-                    if (posturaOk && distantaOk) {
-                        timpDrept++;
-                    }
-
-                    // Update Carduri
-                    let scor = (timpDrept / timpTotal) * 100;
-                    document.getElementById('ui-scor').innerText = Math.floor(scor) + "%";
-                    
-                    let uiGat = document.getElementById('ui-gat');
-                    let cardGat = document.getElementById('card-gat');
-                    uiGat.innerText = posturaOk ? "CORECT ✅" : "APLECAT ⚠️";
-                    uiGat.className = posturaOk ? "val" : "val bad";
-                    cardGat.className = posturaOk ? "card" : "card bad";
-
-                    let uiOchi = document.getElementById('ui-ochi');
-                    let cardOchi = document.getElementById('card-ochi');
-                    uiOchi.innerText = distantaOk ? "OPTIMĂ ✅" : "PREA APROAPE 🚨";
-                    uiOchi.className = distantaOk ? "val" : "val bad";
-                    cardOchi.className = distantaOk ? "card" : "card bad";
-
-                    // Grafica pe video
-                    stroke(posturaOk ? "#00ff88" : "#ff4444");
-                    strokeWeight(5);
-                    line(pose.left_shoulder.x, pose.left_shoulder.y, pose.right_shoulder.x, pose.right_shoulder.y);
-
-                    if (!distantaOk) {
-                        stroke("#ff4444");
-                        noFill();
-                        strokeWeight(4);
-                        ellipse(pose.left_eye.x, pose.left_eye.y, 40, 40);
-                        ellipse(pose.right_eye.x, pose.right_eye.y, 40, 40);
-                    }
+                    document.getElementById('v3').innerText = dOk ? "OPTIMĂ" : "PREA APROAPE";
+                    document.getElementById('c3').className = dOk ? "card" : "card bad";
+                    document.getElementById('v3').className = dOk ? "val" : "val bad";
+[3/26/2026 10:15 AM] Cosmin Preda: stroke(pOk ? "#0f8" : "#f44");
+                    strokeWeight(4);
+                    line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
                 }
             }
         }
