@@ -2,41 +2,37 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Background Mode</title>
+    <title>Zen Posture Pro - Analytics Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
         body { 
             background: #050508; color: #e0e0e0; 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center; 
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
         }
         
         .header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
-        .controale { display: flex; gap: 15px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
+        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
         
         button {
-            border: none; padding: 12px 25px; font-size: 1rem; font-weight: bold; 
+            border: none; padding: 12px 20px; font-size: 0.95rem; font-weight: bold; 
             border-radius: 50px; cursor: pointer; transition: 0.3s;
         }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); }
-        #btn-start:hover { transform: scale(1.05); }
-        
         #btn-audio { background: #333; color: #fff; display: none; }
         #btn-audio.activ { background: #00ff88; color: #000; }
-
-        /* Butonul nou pentru fundal */
         #btn-pip { background: #00b8ff; color: #000; display: none; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
-        #btn-pip:hover { transform: scale(1.05); }
+        #btn-analytics { background: #ffaa00; color: #000; display: none; box-shadow: 0 5px 20px rgba(255,170,0,0.3); }
+
+        button:hover { transform: scale(1.05); }
 
         #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
 
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
 
-        /* Privacy Blur CSS */
         #camera-wrapper { 
             border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
             border-radius: 20px; overflow: hidden; background: #000;
@@ -44,24 +40,40 @@
         }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
         #camera-wrapper video.feed {
-            display: block; width: 640px; height: 480px;
-            position: absolute; top: 0; left: 0; z-index: 1;
+            display: block; width: 640px; height: 480px; position: absolute; top: 0; left: 0; z-index: 1;
             filter: blur(20px) brightness(0.6); transform: scale(1.1);
         }
 
         .panel { display: flex; flex-direction: column; gap: 20px; width: 300px; }
-
-        .card { 
-            background: #111122; border-radius: 15px; padding: 25px; 
-            border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s;
-        }
+        .card { background: #111122; border-radius: 15px; padding: 25px; border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
         .card.ok { border-left-color: #00ff88; }
         .card.bad { border-left-color: #ff4444; background: #1a1122; }
-
         .lbl { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
         .val { font-size: 1.6rem; font-weight: bold; color: #fff; }
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
+
+        /* --- STILURI PENTRU MODALUL DE ANALYTICS --- */
+        #modal-analytics {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5,5,8,0.95); z-index: 999; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: #111122; border: 2px solid #ffaa00; border-radius: 20px;
+            padding: 30px; width: 90%; max-width: 700px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        .modal-content h2 { color: #ffaa00; margin-top: 0; }
+        .chart-container {
+            display: flex; justify-content: space-evenly; align-items: flex-end;
+            height: 250px; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;
+        }
+        .bar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 50px; }
+        .bar { width: 100%; background: linear-gradient(0deg, #006633, #00ff88); border-radius: 5px 5px 0 0; transition: height 1s ease-out; }
+        .bar.low { background: linear-gradient(0deg, #660000, #ff4444); }
+        .bar-label { font-size: 0.8rem; color: #aaa; }
+        .bar-score { font-size: 1rem; font-weight: bold; color: #fff; }
+        #btn-close-modal { background: #333; color: #fff; margin-top: 30px; }
+        #btn-close-modal:hover { background: #555; }
     </style>
 </head>
 <body>
@@ -72,7 +84,8 @@
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
-            <button id="btn-pip" onclick="activeazaModFundal()">📺 MOD FUNDAL (PIP)</button>
+            <button id="btn-pip" onclick="activeazaModFundal()">📺 MOD FUNDAL</button>
+            <button id="btn-analytics" onclick="deschideAnalytics()">📊 RAPORT ANALYTICS</button>
         </div>
         
         <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
@@ -80,7 +93,6 @@
     
     <div class="dashboard">
         <div id="camera-wrapper"></div>
-        
         <div class="panel">
             <div class="card" id="c-scor"><div class="lbl">Scor Zilnic</div><div id="v-scor" class="val">0%</div></div>
             <div class="card" id="c-gat"><div class="lbl">Postură Cervicală</div><div id="v-gat" class="val">---</div></div>
@@ -89,6 +101,16 @@
     </div>
 
     <video id="pip-video" muted autoplay playsinline style="display:none;"></video>
+
+    <div id="modal-analytics">
+        <div class="modal-content">
+            <h2>Evoluția Sănătății Tale</h2>
+            <p style="color: #888;">Monitorizare pe ultimele zile</p>
+            <div class="chart-container" id="chart-area">
+                </div>
+            <button id="btn-close-modal" onclick="inchideAnalytics()">Închide Raportul</button>
+        </div>
+    </div>
 
     <script>
         let video, bodyPose, poses = [];
@@ -99,83 +121,132 @@
         let ultimulAvertisment = 0; 
         const COOLDOWN_NOTIFICARE = 6000; 
 
-        const PRAG_POSTURA = 100;  
-        const PRAG_DISTANTA = 110; 
+        const PRAG_POSTURA = 75;  
+        const PRAG_DISTANTA = 65; 
         
         let pipVideoElement;
+        let dataCurenta = new Date().toLocaleDateString('ro-RO');
 
         function setup() {
             let cnv = createCanvas(640, 480);
             cnv.parent('camera-wrapper');
-            
-            // Pregătim video-ul pentru modul Picture-in-Picture
             pipVideoElement = document.getElementById('pip-video');
-            pipVideoElement.srcObject = cnv.elt.captureStream(30); // Capturăm imaginea la 30fps
+            pipVideoElement.srcObject = cnv.elt.captureStream(30);
+
+            // Inserăm date demo pentru Analytics dacă e prima oară când deschide aplicația
+            initializareDateDemo();
         }
 
         function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
             document.getElementById('status-msg').innerText = "Pas 1: Permite notificările...";
             
-            if ("Notification" in window) {
-                Notification.requestPermission();
-            }
+            if ("Notification" in window) Notification.requestPermission();
 
             try {
                 window.AudioContext = window.AudioContext || window.webkitAudioContext;
                 contextAudio = new AudioContext();
+                let silentOsc = contextAudio.createOscillator();
+                let silentGain = contextAudio.createGain();
+                silentGain.gain.value = 0.0001; 
+                silentOsc.connect(silentGain); silentGain.connect(contextAudio.destination);
+                silentOsc.start();
             } catch (e) {}
             
             video = createCapture(VIDEO, () => {
                 document.getElementById('status-msg').innerText = "Pas 2: Se descarcă modelul AI...";
-                video.addClass('feed'); // Clasa pentru blur
+                video.addClass('feed'); 
                 
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = "SISTEM ACTIV ✅ Pentru a lucra în alt tab, apasă MOD FUNDAL.";
+                    document.getElementById('status-msg').innerText = "SISTEM ACTIV ✅";
                     document.getElementById('status-msg').style.color = "#00ff88";
                     
                     document.getElementById('btn-audio').style.display = 'block'; 
-                    document.getElementById('btn-pip').style.display = 'block'; // Arătăm butonul albastru
+                    document.getElementById('btn-pip').style.display = 'block'; 
+                    document.getElementById('btn-analytics').style.display = 'block'; // Arătăm butonul Analytics
                     
-                    // Pornim mini-playerul în fundal
                     pipVideoElement.play();
-
-                    bodyPose.detectStart(video, (results) => {
-                        poses = results;
-                    });
+                    bodyPose.detectStart(video, (results) => { poses = results; });
+                    
+                    // Salvăm datele automat la fiecare 5 secunde
+                    setInterval(salveazaProgresul, 5000);
                 });
             });
             video.size(640, 480);
-            video.hide(); // Ascundem video-ul original brut, lăsăm doar canvas-ul + video-ul cu blur
+            video.hide(); 
         }
 
-        // FUNCȚIA MAGICĂ PENTRU FUNDAL
+        // --- SISTEMUL DE SALVARE (ANALYTICS) ---
+        function salveazaProgresul() {
+            if (cadreTotale < 50) return; // Nu salva dacă abia a pornit
+            let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
+            
+            // Extragem istoricul din memorie
+            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
+            // Actualizăm ziua de azi
+            istoric[dataCurenta] = scorCurent;
+            // Salvăm la loc în memoria browserului
+            localStorage.setItem('zenPostureHistory', JSON.stringify(istoric));
+        }
+
+        function initializareDateDemo() {
+            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory'));
+            if (!istoric || Object.keys(istoric).length === 0) {
+                // Dacă nu există date, punem niște date de test ca să arate bine graficul
+                istoric = {
+                    "Luni": 65,
+                    "Marți": 72,
+                    "Miercuri": 88,
+                    "Joi": 81
+                };
+                localStorage.setItem('zenPostureHistory', JSON.stringify(istoric));
+            }
+        }
+
+        // --- LOGICA PENTRU MODALUL GRAFIC ---
+        function deschideAnalytics() {
+            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
+            let chartArea = document.getElementById('chart-area');
+            chartArea.innerHTML = ""; // Curățăm graficul vechi
+
+            // Generăm barele pentru fiecare zi salvată
+            for (const [ziua, scorul] of Object.entries(istoric)) {
+                let clasaCuloare = scorul < 80 ? "bar low" : "bar"; // Roșu dacă e sub 80%
+                
+                let htmlBara = `
+                    <div class="bar-wrapper">
+                        <div class="bar-score">${scorul}%</div>
+                        <div class="${clasaCuloare}" style="height: ${scorul * 2}px;"></div>
+                        <div class="bar-label">${ziua === dataCurenta ? "Azi" : ziua}</div>
+                    </div>
+                `;
+                chartArea.innerHTML += htmlBara;
+            }
+
+            document.getElementById('modal-analytics').style.display = "flex";
+        }
+
+        function inchideAnalytics() {
+            document.getElementById('modal-analytics').style.display = "none";
+        }
+
+        // --- RESTUL FUNCȚIILOR (Neschimbate) ---
         async function activeazaModFundal() {
             try {
-                if (document.pictureInPictureElement) {
-                    await document.exitPictureInPicture();
-                } else {
-                    // Trimiterea imaginii într-o fereastră flotantă forțează browserul să NU mai înghețe tab-ul!
-                    await pipVideoElement.requestPictureInPicture();
-                    document.getElementById('status-msg').innerText = "Mod Fundal Activ! Acum poți schimba tab-ul sau minimiza browserul. 🚀";
-                }
-            } catch (error) {
-                console.error("Modul fundal nu este suportat complet pe acest browser.", error);
-                alert("Browserul tău blochează modul flotant. O altă soluție este să tragi acest tab într-o fereastră separată (nu minimizată).");
-            }
+                if (document.pictureInPictureElement) await document.exitPictureInPicture();
+                else await pipVideoElement.requestPictureInPicture();
+            } catch (error) { alert("Folosește o fereastră separată de browser pentru fundal."); }
         }
 
         function declanseazaAlarma(tipEroare) {
             if (!alarmeActive) return;
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
-
             if ("Notification" in window && Notification.permission === "granted") {
                 let titlu = tipEroare === 'gat' ? "⚠️ Postură Incorectă" : "🚨 Prea aproape!";
-                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele și relaxează umerii." : "Distanțează-te de ecran.";
+                let mesaj = tipEroare === 'gat' ? "Îndreaptă spatele." : "Distanțează-te de ecran.";
                 new Notification(titlu, { body: mesaj });
             }
-
             try {
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
                 let oscilator = contextAudio.createOscillator();
@@ -192,33 +263,22 @@
         function toggleAudio() {
             alarmeActive = !alarmeActive;
             let btn = document.getElementById('btn-audio');
-            if (alarmeActive) {
-                btn.className = "activ"; btn.innerText = "🔔 ALARME: ON";
-            } else {
-                btn.className = ""; btn.innerText = "🔕 ALARME: OFF";
-            }
+            btn.className = alarmeActive ? "activ" : "";
+            btn.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF";
         }
 
         function draw() {
             background(0);
-            
-            // Desenăm fundalul blured (Privacy Blur)
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480);
-            }
+            if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
 
             if (poses.length > 0) {
                 let p = poses[0];
-                
                 if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
                     cadreTotale++;
-                    
                     let centruUmeriX = (p.left_shoulder.x + p.right_shoulder.x) / 2;
                     let centruUmeriY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
-                    
                     let distantaGat = centruUmeriY - p.nose.y;
                     let gatCorect = distantaGat > PRAG_POSTURA;
-                    
                     let distantaOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     let distantaCorecta = distantaOchi < PRAG_DISTANTA;
 
@@ -227,16 +287,19 @@
                     if (!gatCorect) declanseazaAlarma('gat');
                     else if (!distantaCorecta) declanseazaAlarma('distanta');
 
-                    // UI Update
                     let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
                     document.getElementById('v-scor').innerText = scorCurent + "%";
                     document.getElementById('c-scor').className = scorCurent > 80 ? "card ok" : "card bad";
                     document.getElementById('v-scor').className = scorCurent > 80 ? "val ok" : "val bad";
 
-                    actualizeazaCard('c-gat', 'v-gat', gatCorect, "OPTIMĂ", "APLECAT ⚠️");
-                    actualizeazaCard('c-ochi', 'v-ochi', distantaCorecta, "SIGURĂ", "PREA APROAPE 🚨");
+                    document.getElementById('c-gat').className = gatCorect ? "card ok" : "card bad";
+                    document.getElementById('v-gat').className = gatCorect ? "val ok" : "val bad";
+                    document.getElementById('v-gat').innerText = gatCorect ? "OPTIMĂ" : "APLECAT ⚠️";
 
-                    // Scheletul pe imagine
+                    document.getElementById('c-ochi').className = distantaCorecta ? "card ok" : "card bad";
+                    document.getElementById('v-ochi').className = distantaCorecta ? "val ok" : "val bad";
+                    document.getElementById('v-ochi').innerText = distantaCorecta ? "SIGURĂ" : "PREA APROAPE 🚨";
+
                     stroke(gatCorect ? "#00ff88" : "#ff4444"); strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
 
@@ -252,13 +315,6 @@
                     }
                 }
             }
-        }
-
-        function actualizeazaCard(idCard, idValoare, esteOk, textOk, textBad) {
-            document.getElementById(idCard).className = esteOk ? "card ok" : "card bad";
-            let val = document.getElementById(idValoare);
-            val.className = esteOk ? "val ok" : "val bad";
-            val.innerText = esteOk ? textOk : textBad;
         }
     </script>
 </body>
