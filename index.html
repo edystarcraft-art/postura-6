@@ -2,58 +2,67 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Final</title>
+    <title>Zen Posture Pro - Ultra Stability</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <style>
-        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        h1 { color: #00ff88; margin: 20px 0; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
-        .main-container { display: flex; gap: 20px; padding: 20px; flex-wrap: wrap; justify-content: center; }
-        #v-box { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        body { background: #050508; color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .header { margin: 20px; text-align: center; }
+        #btn-start { background: #00ff88; color: #000; border: none; padding: 15px 30px; font-size: 1.2rem; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 0 20px rgba(0,255,136,0.4); margin-bottom: 20px; }
+        #btn-start:hover { transform: scale(1.05); background: #00cc6e; }
+        .main-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        #video-holder { border: 2px solid #1a1a2e; border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; }
         .panel { width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        .card { background: #111122; border-radius: 15px; padding: 20px; border-left: 5px solid #00ff88; transition: 0.3s; }
-        .card.bad { border-left-color: #ff4444; background: #1a1122; }
-        .lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        .card { background: #111122; border-radius: 15px; padding: 20px; border-left: 5px solid #00ff88; }
+        .card.bad { border-left-color: #ff4444; }
         .val { font-size: 1.4rem; font-weight: bold; color: #00ff88; }
         .val.bad { color: #ff4444; }
-        #status { color: #fa0; font-weight: bold; margin-bottom: 10px; }
+        #status-text { color: #aaa; margin-bottom: 10px; font-style: italic; }
     </style>
 </head>
 <body>
-    <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
-    <div id="status">DĂ UN CLICK PE ECRAN PENTRU ACTIVARE</div>
+    <div class="header">
+        <h1>ZEN POSTURE <span style="color:#00ff88">PRO</span></h1>
+        <button id="btn-start" onclick="activareSistem()">PORNEȘTE CAMERA</button>
+        <div id="status-text">Sistemul este în așteptare...</div>
+    </div>
     
     <div class="main-container">
-        <div id="v-box"></div>
+        <div id="video-holder"></div>
         <div class="panel">
-            <div class="card" id="c-scor"><div class="lbl">Scor Sănătate</div><div id="v-scor" class="val">0%</div></div>
-            <div class="card" id="c-gat"><div class="lbl">Postură Gât</div><div id="v-gat" class="val">AȘTEPTARE...</div></div>
-            <div class="card" id="c-dist"><div class="lbl">Distanță Ecran</div><div id="v-dist" class="val">AȘTEPTARE...</div></div>
+            <div class="card" id="card-scor"><div>SCOR ZILNIC</div><div id="v-scor" class="val">0%</div></div>
+            <div class="card" id="card-postura"><div>POSTURĂ GÂT</div><div id="v-postura" class="val">---</div></div>
+            <div class="card" id="card-dist"><div>DISTANȚĂ ECRAN</div><div id="v-dist" class="val">---</div></div>
         </div>
     </div>
 
     <script>
         let video, bPose, poses = [], tOk = 0, tTot = 0;
+        let modelIncarcat = false;
 
         function setup() {
             let cnv = createCanvas(640, 480);
-            cnv.parent('v-box');
-            cnv.mousePressed(initCam);
+            cnv.parent('video-holder');
+            background(0);
         }
 
-        function initCam() {
-            if (!video) {
-                document.getElementById('status').innerText = "SE ÎNCARCĂ AI-UL...";
-                video = createCapture(VIDEO, () => {
-                    bPose = ml5.bodyPose(video, () => {
-                        document.getElementById('status').innerText = "SISTEM ACTIV ✅";
-                        document.getElementById('status').style.color = "#0f8";
-                        bPose.detectStart(video, r => { poses = r; });
-                    });
+        function activareSistem() {
+            document.getElementById('btn-start').style.display = 'none';
+            document.getElementById('status-text').innerText = "Se accesează camera...";
+            
+            // Pornire Cameră
+            video = createCapture(VIDEO, () => {
+                document.getElementById('status-text').innerText = "Se încarcă Inteligența Artificială...";
+                
+                // Pornire AI
+                bPose = ml5.bodyPose(video, () => {
+                    document.getElementById('status-text').innerText = "SISTEM ACTIV ✅";
+                    modelIncarcat = true;
+                    bPose.detectStart(video, results => { poses = results; });
                 });
-                video.size(640, 480);
-                video.hide();
-            }
+            });
+            video.size(640, 480);
+            video.hide();
         }
 
         function draw() {
@@ -62,40 +71,42 @@
             
             if (poses.length > 0) {
                 let p = poses[0];
-                if (p.nose && p.left_shoulder && p.left_eye) {
-                    let dV = ((p.left_shoulder.y + p.right_shoulder.y)/2) - p.nose.y;
-                    let dO = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
+                // VERIFICARE STRICTĂ: Dacă nu vede toate punctele, nu face calcule (evită blocarea)
+                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
+                    
+                    let dV = ((p.left_shoulder.y + p.right_shoulder.y) / 2) - p.nose.y;
+                    let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     
                     tTot++;
                     let pOk = dV > 80; 
-                    let dOk = dO < 55; // Prag proximitate
-                    if (pOk && dOk) tOk++;
+                    let dOk = dOchi < 55; // Limita de apropiere
+[3/26/2026 10:30 AM] Cosmin Preda: if (pOk && dOk) tOk++;
 
                     // Update UI
                     document.getElementById('v-scor').innerText = Math.floor((tOk/tTot)*100) + "%";
                     
-                    updateUI('c-gat', 'v-gat', pOk, pOk ? "CORECT" : "APLECAT");
-                    updateUI('c-dist', 'v-dist', dOk, dOk ? "OPTIMĂ" : "PREA APROAPE");
-[3/26/2026 10:25 AM] Cosmin Preda: // Feedback Video
+                    actualizareCard('card-postura', 'v-postura', pOk, pOk ? "CORECTĂ ✅" : "APLECATĂ ⚠️");
+                    actualizareCard('card-dist', 'v-dist', dOk, dOk ? "OPTIMĂ ✅" : "PREA APROAPE 🚨");
+
+                    // Desenare linii feedback
                     stroke(pOk ? "#0f8" : "#f44");
                     strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
                     
                     if(!dOk) {
-                        noFill(); stroke("#f44");
-                        ellipse(p.left_eye.x, p.left_eye.y, 30);
-                        ellipse(p.right_eye.x, p.right_eye.y, 30);
+                        noFill(); stroke("#f44"); strokeWeight(3);
+                        ellipse(p.left_eye.x, p.left_eye.y, 40);
+                        ellipse(p.right_eye.x, p.right_eye.y, 40);
                     }
                 }
             }
         }
 
-        function updateUI(cId, vId, ok, txt) {
-            let c = document.getElementById(cId);
+        function actualizareCard(cId, vId, esteOk, text) {
+            document.getElementById(cId).className = esteOk ? "card" : "card bad";
             let v = document.getElementById(vId);
-            c.className = ok ? "card" : "card bad";
-            v.className = ok ? "val" : "val bad";
-            v.innerText = txt;
+            v.className = esteOk ? "val" : "val bad";
+            v.innerText = text;
         }
     </script>
 </body>
