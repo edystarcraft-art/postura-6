@@ -2,9 +2,10 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Smart Breaks</title>
+    <title>Zen Posture Pro - Live Analytics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .header { text-align: center; margin-bottom: 20px; }
@@ -39,22 +40,21 @@
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
 
-        /* Modal Întrebare Pauză */
         #modal-intrebare { display: none; position: absolute; top: 0; left: 0; width: 640px; height: 480px; background: rgba(5,5,8,0.85); z-index: 20; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 20px; backdrop-filter: blur(5px); }
         .intrebare-titlu { color: #ffaa00; font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
-        .btn-raspuns { padding: 15px 40px; font-size: 1.2rem; margin: 10px; border-radius: 10px; }
+        .btn-raspuns { padding: 15px 40px; font-size: 1.2rem; margin: 10px; border-radius: 10px; cursor: pointer; border: none; font-weight: bold; transition: 0.2s;}
+        .btn-raspuns:hover { transform: scale(1.05); }
         #btn-da { background: #00ff88; color: #000; }
         #btn-nu { background: #ff4444; color: #fff; }
 
-        /* Modal Analytics */
+        /* STILURI DASHBOARD ANALYTICS */
         #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.95); z-index: 999; justify-content: center; align-items: center; }
-        .modal-content { background: #111122; border: 2px solid #ffaa00; border-radius: 20px; padding: 30px; width: 90%; max-width: 700px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
-        .chart-container { display: flex; justify-content: space-evenly; align-items: flex-end; height: 250px; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .bar-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 50px; }
-        .bar { width: 100%; background: linear-gradient(0deg, #006633, #00ff88); border-radius: 5px 5px 0 0; }
-        .bar.low { background: linear-gradient(0deg, #660000, #ff4444); }
-        .bar-label { font-size: 0.8rem; color: #aaa; }
-        .bar-score { font-size: 1rem; font-weight: bold; color: #fff; }
+        .modal-content { background: #0b0b14; border: 2px solid #333; border-radius: 20px; padding: 30px; width: 90%; max-width: 800px; text-align: center; box-shadow: 0 10px 50px rgba(0,0,0,0.9); }
+        .stats-grid { display: flex; justify-content: space-between; gap: 15px; margin: 20px 0; }
+        .stat-box { background: #111122; padding: 20px; border-radius: 15px; flex: 1; text-align: center; border: 1px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .stat-val { font-size: 2.2rem; font-weight: bold; color: #00ff88; display: block; margin-bottom: 5px; }
+        .stat-lbl { font-size: 0.85rem; color: #aaa; text-transform: uppercase; }
+        .chart-container { height: 300px; width: 100%; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -66,9 +66,8 @@
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
             <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
-            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT</button>
+            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT INTERACTIV</button>
             <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE AI</button>
-            <button id="btn-zen" class="btn-sec" onclick="declanseazaIntrebarePauza()" style="background:#00b8ff; color:black;">🧘 TEST PAUZĂ</button>
         </div>
         
         <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
@@ -78,9 +77,9 @@
         <div id="camera-wrapper">
             <div id="modal-intrebare">
                 <div class="intrebare-titlu">Oboseală detectată!</div>
-                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat aplecat destul de mult. Vrei o pauză de 1 minut?</div>
+                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă de 15 secunde.<br>Vrei o pauză de 1 minut pentru relaxare?</div>
                 <div>
-                    <button id="btn-da" class="btn-raspuns" onclick="raspunsPauza(true)">DA, vreau o pauză</button>
+                    <button id="btn-da" class="btn-raspuns" onclick="raspunsPauza(true)">DA, vreau pauză</button>
                     <button id="btn-nu" class="btn-raspuns" onclick="raspunsPauza(false)">NU, continuu munca</button>
                 </div>
             </div>
@@ -97,9 +96,28 @@
 
     <div id="modal-analytics">
         <div class="modal-content">
-            <h2 style="color:#ffaa00; margin-top:0;">Evoluția Sănătății Tale</h2>
-            <div class="chart-container" id="chart-area"></div>
-            <button class="btn-sec" style="display:inline-block; margin-top:30px;" onclick="inchideAnalytics()">Închide Raportul</button>
+            <h2 style="color:#ffaa00; margin-top:0;">📊 Dashboard Performanță Live</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-val" id="stat-live-score">0%</span>
+                    <span class="stat-lbl">Scor Sesiune Curentă</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" id="stat-time">00:00</span>
+                    <span class="stat-lbl">Timp Monitorizat</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span>
+                    <span class="stat-lbl">Alerte Azi</span>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="historyChart"></canvas>
+            </div>
+            
+            <button class="btn-sec" style="display:inline-block; margin-top:30px; padding: 10px 30px;" onclick="inchideAnalytics()">Închide Raportul</button>
         </div>
     </div>
 
@@ -112,19 +130,21 @@
         let PRAG_POSTURA = localStorage.getItem('zenPragGat') ? parseInt(localStorage.getItem('zenPragGat')) : 75;  
         let PRAG_DISTANTA = localStorage.getItem('zenPragOchi') ? parseInt(localStorage.getItem('zenPragOchi')) : 65; 
         
-        let modCalibrare = false;
-        let dateCalibrare = [];
-
-        // Zen Break State
-        let cadreGresiteConsecutive = 0;
-        let asteaptaRaspunsPauza = false;
-        let esteInZenBreak = false;
-        let secundeRamasePauza = 0;
-        let timerInterval = null;
-
+        let modCalibrare = false, dateCalibrare = [];
+        
+        // --- NOU: Timer de oboseală precis bazat pe milisecunde ---
+        let timpInceputOboseala = 0; 
+        
+        let asteaptaRaspunsPauza = false, esteInZenBreak = false, secundeRamasePauza = 0;
+        let timerPauza = null;
         let pipVideoElement;
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
         let bannerVizual = "", timerBanner = 0;
+
+        let timpStartSesiune = null;
+        let totalAlarmeAzi = localStorage.getItem('zenAlarmsToday') ? parseInt(localStorage.getItem('zenAlarmsToday')) : 0;
+        let chartInstance = null; 
+        let updateLiveStatsInterval = null;
 
         function setup() {
             let cnv = createCanvas(640, 480);
@@ -139,7 +159,7 @@
 
         function initSistem() {
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "Permite accesul camerei...";
+            document.getElementById('status-msg').innerText = "Permite accesul...";
 
             if ("Notification" in window) Notification.requestPermission();
             try {
@@ -157,13 +177,15 @@
                 video.addClass('feed'); 
                 
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = `SISTEM ACTIV ✅ (Calibrat: Gât ${PRAG_POSTURA}px)`;
+                    document.getElementById('status-msg').innerText = `SISTEM ACTIV ✅ (Calibrat)`;
                     document.getElementById('status-msg').style.color = "#00ff88";
                     
                     let btns = document.getElementsByClassName('btn-sec');
                     for(let i=0; i<btns.length; i++) btns[i].style.display = 'block';
                     
                     pipVideoElement.play();
+                    timpStartSesiune = Date.now(); 
+                    
                     bodyPose.detectStart(video, (results) => { poses = results; });
                     setInterval(salveazaProgresul, 5000);
                 });
@@ -181,92 +203,67 @@
         function finalizeazaCalibrare() {
             modCalibrare = false;
             let sumaGat = 0, sumaOchi = 0;
-            for(let i = 0; i < dateCalibrare.length; i++) {
-                sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi;
-            }
+            for(let i = 0; i < dateCalibrare.length; i++) { sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi; }
             PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.85); 
             PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.20); 
             localStorage.setItem('zenPragGat', PRAG_POSTURA); localStorage.setItem('zenPragOchi', PRAG_DISTANTA);
-            document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`;
-            document.getElementById('status-msg').style.color = "#00ff88";
+            document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`; document.getElementById('status-msg').style.color = "#00ff88";
         }
 
-        // --- NOU: LOGICA DE ÎNTREBARE PAUZĂ ---
         function declanseazaIntrebarePauza() {
             if (esteInZenBreak || asteaptaRaspunsPauza) return;
             asteaptaRaspunsPauza = true;
-            
-            // Afișăm modalul HTML pe pagina principală
             document.getElementById('modal-intrebare').style.display = "flex";
-            
-            // Trimitem o notificare Desktop ca să știe utilizatorul (dacă e în alt tab)
             if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Zen Posture", { body: "Ai obosit? Intră pe aplicație ca să alegi dacă vrei o pauză." });
+                new Notification("Zen Posture", { body: "Ai stat aplecat 15 secunde. Vrei o pauză de relaxare?" });
             }
         }
 
         function raspunsPauza(vreaPauza) {
             document.getElementById('modal-intrebare').style.display = "none";
             asteaptaRaspunsPauza = false;
-
             if (vreaPauza) {
                 pornestePauzaZen();
             } else {
-                // Dacă a zis "Nu", mai dăm o șansă și resetăm cronometrul de oboseală
-                cadreGresiteConsecutive = 0;
+                timpInceputOboseala = 0; // Resetăm cronometrul dacă refuză
             }
         }
 
         function pornestePauzaZen() {
-            esteInZenBreak = true;
-            secundeRamasePauza = 60;
-            
-            timerInterval = setInterval(() => {
+            esteInZenBreak = true; secundeRamasePauza = 60;
+            timerPauza = setInterval(() => {
                 secundeRamasePauza--;
-                if(secundeRamasePauza <= 0) {
-                    clearInterval(timerInterval);
-                    esteInZenBreak = false;
-                    cadreGresiteConsecutive = 0;
+                if(secundeRamasePauza <= 0) { 
+                    clearInterval(timerPauza); 
+                    esteInZenBreak = false; 
+                    timpInceputOboseala = 0; 
                 }
             }, 1000);
         }
 
         function draw() {
-            // Dacă suntem în pauză, desenăm instrucțiunile DIRECT pe Canvas.
-            // Asta înseamnă că se vor vedea în fereastra mică plutitoare (Picture-in-Picture)
+            // --- NOU: EXERCIȚIILE CERVICALE AFIȘATE ÎN TIMPUL PAUZEI ---
             if (esteInZenBreak) {
-                background(10, 20, 30); // Fundal calm, albastru închis
-                
-                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER);
-                textSize(40); textStyle(BOLD);
-                text("TIMP PENTRU TINE", 320, 100);
+                background(10, 20, 30); 
+                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("TIMP PENTRU TINE", 320, 80);
                 
                 fill(255); textSize(20); textStyle(NORMAL);
-                text("1. Rotește umerii în spate de 5 ori.", 320, 200);
-                text("2. Privește departe de ecran ca să relaxezi ochii.", 320, 250);
-                text("3. Respiră adânc de 3 ori.", 320, 300);
+                text("1. Mișcă ușor capul stânga - dreapta.", 320, 160); 
+                text("2. Fă câteva rotiri lente ale capului.", 320, 210); 
+                text("3. Privește departe de ecran (relaxează ochii).", 320, 260);
+                text("4. Respiră adânc și relaxează umerii.", 320, 310);
                 
-                fill(0, 184, 255); textSize(60); textStyle(BOLD);
-                text(secundeRamasePauza + "s", 320, 400);
-                return; // Oprim desenarea camerei
-            }
-
-            // --- Logica normală de desenare a camerei ---
-            background(0);
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480); // Fără blur
-            }
-
-            if (asteaptaRaspunsPauza) {
-                // Dacă așteptăm răspuns, aplicăm doar un filtru închis pe video
-                background(0, 0, 0, 150);
+                fill(0, 184, 255); textSize(60); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 410);
                 return; 
             }
+
+            background(0);
+            if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
+            if (asteaptaRaspunsPauza) { background(0, 0, 0, 150); return; }
 
             if (poses.length > 0) {
                 let p = poses[0];
                 if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
-                    
                     let centruUmeriX = (p.left_shoulder.x + p.right_shoulder.x) / 2;
                     let centruUmeriY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
                     let distantaGat = centruUmeriY - p.nose.y;
@@ -280,25 +277,29 @@
                     }
 
                     cadreTotale++;
-                    let gatCorect = distantaGat > PRAG_POSTURA;
-                    let distantaCorecta = distantaOchi < PRAG_DISTANTA;
+                    let gatCorect = distantaGat > PRAG_POSTURA; let distantaCorecta = distantaOchi < PRAG_DISTANTA;
 
+                    // --- NOU: CRONOMETRU EXACT DE 15 SECUNDE ---
                     if (gatCorect && distantaCorecta) {
-                        cadreCorecte++;
-                        cadreGresiteConsecutive = 0; 
+                        cadreCorecte++; 
+                        timpInceputOboseala = 0; // Se resetează instant dacă stă bine
                     } else {
-                        cadreGresiteConsecutive++;
-                        // Declanșează întrebarea după 450 cadre (~15 sec)
-                        if (cadreGresiteConsecutive > 450) { 
+                        // Dacă abia acum a greșit poziția, notăm momentul de început
+                        if (timpInceputOboseala === 0) {
+                            timpInceputOboseala = millis();
+                        }
+                        
+                        // Verificăm dacă au trecut 15.000 milisecunde (fix 15 secunde) de când stă prost
+                        if (millis() - timpInceputOboseala > 15000) {
+                            timpInceputOboseala = 0; // Resetăm
                             declanseazaIntrebarePauza();
-                            return;
+                            return; // Ieșim ca să nu mai desenăm liniile
                         }
 
-                        if (!gatCorect) declanseazaAlarma('gat');
-                        else if (!distantaCorecta) declanseazaAlarma('distanta');
+                        // Dacă nu au trecut 15 secunde, primește doar alarmele normale
+                        if (!gatCorect) declanseazaAlarma('gat'); else if (!distantaCorecta) declanseazaAlarma('distanta');
                     }
 
-                    // UI Update
                     let scorCurent = Math.floor((cadreCorecte / cadreTotale) * 100);
                     document.getElementById('v-scor').innerText = scorCurent + "%";
                     document.getElementById('c-scor').className = scorCurent > 80 ? "card ok" : "card bad";
@@ -312,23 +313,15 @@
                     document.getElementById('v-ochi').className = distantaCorecta ? "val ok" : "val bad";
                     document.getElementById('v-ochi').innerText = distantaCorecta ? "SIGURĂ" : "PREA APROAPE 🚨";
 
-                    // Schelet
                     stroke(gatCorect ? "#00ff88" : "#ff4444"); strokeWeight(6);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-
                     stroke(gatCorect ? "#00ff88" : "#ffaa00"); strokeWeight(4);
                     line(p.nose.x, p.nose.y, centruUmeriX, centruUmeriY);
+                    noStroke(); fill(255); textSize(24); textStyle(BOLD); textAlign(LEFT); text(Math.floor(distantaGat) + " px", centruUmeriX + 15, centruUmeriY - 20);
 
-                    noStroke(); fill(255); textSize(24); textStyle(BOLD); textAlign(LEFT);
-                    text(Math.floor(distantaGat) + " px", centruUmeriX + 15, centruUmeriY - 20);
-
-                    if (!distantaCorecta) {
-                        noFill(); stroke("#ff4444"); strokeWeight(4);
-                        ellipse(p.left_eye.x, p.left_eye.y, 40); ellipse(p.right_eye.x, p.right_eye.y, 40);
-                    }
+                    if (!distantaCorecta) { noFill(); stroke("#ff4444"); strokeWeight(4); ellipse(p.left_eye.x, p.left_eye.y, 40); ellipse(p.right_eye.x, p.right_eye.y, 40); }
                 }
             }
-            
             if (bannerVizual !== "" && millis() - timerBanner < 4000) { 
                 push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 60, 480, 60, 15); 
                 fill(255); textSize(26); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 60); pop(); 
@@ -342,17 +335,42 @@
             is[dataCurenta] = scor; localStorage.setItem('zenPostureHistory', JSON.stringify(is));
         }
 
-        function deschideAnalytics() {
-            let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
-            let chart = document.getElementById('chart-area'); chart.innerHTML = ""; 
-            for (const [z, s] of Object.entries(is)) {
-                let cls = s < 80 ? "bar low" : "bar"; 
-                chart.innerHTML += `<div class="bar-wrapper"><div class="bar-score">${s}%</div><div class="${cls}" style="height: ${s * 2}px;"></div><div class="bar-label">${z === dataCurenta ? "Azi" : z}</div></div>`;
-            }
-            document.getElementById('modal-analytics').style.display = "flex";
+        function formatTime(milliseconds) {
+            let totalSeconds = Math.floor(milliseconds / 1000);
+            let minutes = Math.floor(totalSeconds / 60);
+            let seconds = totalSeconds % 60;
+            return (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
         }
 
-        function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; }
+        function updateStatisticiLive() {
+            if (timpStartSesiune) document.getElementById('stat-time').innerText = formatTime(Date.now() - timpStartSesiune);
+            let scorReal = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
+            document.getElementById('stat-live-score').innerText = scorReal + "%";
+            document.getElementById('stat-live-score').style.color = scorReal > 80 ? "#00ff88" : "#ff4444";
+            document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
+        }
+
+        function deschideAnalytics() {
+            document.getElementById('modal-analytics').style.display = "flex";
+            updateStatisticiLive(); updateLiveStatsInterval = setInterval(updateStatisticiLive, 1000);
+            let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
+            let labels = Object.keys(istoric); let dateScor = Object.values(istoric);
+            if (chartInstance) chartInstance.destroy();
+            let ctx = document.getElementById('historyChart').getContext('2d');
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, '#00ff88'); gradient.addColorStop(1, '#006633');
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: labels.map(l => l === dataCurenta ? "Azi" : l), datasets: [{ label: 'Scor Sănătate (%)', data: dateScor, backgroundColor: gradient, borderRadius: 8, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111122', titleColor: '#ffaa00', bodyFont: {size: 16} } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#333' }, ticks: { color: '#aaa', callback: function(value) { return value + "%" } } }, x: { grid: { display: false }, ticks: { color: '#e0e0e0', font: {size: 14} } } } }
+            });
+        }
+
+        function inchideAnalytics() { 
+            document.getElementById('modal-analytics').style.display = "none"; 
+            if (updateLiveStatsInterval) clearInterval(updateLiveStatsInterval); 
+        }
+        
         async function activeazaModFundal() {
             try { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); } catch (e) { alert("Eroare mod PIP."); }
         }
@@ -361,6 +379,8 @@
             if (!alarmeActive) return;
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
+            
+            totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
             bannerVizual = tipEroare === 'gat' ? "⚠️ ÎNDREAPTĂ SPATELE!" : "🚨 PREA APROAPE!"; timerBanner = millis(); 
             try {
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
@@ -373,10 +393,8 @@
         }
 
         function toggleAudio() {
-            alarmeActive = !alarmeActive;
-            let btn = document.getElementById('btn-audio');
-            btn.className = alarmeActive ? "btn-sec activ" : "btn-sec";
-            btn.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF";
+            alarmeActive = !alarmeActive; let btn = document.getElementById('btn-audio');
+            btn.className = alarmeActive ? "btn-sec activ" : "btn-sec"; btn.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF";
         }
     </script>
 </body>
