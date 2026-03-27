@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Smart Dashboard</title>
+    <title>Zen Posture Pro - Smart Pause</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,7 +11,7 @@
         .header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
-        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 800px; }
+        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 900px; }
         button { border: none; padding: 10px 20px; font-size: 0.9rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); font-size: 1rem; padding: 12px 25px; }
         #btn-start:hover { transform: scale(1.05); }
@@ -22,6 +22,16 @@
         #btn-pip { background: #00b8ff; color: #000; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
         #btn-analytics { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.3); }
         #btn-calib { background: #ff00ff; color: #fff; box-shadow: 0 5px 20px rgba(255,0,255,0.3); }
+        
+        /* Butonul nou de Pauză */
+        #btn-pauza { background: #555; color: #fff; border: 2px solid #777; }
+        #btn-pauza.in-pauza { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.4); border-color: #ffaa00; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
 
         #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
 
@@ -47,19 +57,15 @@
         #btn-da { background: #00ff88; color: #000; }
         #btn-nu { background: #ff4444; color: #fff; }
 
-        /* --- STILURI MODAL ANALYTICS AVANSAT --- */
         #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.95); z-index: 999; justify-content: center; align-items: center; overflow-y: auto; padding: 20px 0; }
         .modal-content { background: #0b0b14; border: 2px solid #333; border-radius: 20px; padding: 30px; width: 90%; max-width: 900px; text-align: center; box-shadow: 0 10px 50px rgba(0,0,0,0.9); margin: auto; }
-        
         .stats-grid { display: flex; justify-content: space-between; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
         .stat-box { background: #111122; padding: 20px; border-radius: 15px; flex: 1; min-width: 150px; text-align: center; border: 1px solid #222; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .stat-val { font-size: 2.2rem; font-weight: bold; color: #00ff88; display: block; margin-bottom: 5px; }
         .stat-lbl { font-size: 0.85rem; color: #aaa; text-transform: uppercase; }
-        
         .charts-layout { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
         .chart-history { flex: 2; min-width: 300px; height: 250px; }
         .chart-doughnut { flex: 1; min-width: 200px; height: 250px; background: #111122; border-radius: 15px; padding: 15px; display: flex; flex-direction: column; align-items: center;}
-        
         .insights-box { background: #111122; padding: 20px; border-radius: 15px; margin-top: 20px; text-align: left; border-left: 5px solid #00b8ff; font-size: 1.1rem; line-height: 1.5; }
     </style>
 </head>
@@ -71,6 +77,7 @@
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
+            <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ PAUZĂ</button>
             <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
             <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT INTERACTIV</button>
             <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE AI</button>
@@ -105,34 +112,17 @@
             <h2 style="color:#ffaa00; margin-top:0;">📊 Dashboard Performanță & Diagnoză</h2>
             
             <div class="stats-grid">
-                <div class="stat-box">
-                    <span class="stat-val" id="stat-live-score">0%</span>
-                    <span class="stat-lbl">Scor Sesiune Curentă</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-val" id="stat-time">00:00</span>
-                    <span class="stat-lbl">Timp Monitorizat</span>
-                </div>
-                <div class="stat-box">
-                    <span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span>
-                    <span class="stat-lbl">Total Erori Azi</span>
-                </div>
+                <div class="stat-box"><span class="stat-val" id="stat-live-score">0%</span><span class="stat-lbl">Scor Sesiune Curentă</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Monitorizat</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Total Erori Azi</span></div>
             </div>
 
             <div class="charts-layout">
-                <div class="chart-history">
-                    <canvas id="historyChart"></canvas>
-                </div>
-                <div class="chart-doughnut">
-                    <h4 style="margin: 0 0 10px 0; color: #aaa;">Tipul de Erori</h4>
-                    <canvas id="errorChart"></canvas>
-                </div>
+                <div class="chart-history"><canvas id="historyChart"></canvas></div>
+                <div class="chart-doughnut"><h4 style="margin: 0 0 10px 0; color: #aaa;">Tipul de Erori</h4><canvas id="errorChart"></canvas></div>
             </div>
             
-            <div class="insights-box" id="smart-insights">
-                Se analizează datele biomecanice...
-            </div>
-            
+            <div class="insights-box" id="smart-insights">Se analizează datele biomecanice...</div>
             <button class="btn-sec" style="display:inline-block; margin-top:30px; padding: 10px 30px;" onclick="inchideAnalytics()">Închide Raportul</button>
         </div>
     </div>
@@ -147,7 +137,6 @@
         let PRAG_DISTANTA = localStorage.getItem('zenPragOchi') ? parseInt(localStorage.getItem('zenPragOchi')) : 65; 
         
         let modCalibrare = false, dateCalibrare = [];
-        
         let timpInceputOboseala = 0; 
         let asteaptaRaspunsPauza = false, esteInZenBreak = false, secundeRamasePauza = 0;
         let timerPauza = null;
@@ -155,17 +144,15 @@
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
         let bannerVizual = "", timerBanner = 0;
 
-        // Variabile Analytics Live
-        let timpStartSesiune = null;
+        // --- NOU: Stare Pauză Manuală ---
+        let sistemInPauza = false;
+
+        let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let totalAlarmeAzi = localStorage.getItem('zenAlarmsToday') ? parseInt(localStorage.getItem('zenAlarmsToday')) : 0;
-        
-        // --- NOU: Stocare separată pentru erori (Gât vs Ochi) ---
         let eroriGat = localStorage.getItem('zenEroriGat') ? parseInt(localStorage.getItem('zenEroriGat')) : 0;
         let eroriOchi = localStorage.getItem('zenEroriOchi') ? parseInt(localStorage.getItem('zenEroriOchi')) : 0;
 
-        let historyChartInstance = null; 
-        let errorChartInstance = null;
-        let updateLiveStatsInterval = null;
+        let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
         function setup() {
             let cnv = createCanvas(640, 480);
@@ -215,6 +202,29 @@
             video.hide(); 
         }
 
+        // --- NOU: Funcția pentru Butonul de Pauză ---
+        function togglePauzaManual() {
+            sistemInPauza = !sistemInPauza;
+            let btn = document.getElementById('btn-pauza');
+            
+            if (sistemInPauza) {
+                btn.className = "btn-sec in-pauza";
+                btn.innerText = "▶️ RELUARE";
+                document.getElementById('status-msg').innerText = "Sistem pe pauză. Poți părăsi biroul.";
+                document.getElementById('status-msg').style.color = "#ffaa00";
+                momentInceputPauzaManual = Date.now();
+                timpInceputOboseala = 0; // Resetăm oboseala să nu sune aiurea când revenim
+            } else {
+                btn.className = "btn-sec";
+                btn.innerText = "⏸️ PAUZĂ";
+                document.getElementById('status-msg').innerText = "SISTEM ACTIV ✅";
+                document.getElementById('status-msg').style.color = "#00ff88";
+                
+                // Scădem timpul cât a stat în pauză din timpul total monitorizat
+                totalTimpPauza += (Date.now() - momentInceputPauzaManual);
+            }
+        }
+
         function pornesteCalibrare() {
             modCalibrare = true; dateCalibrare = [];
             document.getElementById('status-msg').innerText = "🔄 CALIBRARE: Stai drept și relaxat!";
@@ -225,50 +235,47 @@
             modCalibrare = false;
             let sumaGat = 0, sumaOchi = 0;
             for(let i = 0; i < dateCalibrare.length; i++) { sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi; }
-            
-            // --- NOU: CALIBRARE MAI PERMISIVĂ ---
-            // Înmulțim cu 0.70 (oferă 30% marjă de eroare pentru aplecare, față de 15% înainte)
             PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.70); 
-            // Înmulțim cu 1.25 (oferă 25% marjă pentru apropiere ochi)
             PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.25); 
-            
             localStorage.setItem('zenPragGat', PRAG_POSTURA); localStorage.setItem('zenPragOchi', PRAG_DISTANTA);
-            document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅ (Marjă extra permisă)`; 
-            document.getElementById('status-msg').style.color = "#00ff88";
+            document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`; document.getElementById('status-msg').style.color = "#00ff88";
         }
 
         function declanseazaIntrebarePauza() {
-            if (esteInZenBreak || asteaptaRaspunsPauza) return;
+            if (esteInZenBreak || asteaptaRaspunsPauza || sistemInPauza) return;
             asteaptaRaspunsPauza = true;
             document.getElementById('modal-intrebare').style.display = "flex";
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Zen Posture", { body: "Ai stat aplecat 15 secunde. Vrei o pauză de relaxare?" });
-            }
+            if ("Notification" in window && Notification.permission === "granted") new Notification("Zen Posture", { body: "Ai stat aplecat 15 secunde. Vrei o pauză de relaxare?" });
         }
 
         function raspunsPauza(vreaPauza) {
             document.getElementById('modal-intrebare').style.display = "none";
             asteaptaRaspunsPauza = false;
-            if (vreaPauza) {
-                pornestePauzaZen();
-            } else {
-                timpInceputOboseala = 0; 
-            }
+            if (vreaPauza) pornestePauzaZen(); else timpInceputOboseala = 0; 
         }
 
         function pornestePauzaZen() {
             esteInZenBreak = true; secundeRamasePauza = 60;
             timerPauza = setInterval(() => {
                 secundeRamasePauza--;
-                if(secundeRamasePauza <= 0) { 
-                    clearInterval(timerPauza); 
-                    esteInZenBreak = false; 
-                    timpInceputOboseala = 0; 
-                }
+                if(secundeRamasePauza <= 0) { clearInterval(timerPauza); esteInZenBreak = false; timpInceputOboseala = 0; }
             }, 1000);
         }
 
         function draw() {
+            // Desenăm feed-ul de bază al camerei
+            background(0);
+            if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
+
+            // --- Dacă e Pauză Manuală, afișăm doar un overlay, NU procesăm corpul ---
+            if (sistemInPauza) {
+                background(0, 0, 0, 180); // Întunecăm ecranul ușor
+                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER);
+                textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ MANUALĂ", 320, 200);
+                fill(255); textSize(18); textStyle(NORMAL); text("Sistemul nu înregistrează date în acest moment.", 320, 250);
+                return; // Oprim funcția draw aici, nu tragem linii, nu modificăm scorul
+            }
+
             if (esteInZenBreak) {
                 background(10, 20, 30); 
                 fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("TIMP PENTRU TINE", 320, 80);
@@ -281,8 +288,6 @@
                 return; 
             }
 
-            background(0);
-            if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
             if (asteaptaRaspunsPauza) { background(0, 0, 0, 150); return; }
 
             if (poses.length > 0) {
@@ -304,14 +309,11 @@
                     let gatCorect = distantaGat > PRAG_POSTURA; let distantaCorecta = distantaOchi < PRAG_DISTANTA;
 
                     if (gatCorect && distantaCorecta) {
-                        cadreCorecte++; 
-                        timpInceputOboseala = 0; 
+                        cadreCorecte++; timpInceputOboseala = 0; 
                     } else {
                         if (timpInceputOboseala === 0) { timpInceputOboseala = millis(); }
                         if (millis() - timpInceputOboseala > 15000) {
-                            timpInceputOboseala = 0; 
-                            declanseazaIntrebarePauza();
-                            return; 
+                            timpInceputOboseala = 0; declanseazaIntrebarePauza(); return; 
                         }
                         if (!gatCorect) declanseazaAlarma('gat'); else if (!distantaCorecta) declanseazaAlarma('distanta');
                     }
@@ -345,7 +347,7 @@
         }
 
         function salveazaProgresul() {
-            if (cadreTotale < 50) return; 
+            if (cadreTotale < 50 || sistemInPauza) return; // Nu salva date eronate in pauza
             let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
             let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
             is[dataCurenta] = scor; localStorage.setItem('zenPostureHistory', JSON.stringify(is));
@@ -359,14 +361,19 @@
         }
 
         function updateStatisticiLive() {
-            if (timpStartSesiune) document.getElementById('stat-time').innerText = formatTime(Date.now() - timpStartSesiune);
+            if (timpStartSesiune) {
+                // Timpul efectiv = Timpul curent - Timpul Start - Timpul petrecut in Pauza
+                let timpEfectivMonitorizare = Date.now() - timpStartSesiune - totalTimpPauza;
+                if (sistemInPauza) timpEfectivMonitorizare -= (Date.now() - momentInceputPauzaManual);
+                
+                document.getElementById('stat-time').innerText = formatTime(timpEfectivMonitorizare);
+            }
             let scorReal = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
             
             document.getElementById('stat-live-score').innerText = scorReal + "%";
             document.getElementById('stat-live-score').style.color = scorReal > 80 ? "#00ff88" : "#ff4444";
             document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
 
-            // --- NOU: LOGICĂ SMART INSIGHTS ---
             let insightBox = document.getElementById('smart-insights');
             if (scorReal >= 85) {
                 insightBox.innerHTML = "💡 <strong>Raport Medical:</strong> Excelent! Musculatura spatelui tău este într-o stare optimă. Îți menții o postură excelentă care previne durerile lombare pe termen lung.";
@@ -379,7 +386,6 @@
                 insightBox.style.borderLeftColor = "#ff4444";
             }
 
-            // Actualizează live graficul rotund
             if (errorChartInstance) {
                 errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi];
                 errorChartInstance.update();
@@ -390,7 +396,6 @@
             document.getElementById('modal-analytics').style.display = "flex";
             updateStatisticiLive(); updateLiveStatsInterval = setInterval(updateStatisticiLive, 1000);
             
-            // 1. GRAFIC ISTORIC (BAR CHART)
             let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
             let labels = Object.keys(istoric); let dateScor = Object.values(istoric);
             if (historyChartInstance) historyChartInstance.destroy();
@@ -403,23 +408,15 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111122', titleColor: '#ffaa00', bodyFont: {size: 16} } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: '#333' }, ticks: { color: '#aaa', callback: function(value) { return value + "%" } } }, x: { grid: { display: false }, ticks: { color: '#e0e0e0', font: {size: 14} } } } }
             });
 
-            // 2. GRAFIC TIPURI ERORI (DOUGHNUT CHART)
             if (errorChartInstance) errorChartInstance.destroy();
             let ctxErr = document.getElementById('errorChart').getContext('2d');
             errorChartInstance = new Chart(ctxErr, {
                 type: 'doughnut',
                 data: {
                     labels: ['Aplecare (Gât)', 'Prea Aproape (Ochi)'],
-                    datasets: [{
-                        data: [eroriGat, eroriOchi],
-                        backgroundColor: ['#ff4444', '#00b8ff'],
-                        borderWidth: 0, hoverOffset: 4
-                    }]
+                    datasets: [{ data: [eroriGat, eroriOchi], backgroundColor: ['#ff4444', '#00b8ff'], borderWidth: 0, hoverOffset: 4 }]
                 },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { color: '#e0e0e0' } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e0e0e0' } } } }
             });
         }
 
@@ -433,11 +430,10 @@
         }
 
         function declanseazaAlarma(tipEroare) {
-            if (!alarmeActive) return;
+            if (!alarmeActive || sistemInPauza) return; // NU suna in pauza
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
             
-            // --- NOU: LOGARE ERORI SEPARATE ---
             totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
             if (tipEroare === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); }
             if (tipEroare === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); }
