@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Interactive Premium</title>
+    <title>Zen Posture Pro - Kineto Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,19 +13,22 @@
         .header { text-align: center; margin-bottom: 20px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
-        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 900px; }
-        button { border: none; padding: 10px 20px; font-size: 0.9rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
+        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 950px; }
+        button { border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); font-size: 1rem; padding: 12px 25px; }
         #btn-start:hover { transform: scale(1.05); }
         
         .btn-sec { background: #333; color: #fff; display: none; }
-        .btn-sec:hover { background: #444; }
+        .btn-sec:hover { background: #444; transform: scale(1.05); }
         #btn-audio.activ { background: #00ff88; color: #000; }
         #btn-pip { background: #00b8ff; color: #000; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
         #btn-analytics { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.3); }
         #btn-calib { background: #ff00ff; color: #fff; box-shadow: 0 5px 20px rgba(255,0,255,0.3); }
         #btn-pauza { background: #555; color: #fff; border: 2px solid #777; }
         #btn-pauza.in-pauza { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.4); border-color: #ffaa00; animation: pulse 2s infinite; }
+        
+        /* NOU: Butonul de Exerciții */
+        #btn-exercitii { background: #00ffcc; color: #000; box-shadow: 0 5px 20px rgba(0,255,204,0.4); }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
@@ -46,57 +49,34 @@
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
 
-        #modal-intrebare { display: none; position: absolute; top: 0; left: 0; width: 640px; height: 480px; background: rgba(5,5,8,0.85); z-index: 20; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 20px; backdrop-filter: blur(5px); }
-        .intrebare-titlu { color: #ffaa00; font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
-        .btn-raspuns { padding: 15px 40px; font-size: 1.2rem; margin: 10px; border-radius: 10px; cursor: pointer; border: none; font-weight: bold; transition: 0.2s;}
+        /* Modale Generale (Întrebări, Meniu Exerciții) */
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 640px; height: 480px; background: rgba(5,5,8,0.85); z-index: 20; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 20px; backdrop-filter: blur(5px); }
+        .modal-titlu { color: #ffaa00; font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
+        .btn-raspuns { padding: 15px 30px; font-size: 1.1rem; margin: 10px; border-radius: 10px; cursor: pointer; border: none; font-weight: bold; transition: 0.2s;}
         .btn-raspuns:hover { transform: scale(1.05); }
-        #btn-da { background: #00ff88; color: #000; }
-        #btn-nu { background: #ff4444; color: #fff; }
 
-        /* --- STILURI RAPORT PREMIUM --- */
+        /* Meniu Exerciții Specific */
+        #btn-birou { background: #00b8ff; color: #000; }
+        #btn-picioare { background: #00ff88; color: #000; }
+
+        /* STILURI RAPORT PREMIUM */
         #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 999; justify-content: center; align-items: center; overflow-y: auto; padding: 20px 0; backdrop-filter: blur(10px); }
-        
-        #raport-printabil { 
-            background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(255,255,255,0.1); 
-            border-radius: 25px; padding: 40px; width: 90%; max-width: 950px; text-align: center; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.8); margin: auto; position: relative; 
-        }
-
+        #raport-printabil { background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 40px; width: 90%; max-width: 950px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.8); margin: auto; position: relative; }
         .header-raport { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 20px; }
         .header-raport h2 { color: #fff; margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 10px; }
         .header-raport .badge { background: #00ff88; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; }
 
-        .stats-grid { display: flex; justify-content: space-between; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
-        
-        .stat-box { 
-            background: linear-gradient(145deg, rgba(30,30,45,0.8), rgba(20,20,30,0.8)); 
-            padding: 25px; border-radius: 20px; flex: 1; min-width: 150px; text-align: left; 
-            border: 1px solid rgba(255,255,255,0.05); box-shadow: inset 0 1px 0 rgba(255,255,255,0.1); 
-            position: relative; overflow: hidden;
-        }
-        
-        .stat-val { font-size: 2.5rem; font-weight: 800; color: #fff; display: block; margin-bottom: 5px; }
-        .stat-lbl { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .grade-circle { 
-            position: absolute; top: 20px; right: 20px; width: 50px; height: 50px; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            font-size: 1.5rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 2px solid; 
-        }
+        .stats-grid { display: flex; justify-content: space-between; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+        .stat-box { background: linear-gradient(145deg, rgba(30,30,45,0.8), rgba(20,20,30,0.8)); padding: 20px; border-radius: 20px; flex: 1; min-width: 140px; text-align: left; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .stat-val { font-size: 2.2rem; font-weight: 800; color: #fff; display: block; margin-bottom: 5px; }
+        .stat-lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .grade-circle { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 2px solid; }
 
         .charts-layout { display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
-        /* Graficul principal acum are un cursor pointer adăugat prin Chart.js */
         .chart-history { flex: 2; min-width: 300px; height: 280px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
         .chart-doughnut { flex: 1; min-width: 200px; height: 280px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05);}
         
-        /* Caseta Insights are acum animație */
-        .insights-box { 
-            background: rgba(0, 184, 255, 0.1); padding: 25px; border-radius: 20px; 
-            margin-top: 30px; text-align: left; border-left: 5px solid #00b8ff; 
-            font-size: 1.15rem; line-height: 1.6; color: #ddd;
-            transition: transform 0.2s ease-out, border-color 0.3s;
-        }
-
+        .insights-box { background: rgba(0, 184, 255, 0.1); padding: 25px; border-radius: 20px; margin-top: 30px; text-align: left; border-left: 5px solid #00b8ff; font-size: 1.15rem; line-height: 1.6; color: #ddd; transition: transform 0.2s ease-out; }
         .actions-raport { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
         #btn-export { background: #fff; color: #000; box-shadow: 0 5px 20px rgba(255,255,255,0.2); }
     </style>
@@ -110,9 +90,11 @@
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
             <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
             <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ PAUZĂ</button>
+            <button id="btn-exercitii" class="btn-sec" onclick="deschideMeniuExercitii()">🏋️ KINETO</button>
+            
             <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
-            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT INTERACTIV</button>
-            <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE AI</button>
+            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT</button>
+            <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE</button>
         </div>
         
         <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
@@ -120,14 +102,26 @@
     
     <div class="dashboard">
         <div id="camera-wrapper">
-            <div id="modal-intrebare">
-                <div class="intrebare-titlu">Oboseală detectată!</div>
+            
+            <div id="modal-intrebare" class="modal-overlay">
+                <div class="modal-titlu">Oboseală detectată!</div>
                 <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă de 15 secunde.<br>Vrei o pauză de 1 minut pentru relaxare?</div>
                 <div>
-                    <button id="btn-da" class="btn-raspuns" onclick="raspunsPauza(true)">DA, vreau pauză</button>
-                    <button id="btn-nu" class="btn-raspuns" onclick="raspunsPauza(false)">NU, continuu munca</button>
+                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="raspunsPauza(true)">DA, vreau pauză</button>
+                    <button class="btn-raspuns" style="background:#ff4444; color:#fff;" onclick="raspunsPauza(false)">NU, continuu munca</button>
                 </div>
             </div>
+
+            <div id="modal-meniu-exercitii" class="modal-overlay">
+                <div class="modal-titlu">Alege tipul de pauză</div>
+                <div style="font-size: 1.1rem; margin-bottom: 30px; color: #ddd;">Cum preferi să te relaxezi în următoarele 60 de secunde?</div>
+                <div>
+                    <button id="btn-birou" class="btn-raspuns" onclick="pornesteExercitii('scaun')">🪑 La Birou (Scaun)</button>
+                    <button id="btn-picioare" class="btn-raspuns" onclick="pornesteExercitii('picioare')">🧍 În Picioare</button>
+                </div>
+                <button class="btn-sec" style="display:block; margin: 20px auto 0 auto; background: #333;" onclick="document.getElementById('modal-meniu-exercitii').style.display='none';">✖ Anulează</button>
+            </div>
+
         </div>
         
         <div class="panel">
@@ -142,7 +136,7 @@
     <div id="modal-analytics">
         <div id="raport-printabil">
             <div class="header-raport">
-                <h2>📊 Analiză Biometrică</h2>
+                <h2>📊 Analiză Biometrică & Activitate</h2>
                 <div class="badge" id="data-raport">Azi</div>
             </div>
             
@@ -154,17 +148,19 @@
                 </div>
                 <div class="stat-box">
                     <span class="stat-val" id="stat-time">00:00</span>
-                    <span class="stat-lbl">Timp Activ (Fără Pauze)</span>
+                    <span class="stat-lbl">Timp Lucru</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span>
-                    <span class="stat-lbl">Corecții Posturale Azi</span>
+                    <span class="stat-lbl">Erori Posturale</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-val" id="stat-exercitii" style="color:#00b8ff;">0</span>
+                    <span class="stat-lbl">Sesiuni Kineto</span>
                 </div>
             </div>
 
-            <p style="color: #888; text-align: left; margin: 0 0 10px 10px; font-size: 0.9rem;">
-                👉 *Apasă pe oricare coloană din grafic pentru a vedea detaliile acelei zile.
-            </p>
+            <p style="color: #888; text-align: left; margin: 0 0 10px 10px; font-size: 0.9rem;">👉 *Apasă pe oricare coloană din grafic pentru detalii zilnice.</p>
 
             <div class="charts-layout">
                 <div class="chart-history">
@@ -182,7 +178,7 @@
         </div>
 
         <div class="actions-raport">
-            <button class="btn-sec" id="btn-export" style="display:block;" onclick="exportaRaport()">📸 DESCARCĂ RAPORT (IMG)</button>
+            <button class="btn-sec" id="btn-export" style="display:block;" onclick="exportaRaport()">📸 DESCARCĂ RAPORT</button>
             <button class="btn-sec" style="display:block; background: #333;" onclick="inchideAnalytics()">✖ ÎNCHIDE</button>
         </div>
     </div>
@@ -210,6 +206,26 @@
         let eroriGat = localStorage.getItem('zenEroriGat') ? parseInt(localStorage.getItem('zenEroriGat')) : 0;
         let eroriOchi = localStorage.getItem('zenEroriOchi') ? parseInt(localStorage.getItem('zenEroriOchi')) : 0;
 
+        // --- NOU: Variabile pentru Exerciții / Kineto ---
+        let sistemInExercitii = false;
+        let exercitiuCurentText = "";
+        let timerExercitii = null;
+        let exercitiiAzi = localStorage.getItem('zenExercitiiAzi') ? parseInt(localStorage.getItem('zenExercitiiAzi')) : 0;
+        
+        // Liste de exerciții
+        const exScaun = [
+            "Rotește gâtul ușor spre stânga și dreapta.",
+            "Întinde brațele deasupra capului.",
+            "Răsucește trunchiul spre spătarul scaunului.",
+            "Privește pe fereastră, la distanță."
+        ];
+        const exPicioare = [
+            "Apleacă-te ușor spre vârfurile picioarelor.",
+            "Pune mâinile pe șolduri și rotește bazinul.",
+            "Prinde mâinile la spate și deschide pieptul.",
+            "Ridică-te pe vârfuri de câteva ori."
+        ];
+
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
         function setup() {
@@ -218,10 +234,14 @@
             pipVideoElement = document.getElementById('pip-video');
             pipVideoElement.srcObject = cnv.elt.captureStream(30);
 
+            // Populam date demo extinse
             if (!localStorage.getItem('zenPostureHistory')) {
-                // Am adăugat mai multe date de test ca să arate graficul frumos
                 localStorage.setItem('zenPostureHistory', JSON.stringify({"Luni": 65, "Marți": 72, "Miercuri": 88, "Joi": 95, "Vineri": 58}));
             }
+            if (!localStorage.getItem('zenExercisesHistory')) {
+                localStorage.setItem('zenExercisesHistory', JSON.stringify({"Luni": 1, "Marți": 0, "Miercuri": 2, "Joi": 3, "Vineri": 1}));
+            }
+            
             document.getElementById('data-raport').innerText = "Data: " + dataCurenta;
         }
 
@@ -262,7 +282,51 @@
             video.hide(); 
         }
 
+        // --- NOU: LOGICĂ PENTRU MODULUL KINETO ---
+        function deschideMeniuExercitii() {
+            if (sistemInPauza || esteInZenBreak) return;
+            document.getElementById('modal-meniu-exercitii').style.display = "flex";
+        }
+
+        function pornesteExercitii(tip) {
+            document.getElementById('modal-meniu-exercitii').style.display = "none";
+            sistemInExercitii = true;
+            secundeRamasePauza = 60; // 1 minut de exerciții
+            
+            let listaCurenta = tip === 'scaun' ? exScaun : exPicioare;
+            
+            // Setăm primul exercițiu
+            exercitiuCurentText = listaCurenta[0];
+            
+            // Pentru Analytics - nu depunctăm în timpul exercițiilor
+            timpInceputOboseala = 0; 
+            momentInceputPauzaManual = Date.now(); // Tratam timpul de exerciții ca pe o pauză de la scor
+            
+            timerExercitii = setInterval(() => {
+                secundeRamasePauza--;
+                
+                // Schimbăm instrucțiunea la fiecare 15 secunde
+                if (secundeRamasePauza === 45) exercitiuCurentText = listaCurenta[1];
+                if (secundeRamasePauza === 30) exercitiuCurentText = listaCurenta[2];
+                if (secundeRamasePauza === 15) exercitiuCurentText = listaCurenta[3];
+
+                if(secundeRamasePauza <= 0) { 
+                    clearInterval(timerExercitii); 
+                    sistemInExercitii = false; 
+                    
+                    // Contorizăm sesiunea de Kineto finalizată
+                    exercitiiAzi++;
+                    localStorage.setItem('zenExercitiiAzi', exercitiiAzi);
+                    totalTimpPauza += (Date.now() - momentInceputPauzaManual); // Adăugăm la timpul ignorat
+                    
+                    bannerVizual = "✅ Sesiune Kineto Completă!";
+                    timerBanner = millis();
+                }
+            }, 1000);
+        }
+
         function togglePauzaManual() {
+            if(sistemInExercitii) return; // Nu lăsăm pauza manuală să strice exercițiul
             sistemInPauza = !sistemInPauza;
             let btn = document.getElementById('btn-pauza');
             
@@ -294,7 +358,7 @@
         }
 
         function declanseazaIntrebarePauza() {
-            if (esteInZenBreak || asteaptaRaspunsPauza || sistemInPauza) return;
+            if (esteInZenBreak || asteaptaRaspunsPauza || sistemInPauza || sistemInExercitii) return;
             asteaptaRaspunsPauza = true;
             document.getElementById('modal-intrebare').style.display = "flex";
             if ("Notification" in window && Notification.permission === "granted") new Notification("Zen Posture", { body: "Vrei o pauză de relaxare?" });
@@ -317,6 +381,21 @@
         function draw() {
             background(0);
             if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
+
+            // --- NOU: Desenare Ecran Exerciții (Kineto Mode) ---
+            if (sistemInExercitii) {
+                background(15, 35, 30); // Fundal Teal-Închis calmant
+                fill(0, 255, 204); noStroke(); textAlign(CENTER, CENTER); textSize(35); textStyle(BOLD); text("🧘 SESIUNE DE RELAXARE", 320, 80);
+                
+                // Instructiunea curenta
+                fill(255); textSize(24); textStyle(NORMAL);
+                text(exercitiuCurentText, 320, 200); 
+                
+                // Cronometru progres
+                fill(0, 255, 204); textSize(80); textStyle(BOLD); 
+                text(secundeRamasePauza + "s", 320, 350);
+                return; // Oprește tracking-ul posturii
+            }
 
             if (sistemInPauza) {
                 background(0, 0, 0, 180); 
@@ -394,10 +473,16 @@
         }
 
         function salveazaProgresul() {
-            if (cadreTotale < 50 || sistemInPauza) return; 
+            if (cadreTotale < 50 || sistemInPauza || sistemInExercitii) return; 
+            
+            // Salvare Scor Postură
             let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
             let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
             is[dataCurenta] = scor; localStorage.setItem('zenPostureHistory', JSON.stringify(is));
+            
+            // Salvare Exerciții
+            let isEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {};
+            isEx[dataCurenta] = exercitiiAzi; localStorage.setItem('zenExercisesHistory', JSON.stringify(isEx));
         }
 
         function formatTime(milliseconds) {
@@ -415,27 +500,14 @@
             return { grade: 'D', color: '#ff4444' };
         }
 
-        // --- NOU: Funcția care se apelează când dai click pe un grafic ---
-        function afiseazaDetaliiIstoric(ziua, scorul) {
+        function afiseazaDetaliiIstoric(ziua, scorul, exercitiiInZiuaAia) {
             let insightBox = document.getElementById('smart-insights');
-            let mesaj = "";
-            let culoare = "";
-            
-            if (scorul >= 85) { 
-                mesaj = "Ai menținut o postură excelentă. Tensiunea lombară a fost minimă!"; 
-                culoare = "#00ff88"; 
-            } else if (scorul >= 65) { 
-                mesaj = "O zi medie. Ai avut câteva momente de oboseală, dar te-ai corectat la timp."; 
-                culoare = "#ffaa00"; 
-            } else { 
-                mesaj = "Atenție! În această zi ai stat foarte mult aplecat, punând presiune mare pe coloană."; 
-                culoare = "#ff4444"; 
-            }
+            let exText = exercitiiInZiuaAia > 0 ? `Ai completat ${exercitiiInZiuaAia} sesiuni de stretching, excelent!` : "Nu ai înregistrat nicio sesiune de stretching în acea zi.";
+            let culoare = scorul >= 85 ? "#00ff88" : (scorul >= 65 ? "#ffaa00" : "#ff4444");
 
             insightBox.style.borderLeftColor = culoare;
-            insightBox.innerHTML = `📅 <strong>Istoric (${ziua}):</strong> Ai înregistrat un scor general de <span style="color:${culoare}; font-weight:bold;">${scorul}%</span>. <br><span style="color:#aaa; font-size: 0.95rem; margin-top:5px; display:inline-block;">${mesaj}</span>`;
+            insightBox.innerHTML = `📅 <strong>Istoric (${ziua}):</strong> Ai înregistrat un scor general de <span style="color:${culoare}; font-weight:bold;">${scorul}%</span>. <br><span style="color:#aaa; font-size: 0.95rem; margin-top:5px; display:inline-block;">${exText}</span>`;
             
-            // Animație de Pop (Pulse) pentru a atrage atenția
             insightBox.style.transform = "scale(1.02)";
             setTimeout(() => { insightBox.style.transform = "scale(1)"; }, 200);
         }
@@ -443,7 +515,7 @@
         function updateStatisticiLive() {
             if (timpStartSesiune) {
                 let timpEfectivMonitorizare = Date.now() - timpStartSesiune - totalTimpPauza;
-                if (sistemInPauza) timpEfectivMonitorizare -= (Date.now() - momentInceputPauzaManual);
+                if (sistemInPauza || sistemInExercitii) timpEfectivMonitorizare -= (Date.now() - momentInceputPauzaManual);
                 document.getElementById('stat-time').innerText = formatTime(timpEfectivMonitorizare);
             }
             
@@ -454,32 +526,28 @@
             document.getElementById('stat-live-score').style.color = rating.color;
             
             let gradeEl = document.getElementById('stat-grade');
-            gradeEl.innerText = rating.grade;
-            gradeEl.style.color = rating.color;
-            gradeEl.style.borderColor = rating.color;
+            gradeEl.innerText = rating.grade; gradeEl.style.color = rating.color; gradeEl.style.borderColor = rating.color;
 
             document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
+            
+            // Update Caseta Kineto
+            document.getElementById('stat-exercitii').innerText = exercitiiAzi;
 
-            // Actualizăm caseta de Insights doar dacă NU s-a dat click pe o altă zi anterior
-            // Dacă scrie "Feedback Bio-Mecanic" sau "Se procesează", înseamnă că e varianta Live
             let insightBox = document.getElementById('smart-insights');
             if(insightBox.innerHTML.includes("Feedback Bio-Mecanic") || insightBox.innerHTML.includes("Se procesează")) {
                 if (scorReal >= 85) {
-                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Postură excelentă. Tensiunea pe discurile intervertebrale este minimă. Menține acest ritm!";
+                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Postură excelentă. Tensiunea pe discurile intervertebrale este minimă.";
                     insightBox.style.borderLeftColor = "#00ff88";
                 } else if (scorReal >= 65) {
-                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Acceptabil. Ești predispus la ușoară tensiune musculară. Folosește pauzele ZEN.";
+                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Ești predispus la ușoară tensiune musculară. Folosește butonul 🏋️ KINETO pentru o pauză.";
                     insightBox.style.borderLeftColor = "#ffaa00";
                 } else {
-                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Risc Ridicat. Unghiul actual îți suprasolicită gâtul. Ajustează înălțimea monitorului.";
+                    insightBox.innerHTML = "💡 <strong>Feedback Bio-Mecanic (Azi):</strong> Risc Ridicat! Unghiul actual îți suprasolicită gâtul sever.";
                     insightBox.style.borderLeftColor = "#ff4444";
                 }
             }
 
-            if (errorChartInstance) {
-                errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi];
-                errorChartInstance.update();
-            }
+            if (errorChartInstance) { errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi]; errorChartInstance.update(); }
         }
 
         function deschideAnalytics() {
@@ -487,75 +555,73 @@
             updateStatisticiLive(); updateLiveStatsInterval = setInterval(updateStatisticiLive, 1000);
             
             let istoric = JSON.parse(localStorage.getItem('zenPostureHistory')) || {};
-            let labels = Object.keys(istoric); let dateScor = Object.values(istoric);
+            let istoricEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {};
+            
+            let labels = Object.keys(istoric); 
+            let dateScor = Object.values(istoric);
+            
+            // Mapăm sesiunile de exerciții pe aceleași zile (dacă nu există, punem 0)
+            let dateExercitii = labels.map(ziua => istoricEx[ziua] || (ziua === dataCurenta ? exercitiiAzi : 0));
             
             if (historyChartInstance) historyChartInstance.destroy();
             let ctxHist = document.getElementById('historyChart').getContext('2d');
             
-            // --- NOU: GRAFICĂ PREMIUM (Gradient Neon & Formă de Capsulă) ---
             let gradient = ctxHist.createLinearGradient(0, 0, 0, 300);
-            gradient.addColorStop(0, '#00ff88'); // Verde Neon
-            gradient.addColorStop(1, '#006633'); // Verde Întunecat
-
+            gradient.addColorStop(0, '#00ff88'); gradient.addColorStop(1, '#006633');
             let hoverGradient = ctxHist.createLinearGradient(0, 0, 0, 300);
-            hoverGradient.addColorStop(0, '#ffffff'); // Alb strălucitor la Hover
-            hoverGradient.addColorStop(1, '#00ff88');
+            hoverGradient.addColorStop(0, '#ffffff'); hoverGradient.addColorStop(1, '#00ff88');
 
+            // --- NOU: MIXED CHART (Bară pt scor, Linie pt Kineto) ---
             historyChartInstance = new Chart(ctxHist, {
-                type: 'bar',
                 data: { 
                     labels: labels.map(l => l === dataCurenta ? "Azi" : l), 
-                    datasets: [{ 
-                        label: 'Scor Sănătate', 
-                        data: dateScor, 
-                        backgroundColor: gradient, 
-                        hoverBackgroundColor: hoverGradient, // Efect de hover luminos
-                        borderRadius: 15, // Formă de "Pill" (Capsulă rotundă)
-                        borderSkipped: false, // O face rotundă și jos
-                        barThickness: 30 // Le face mai groase
-                    }] 
+                    datasets: [
+                        { 
+                            type: 'line',
+                            label: 'Sesiuni Kineto',
+                            data: dateExercitii,
+                            borderColor: '#00b8ff',
+                            backgroundColor: '#00b8ff',
+                            borderWidth: 3,
+                            tension: 0.4, // Face linia curbată frumos
+                            yAxisID: 'y1' // Folosește a doua axă Y în dreapta
+                        },
+                        { 
+                            type: 'bar',
+                            label: 'Scor Sănătate', 
+                            data: dateScor, 
+                            backgroundColor: gradient, 
+                            hoverBackgroundColor: hoverGradient, 
+                            borderRadius: 15, 
+                            borderSkipped: false, 
+                            barThickness: 30,
+                            yAxisID: 'y'
+                        }
+                    ] 
                 },
                 options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    
-                    // --- NOU: LOGICĂ PENTRU CLICK ȘI HOVER PE COLOANE ---
-                    onHover: (event, chartElement) => {
-                        // Schimbă cursorul în 'mână' când ești peste o coloană
-                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
-                    },
-                    onClick: (event, activeElements) => {
-                        // Când utilizatorul apasă pe o bară
-                        if (activeElements.length > 0) {
-                            const dataIndex = activeElements[0].index;
-                            const ziuaSelectata = Object.keys(istoric)[dataIndex];
-                            const scorSelectat = Object.values(istoric)[dataIndex];
-                            afiseazaDetaliiIstoric(ziuaSelectata, scorSelectat);
+                    responsive: true, maintainAspectRatio: false, 
+                    onHover: (e, el) => { e.native.target.style.cursor = el[0] ? 'pointer' : 'default'; },
+                    onClick: (e, el) => {
+                        if (el.length > 0) {
+                            const index = el[0].index;
+                            afiseazaDetaliiIstoric(Object.keys(istoric)[index], Object.values(istoric)[index], dateExercitii[index]);
                         }
                     },
-
                     plugins: { 
-                        legend: { display: false },
-                        tooltip: { 
-                            backgroundColor: 'rgba(15, 15, 25, 0.9)', 
-                            titleColor: '#00b8ff', 
-                            bodyFont: {size: 16},
-                            padding: 12,
-                            borderColor: 'rgba(0, 255, 136, 0.3)',
-                            borderWidth: 1,
-                            cornerRadius: 10
-                        } 
+                        legend: { display: true, labels: { color: '#aaa', boxWidth: 15 } },
+                        tooltip: { backgroundColor: 'rgba(15, 15, 25, 0.9)', titleColor: '#00b8ff', bodyFont: {size: 14}, padding: 12, borderColor: 'rgba(0, 255, 136, 0.3)', borderWidth: 1, cornerRadius: 10 } 
                     }, 
                     scales: { 
                         y: { 
-                            max: 100, 
-                            grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] }, // Linii punctate subțiri
-                            ticks: { color: '#888' } 
-                        }, 
-                        x: { 
-                            grid: { display: false }, 
-                            ticks: { color: '#e0e0e0', font: {weight: 'bold', size: 12} } 
-                        } 
+                            type: 'linear', display: true, position: 'left',
+                            max: 100, grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] }, ticks: { color: '#888' } 
+                        },
+                        y1: {
+                            type: 'linear', display: true, position: 'right',
+                            min: 0, suggestedMax: 5, grid: { drawOnChartArea: false }, ticks: { color: '#00b8ff', stepSize: 1 }
+                        },
+                        x: { grid: { display: false }, ticks: { color: '#e0e0e0', font: {weight: 'bold', size: 12} } } 
                     } 
                 }
             });
@@ -572,33 +638,22 @@
         function inchideAnalytics() { 
             document.getElementById('modal-analytics').style.display = "none"; 
             if (updateLiveStatsInterval) clearInterval(updateLiveStatsInterval); 
-            // Resetăm textul de insights înapoi la "Live" când închide raportul istoric
             document.getElementById('smart-insights').innerHTML = "Se procesează datele neurologice și biomecanice...";
         }
 
         function exportaRaport() {
             let btn = document.getElementById('btn-export');
-            btn.innerText = "⏳ Se generează imaginea...";
-            btn.style.background = "#ffaa00";
-            
+            btn.innerText = "⏳ Se generează imaginea..."; btn.style.background = "#ffaa00";
             let zonaDePrintat = document.getElementById('raport-printabil');
             
-            html2canvas(zonaDePrintat, {
-                backgroundColor: "#050508",
-                scale: 2 
-            }).then(canvas => {
-                let imgData = canvas.toDataURL("image/png");
+            html2canvas(zonaDePrintat, { backgroundColor: "#050508", scale: 2 }).then(canvas => {
                 let link = document.createElement('a');
-                link.href = imgData;
+                link.href = canvas.toDataURL("image/png");
                 link.download = `ZenPosture_Raport_${dataCurenta.replace(/\./g, '_')}.png`;
                 link.click();
                 
-                btn.innerText = "✅ SALVAT CU SUCCES";
-                btn.style.background = "#00ff88";
-                setTimeout(() => {
-                    btn.innerText = "📸 DESCARCĂ RAPORT (IMG)";
-                    btn.style.background = "#fff";
-                }, 3000);
+                btn.innerText = "✅ SALVAT CU SUCCES"; btn.style.background = "#00ff88";
+                setTimeout(() => { btn.innerText = "📸 DESCARCĂ RAPORT"; btn.style.background = "#fff"; }, 3000);
             });
         }
         
@@ -607,7 +662,7 @@
         }
 
         function declanseazaAlarma(tipEroare) {
-            if (!alarmeActive || sistemInPauza) return; 
+            if (!alarmeActive || sistemInPauza || sistemInExercitii) return; 
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             ultimulAvertisment = millis();
             
