@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Elite Edition</title>
+    <title>Zen Posture Pro - Performance Edition</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -108,7 +108,7 @@
 
             <div id="modal-ora" class="modal-overlay">
                 <div class="modal-titlu" style="color: #00b8ff;">⏱️ O ORĂ DE LUCRU!</div>
-                <div style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; font-weight: bold;">Excelentă concentrare! <br> Dar coloana ta are nevoie de o mică întindere.</div>
+                <div style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; font-weight: bold;">Coloana ta are nevoie de o mică întindere.</div>
                 <div style="font-size: 1.1rem; color: #aaa; margin-bottom: 30px;">Vrei să faci o sesiune scurtă de Kineto?</div>
                 <div>
                     <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="acceptaExercitiiOra()">DA, facem Kineto</button>
@@ -175,18 +175,18 @@
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
         let contextAudio = null, alarmeActive = true, ultimulAvertisment = 0; 
+        const COOLDOWN_NOTIFICARE = 6000; 
         
         let PRAG_POSTURA = localStorage.getItem('zenPragGat') ? parseInt(localStorage.getItem('zenPragGat')) : 75;  
         let PRAG_DISTANTA = localStorage.getItem('zenPragOchi') ? parseInt(localStorage.getItem('zenPragOchi')) : 65; 
-        const PRAG_UMERI = 40; // NOU: Valoare permisivă conform cerinței
+        const PRAG_UMERI = 40; 
         
         let modCalibrare = false, dateCalibrare = [];
         let timpInceputOboseala = 0; 
         let asteaptaRaspunsPauza = false, esteInZenBreak = false, secundeRamasePauza = 0;
         
-        // --- NOU: LOGICA DE O ORĂ ---
         let timpUltimaNotificareOra = 0;
-        const INTERVAL_NOTIFICARE_ORA = 3600000; // 1 oră în milisecunde
+        const INTERVAL_NOTIFICARE_ORA = 3600000; 
         let asteaptaRaspunsOra = false;
 
         let timerPauza = null, pipVideoElement;
@@ -194,8 +194,13 @@
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
         
-        const exScaun = ["Rotește gâtul ușor spre stânga și dreapta.", "Întinde brațele deasupra capului.", "Răsucește trunchiul spre spătar.", "Privește la distanță."];
-        const exPicioare = ["Apleacă-te ușor spre vârfurile picioarelor.", "Rotește bazinul.", "Deschide pieptul cu mâinile la spate.", "Ridică-te pe vârfuri."];
+        // Memorie UI (PENTRU A PREVENI BLOCAJUL / DOM THRASHING)
+        let cacheScor = -1;
+        let cacheStareGat = "";
+        let cacheStareUmeri = "";
+
+        const exScaun = ["Rotește gâtul ușor stânga-dreapta.", "Întinde brațele deasupra capului.", "Răsucește trunchiul spre spătar.", "Privește la distanță."];
+        const exPicioare = ["Apleacă-te ușor spre vârfuri.", "Rotește bazinul.", "Deschide pieptul, mâinile la spate.", "Ridică-te pe vârfuri."];
 
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
@@ -216,6 +221,11 @@
             document.getElementById('status-msg').innerText = "Permite accesul...";
             if ("Notification" in window) Notification.requestPermission();
             
+            try {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                contextAudio = new AudioContext();
+            } catch (e) {}
+
             video = createCapture(VIDEO, () => {
                 bodyPose = ml5.bodyPose(() => {
                     document.getElementById('status-msg').innerText = `SISTEM ACTIV ✅`;
@@ -224,7 +234,7 @@
                     for(let i=0; i<btns.length; i++) btns[i].style.display = 'block';
                     pipVideoElement.play();
                     timpStartSesiune = Date.now(); 
-                    timpUltimaNotificareOra = millis(); // Începem numărătoarea de 1 oră
+                    timpUltimaNotificareOra = millis(); 
                     bodyPose.detectStart(video, (results) => { poses = results; });
                     setInterval(salveazaProgresul, 5000);
                 });
@@ -233,18 +243,14 @@
             video.hide(); 
         }
 
-        // FUNCȚII O ORĂ
         function acceptaExercitiiOra() {
             document.getElementById('modal-ora').style.display = 'none';
-            asteaptaRaspunsOra = false;
-            deschideMeniuExercitii();
-            timpUltimaNotificareOra = millis();
+            asteaptaRaspunsOra = false; deschideMeniuExercitii(); timpUltimaNotificareOra = millis();
         }
 
         function amanaExercitiiOra() {
             document.getElementById('modal-ora').style.display = 'none';
-            asteaptaRaspunsOra = false;
-            timpUltimaNotificareOra = millis(); // Resetăm timer-ul pentru încă o oră
+            asteaptaRaspunsOra = false; timpUltimaNotificareOra = millis(); 
         }
 
         function deschideMeniuExercitii() {
@@ -305,12 +311,13 @@
             background(0);
             if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
 
-            // VERIFICARE CRONOMETRU 1 ORĂ
             if (timpStartSesiune && !sistemInPauza && !sistemInExercitii && !asteaptaRaspunsOra) {
                 if (millis() - timpUltimaNotificareOra > INTERVAL_NOTIFICARE_ORA) {
                     asteaptaRaspunsOra = true;
                     document.getElementById('modal-ora').style.display = 'flex';
-                    if (Notification.permission === "granted") new Notification("Zen Posture", { body: "A trecut o oră! Hai să facem puțin Kineto." });
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        new Notification("Zen Posture", { body: "A trecut o oră! Timp pentru o pauză scurtă." });
+                    }
                 }
             }
 
@@ -346,28 +353,49 @@
                     }
 
                     cadreTotale++;
-                    let gOk = dGat > PRAG_POSTURA; let dOk = dOchi < PRAG_DISTANTA; let uOk = diffUm < PRAG_UMERI;
+                    let gOk = dGat > PRAG_POSTURA; 
+                    let dOk = dOchi < PRAG_DISTANTA; 
+                    let uOk = diffUm < PRAG_UMERI;
 
                     if (gOk && dOk && uOk) {
                         cadreCorecte++; timpInceputOboseala = 0; 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
+                        
                         if (millis() - timpInceputOboseala > 15000) { 
                             timpInceputOboseala = 0; 
                             document.getElementById('modal-intrebare').style.display = "flex"; 
                             asteaptaRaspunsPauza = true; return; 
                         }
-                        declanseazaAlarma(!gOk ? 'gat' : (!dOk ? 'distanta' : 'umeri'));
+
+                        // Alarma se va declanșa controlat și stabil
+                        if (!gOk) declanseazaAlarma('gat');
+                        else if (!dOk) declanseazaAlarma('distanta');
+                        else if (!uOk) declanseazaAlarma('umeri');
                     }
 
-                    // Dashboard UI
+                    // --- SISTEMUL ANTI-BLOCAJ (Prevenire DOM Thrashing) ---
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
-                    document.getElementById('v-scor').innerText = scor + "%";
-                    document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad";
-                    document.getElementById('v-gat').innerText = gOk ? "OPTIMĂ" : "APLECAT ⚠️";
-                    document.getElementById('c-gat').className = gOk ? "card ok" : "card bad";
-                    document.getElementById('v-umeri').innerText = uOk ? "DREPȚI" : "STRÂMBI ⚖️";
-                    document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn";
+                    if (scor !== cacheScor) {
+                        document.getElementById('v-scor').innerText = scor + "%";
+                        document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad";
+                        cacheScor = scor;
+                    }
+
+                    let stareGatAsteptata = gOk ? "OPTIMĂ" : "APLECAT ⚠️";
+                    if (stareGatAsteptata !== cacheStareGat) {
+                        document.getElementById('v-gat').innerText = stareGatAsteptata;
+                        document.getElementById('c-gat').className = gOk ? "card ok" : "card bad";
+                        cacheStareGat = stareGatAsteptata;
+                    }
+
+                    let stareUmeriAsteptata = uOk ? "DREPȚI" : "STRÂMBI ⚖️";
+                    if (stareUmeriAsteptata !== cacheStareUmeri) {
+                        document.getElementById('v-umeri').innerText = stareUmeriAsteptata;
+                        document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn";
+                        cacheStareUmeri = stareUmeriAsteptata;
+                    }
+                    // --------------------------------------------------------
 
                     stroke(uOk ? (gOk ? "#00ff88" : "#ff4444") : "#ffaa00"); strokeWeight(8);
                     line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
@@ -455,17 +483,32 @@
         function declanseazaAlarma(tip) {
             if (!alarmeActive || sistemInPauza || sistemInExercitii) return; 
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
-            ultimulAvertisment = millis(); totalAlarmeAzi++; 
+            
+            ultimulAvertisment = millis(); 
+            totalAlarmeAzi++; 
             localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
+            
             if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
             if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
             if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
+            
             timerBanner = millis();
+            
             try { 
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
-                o.connect(v); v.connect(contextAudio.destination);
-                o.frequency.value = tip === 'umeri' ? 250 : 440; o.start(); o.stop(contextAudio.currentTime + 0.3);
+                let o = contextAudio.createOscillator(); 
+                let v = contextAudio.createGain();
+                
+                o.connect(v); 
+                v.connect(contextAudio.destination);
+                o.frequency.value = tip === 'umeri' ? 250 : 440; 
+                
+                // Plic de sunet sigur pentru browser
+                v.gain.setValueAtTime(0.1, contextAudio.currentTime);
+                v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
+                
+                o.start(); 
+                o.stop(contextAudio.currentTime + 0.3);
             } catch (e) {}
         }
 
