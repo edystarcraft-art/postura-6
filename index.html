@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Enterprise Ergonomics</title>
+    <title>Zen Posture Pro - Ultra Stable</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -38,9 +38,7 @@
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
         #camera-wrapper video.feed { display: none; }
 
-        /* NOU: Panoul lateral acum are scroll ca să încapă toate noile măsurători */
         .panel { display: flex; flex-direction: column; gap: 15px; width: 280px; max-height: 480px; overflow-y: auto; padding-right: 5px; }
-        /* Scrollbar elegant pentru panou */
         .panel::-webkit-scrollbar { width: 6px; }
         .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
 
@@ -86,7 +84,7 @@
 <body>
 
     <div class="header">
-        <h1>ZEN POSTURE <span style="color:white">PRO</span> <span style="font-size:0.4em; color:#00b8ff; vertical-align:top;">ENTERPRISE</span></h1>
+        <h1>ZEN POSTURE <span style="color:white">PRO</span> <span style="font-size:0.4em; color:#00b8ff; vertical-align:top;">STABLE</span></h1>
         
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
@@ -138,7 +136,7 @@
             <div class="card" id="c-gat"><div class="lbl">Postură & Gât</div><div id="v-gat" class="val">---</div></div>
             <div class="card" id="c-ochi"><div class="lbl">Distanță Monitor</div><div id="v-ochi" class="val">---</div></div>
             <div class="card" id="c-umeri"><div class="lbl">Asimetrie Umeri</div><div id="v-umeri" class="val">---</div></div>
-            <div class="card" id="c-mediu"><div class="lbl">Mediu & Dinamism</div><div id="v-mediu" class="val info">ANALIZĂ...</div></div>
+            <div class="card" id="c-mediu"><div class="lbl">Dinamism Corp</div><div id="v-mediu" class="val info">ANALIZĂ...</div></div>
         </div>
     </div>
 
@@ -172,25 +170,26 @@
         if (ultimaZiSalvata !== dataCurenta) {
             localStorage.setItem('zenAlarmsToday', 0); localStorage.setItem('zenEroriGat', 0);
             localStorage.setItem('zenEroriOchi', 0); localStorage.setItem('zenEroriUmeri', 0);
-            localStorage.setItem('zenEroriTextNeck', 0); // NOU
-            localStorage.setItem('zenExercitiiAzi', 0); localStorage.setItem('zenUltimaZi', dataCurenta);
+            localStorage.setItem('zenEroriTextNeck', 0); localStorage.setItem('zenExercitiiAzi', 0); 
+            localStorage.setItem('zenUltimaZi', dataCurenta);
         }
 
         let totalAlarmeAzi = parseInt(localStorage.getItem('zenAlarmsToday')) || 0;
         let eroriGat = parseInt(localStorage.getItem('zenEroriGat')) || 0;
         let eroriOchi = parseInt(localStorage.getItem('zenEroriOchi')) || 0;
         let eroriUmeri = parseInt(localStorage.getItem('zenEroriUmeri')) || 0;
-        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; // NOU
+        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; 
         let exercitiiAzi = parseInt(localStorage.getItem('zenExercitiiAzi')) || 0;
 
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
         let contextAudio = null, alarmeActive = true, ultimulAvertisment = 0; 
+        const COOLDOWN_NOTIFICARE = 6000; 
         
         let PRAG_POSTURA = localStorage.getItem('zenPragGat') ? parseInt(localStorage.getItem('zenPragGat')) : 75;  
         let PRAG_DISTANTA = localStorage.getItem('zenPragOchi') ? parseInt(localStorage.getItem('zenPragOchi')) : 65; 
         const PRAG_UMERI = 40; 
-        let PRAG_TEXT_NECK = PRAG_POSTURA * 0.45; // NOU: Nasul scade extrem de mult față de umeri
+        let PRAG_TEXT_NECK = PRAG_POSTURA * 0.45; 
         
         let modCalibrare = false, dateCalibrare = [];
         let timpInceputOboseala = 0; 
@@ -200,12 +199,8 @@
         const INTERVAL_NOTIFICARE_ORA = 3600000; 
         let asteaptaRaspunsOra = false;
 
-        // --- NOU: VARIABILE ANALIZĂ MEDIU (Lumină & Dinamism) ---
         let ultimulCheckSecunda = 0;
-        let luminaSlaba = false;
-        let ultimaPozitieUmeri = 0;
-        let miscareAcumulata = 0;
-        let cronometruStatie = 0; // numără secundele în care ai fost analizat
+        let ultimaPozitieUmeri = 0, miscareAcumulata = 0, cronometruStatie = 0; 
         let stareDinamism = "ACTIV"; 
 
         let timerPauza = null, pipVideoElement;
@@ -312,33 +307,19 @@
             for(let i = 0; i < dateCalibrare.length; i++) { sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi; }
             PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.70); 
             PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.25); 
-            PRAG_TEXT_NECK = Math.floor(PRAG_POSTURA * 0.45); // Recalculăm și pragul extrem
+            PRAG_TEXT_NECK = Math.floor(PRAG_POSTURA * 0.45); 
             localStorage.setItem('zenPragGat', PRAG_POSTURA); localStorage.setItem('zenPragOchi', PRAG_DISTANTA);
             document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`;
         }
 
         function draw() {
+            // DESENĂM FUNDALUL ȘI CAMERA OBLIGATORIU AICI (Nu facem return)
             background(0);
             if (video && video.loadedmetadata) {
                 image(video, 0, 0, 640, 480);
                 
-                // --- ANALIZĂ 1 DATA PE SECUNDĂ (Lumină & Dinamism) ---
                 if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
                     ultimulCheckSecunda = millis();
-                    
-                    // 1. Calcul Luminos (Eșantionare redusă pentru super-performanță)
-                    video.loadPixels();
-                    if (video.pixels.length > 0) {
-                        let sumLumina = 0; let pixelCount = 0;
-                        for(let i = 0; i < video.pixels.length; i += 800) { 
-                            sumLumina += (video.pixels[i] + video.pixels[i+1] + video.pixels[i+2]) / 3;
-                            pixelCount++;
-                        }
-                        let avgLumina = sumLumina / pixelCount;
-                        luminaSlaba = avgLumina < 35; // Prag de întuneric
-                    }
-                    
-                    // 2. Calcul Dinamism (Statue Syndrome)
                     if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder) {
                         let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
                         if (ultimaPozitieUmeri !== 0) {
@@ -347,11 +328,10 @@
                         ultimaPozitieUmeri = umeriXCurent;
                         
                         cronometruStatie++;
-                        // La fiecare 60 de secunde verificăm dacă s-a mișcat suficient
                         if (cronometruStatie >= 60) {
-                            if (miscareAcumulata < 120) { // Foarte rigid (ex. < 120 pixeli mișcare totală în 60s)
+                            if (miscareAcumulata < 120) { 
                                 stareDinamism = "STATIC ⚠️";
-                                bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA (EȘTI PREA RIGID)!"; timerBanner = millis();
+                                bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA!"; timerBanner = millis();
                             } else {
                                 stareDinamism = "ACTIV";
                             }
@@ -367,19 +347,36 @@
                 }
             }
 
+            // RENDERIZARE OVERLAY-URI PESTE CAMERĂ
             if (sistemInExercitii) {
-                background(15, 35, 30); 
+                push(); fill(15, 35, 30, 230); rect(0, 0, 640, 480); pop();
                 fill(0, 255, 204); noStroke(); textAlign(CENTER, CENTER); textSize(35); textStyle(BOLD); text("🧘 KINETO LA FIECARE ORĂ", 320, 80);
-                fill(255); textSize(24); text(exercitiuCurentText, 320, 200); 
-                fill(0, 255, 204); textSize(80); text(secundeRamasePauza + "s", 320, 350);
+                fill(255); textSize(24); textStyle(NORMAL); text(exercitiuCurentText, 320, 200); 
+                fill(0, 255, 204); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 350);
                 return; 
             }
 
             if (sistemInPauza) {
-                background(0, 0, 0, 180); fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); text("⏸️ PAUZĂ MANUALĂ", 320, 200); return; 
+                push(); fill(0, 0, 0, 200); rect(0, 0, 640, 480); pop();
+                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ MANUALĂ", 320, 200);
+                return; 
             }
 
-            if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { background(0, 0, 0, 150); return; }
+            if (esteInZenBreak) {
+                push(); fill(10, 20, 30, 230); rect(0, 0, 640, 480); pop();
+                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("TIMP PENTRU TINE", 320, 80);
+                fill(255); textSize(20); textStyle(NORMAL);
+                text("1. Mișcă ușor capul stânga - dreapta.", 320, 160); text("2. Fă câteva rotiri lente ale capului.", 320, 210); 
+                text("3. Privește departe de ecran.", 320, 260); text("4. Respiră adânc și relaxează umerii.", 320, 310);
+                fill(0, 184, 255); textSize(60); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 410);
+                return; 
+            }
+
+            // MODIFICARE CRITICĂ: Doar desenăm un dreptunghi transparent, nu mai dăm `background()` ca să nu dispară imaginea!
+            if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { 
+                push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop();
+                return; 
+            }
 
             if (poses.length > 0) {
                 let p = poses[0];
@@ -400,10 +397,9 @@
 
                     cadreTotale++;
                     
-                    // --- NOU: LOGICĂ TEXT NECK ---
                     let isTextNeck = dGat < PRAG_TEXT_NECK;
                     let isAplecat = !isTextNeck && dGat < PRAG_POSTURA; 
-                    let gOk = !isTextNeck && !isAplecat; // Gâtul e OK doar dacă nu e nici aplecat, nici în text neck
+                    let gOk = !isTextNeck && !isAplecat; 
                     
                     let dOk = dOchi < PRAG_DISTANTA; 
                     let uOk = diffUm < PRAG_UMERI;
@@ -416,14 +412,13 @@
                             timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; 
                         }
                         
-                        // Declanșare alarme specifice (Prioritate la Text Neck, apoi la Aplecat)
                         if (isTextNeck) declanseazaAlarma('textneck');
                         else if (isAplecat) declanseazaAlarma('gat');
                         else if (!dOk) declanseazaAlarma('distanta');
                         else if (!uOk) declanseazaAlarma('umeri');
                     }
 
-                    // --- ACTUALIZARE UI OPTIMIZATĂ ---
+                    // --- ACTUALIZARE UI EXTREM DE OPTIMIZATĂ ---
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
                     if (scor !== cacheScor) {
                         document.getElementById('v-scor').innerText = scor + "%";
@@ -452,15 +447,12 @@
                         cacheStareUmeri = stareUmeriAsteptata;
                     }
                     
-                    let stareMediuAsteptata = (luminaSlaba ? "ÎNTUNERIC / " : "LUMINOS / ") + stareDinamism;
-                    if (stareMediuAsteptata !== cacheStareMediu) {
-                        document.getElementById('v-mediu').innerText = stareMediuAsteptata;
-                        document.getElementById('c-mediu').className = (luminaSlaba || stareDinamism.includes("STATIC")) ? "card warn" : "card info";
-                        cacheStareMediu = stareMediuAsteptata;
+                    if (stareDinamism !== cacheStareMediu) {
+                        document.getElementById('v-mediu').innerText = stareDinamism;
+                        document.getElementById('c-mediu').className = stareDinamism.includes("STATIC") ? "card warn" : "card info";
+                        cacheStareMediu = stareDinamism;
                     }
-                    // ------------------------------------
 
-                    // Desenare dinamică (Linia se face ROȘIE puternic la Text Neck, portocaliu la asimetrie)
                     stroke(isTextNeck ? "#ff0000" : (uOk ? (gOk ? "#00ff88" : "#ff4444") : "#ffaa00")); 
                     strokeWeight(8); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
                     stroke(isTextNeck ? "#ff0000" : "#00ff88"); 
@@ -516,15 +508,11 @@
             else if(s >= 80) { g.innerText = "A"; g.style.color = "#00ff88"; }
             else { g.innerText = "B"; g.style.color = "#ffaa00"; }
 
-            // Update Insights cu toate variabilele
             let insightBox = document.getElementById('smart-insights');
             if(insightBox.innerHTML.includes("Se analizează") || insightBox.innerHTML.includes("Biomecanic")) {
                 if (eroriTextNeck > 10) {
-                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Scade utilizarea telefonului! Stai cu capul extrem de aplecat, punând 25kg presiune pe cervicală.";
+                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Scade utilizarea telefonului! Stai cu capul extrem de aplecat, punând presiune pe cervicală.";
                     insightBox.style.borderLeftColor = "#ff0000";
-                } else if (luminaSlaba) {
-                    insightBox.innerHTML = "💡 <strong>Atenție Mediu:</strong> Lumina ambientală este prea slabă! Riști să îți obosești ochii sever. Aprinde o lampă de birou.";
-                    insightBox.style.borderLeftColor = "#ffaa00";
                 } else if (stareDinamism.includes("STATIC")) {
                     insightBox.innerHTML = "💡 <strong>Atenție Circulație:</strong> Ești prea rigid. Fă o mică întindere sau folosește butonul Kineto pentru a activa sângele.";
                     insightBox.style.borderLeftColor = "#00b8ff";
@@ -561,7 +549,6 @@
             let ctxErr = document.getElementById('errorChart').getContext('2d');
             errorChartInstance = new Chart(ctxErr, {
                 type: 'doughnut',
-                // NOU: Am integrat TEXT NECK în graficul de tort
                 data: { labels: ['Aplecat', 'Ochi', 'Umeri', 'Text Neck (Telefon)'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ff4444', '#00b8ff', '#ffaa00', '#ff0000'], borderWidth: 0 }] },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ccc', font: {size: 11} } } }, cutout: '70%' }
             });
@@ -592,12 +579,15 @@
             
             try { 
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
-                o.connect(v); v.connect(contextAudio.destination);
-                // Sunet acut și enervant pentru Telefon
-                o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
-                v.gain.setValueAtTime(0.1, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
-                o.start(); o.stop(contextAudio.currentTime + 0.3);
+                if (contextAudio) {
+                    let o = contextAudio.createOscillator(); 
+                    let v = contextAudio.createGain();
+                    o.connect(v); v.connect(contextAudio.destination);
+                    o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
+                    v.gain.setValueAtTime(0.05, contextAudio.currentTime); 
+                    v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
+                    o.start(); o.stop(contextAudio.currentTime + 0.3);
+                }
             } catch (e) {}
         }
 
