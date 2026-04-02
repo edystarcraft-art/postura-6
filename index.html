@@ -2,19 +2,19 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Performance Edition</title>
+    <title>Zen Posture Pro - Enterprise Ergonomics</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .header { text-align: center; margin-bottom: 20px; }
+        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; }
+        .header { text-align: center; margin-bottom: 15px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
-        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 950px; }
-        button { border: none; padding: 10px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
+        .controale { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 1000px; }
+        button { border: none; padding: 10px 15px; font-size: 0.9rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
         #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); font-size: 1rem; padding: 12px 25px; }
         #btn-start:hover { transform: scale(1.05); }
         
@@ -32,23 +32,30 @@
 
         #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
 
-        .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1000px; width: 100%; }
+        .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1100px; width: 100%; align-items: flex-start; }
 
         #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; position: relative; }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
         #camera-wrapper video.feed { display: none; }
 
-        .panel { display: flex; flex-direction: column; gap: 20px; width: 300px; }
-        .card { background: #111122; border-radius: 15px; padding: 25px; border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        /* NOU: Panoul lateral acum are scroll ca să încapă toate noile măsurători */
+        .panel { display: flex; flex-direction: column; gap: 15px; width: 280px; max-height: 480px; overflow-y: auto; padding-right: 5px; }
+        /* Scrollbar elegant pentru panou */
+        .panel::-webkit-scrollbar { width: 6px; }
+        .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .card { background: #111122; border-radius: 12px; padding: 15px 20px; border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
         .card.ok { border-left-color: #00ff88; }
-        .card.bad { border-left-color: #ff4444; background: #1a1122; }
+        .card.bad { border-left-color: #ff4444; background: #1a111a; }
         .card.warn { border-left-color: #ffaa00; background: #221a11; }
+        .card.info { border-left-color: #00b8ff; }
         
-        .lbl { font-size: 0.85rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .val { font-size: 1.6rem; font-weight: bold; color: #fff; }
+        .lbl { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .val { font-size: 1.3rem; font-weight: bold; color: #fff; }
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
         .val.warn { color: #ffaa00; }
+        .val.info { color: #00b8ff; }
 
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 640px; height: 480px; background: rgba(5,5,8,0.9); z-index: 20; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 20px; backdrop-filter: blur(8px); }
         .modal-titlu { color: #ffaa00; font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
@@ -79,7 +86,7 @@
 <body>
 
     <div class="header">
-        <h1>ZEN POSTURE <span style="color:white">PRO</span></h1>
+        <h1>ZEN POSTURE <span style="color:white">PRO</span> <span style="font-size:0.4em; color:#00b8ff; vertical-align:top;">ENTERPRISE</span></h1>
         
         <div class="controale">
             <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
@@ -99,7 +106,7 @@
             
             <div id="modal-intrebare" class="modal-overlay">
                 <div class="modal-titlu">Oboseală detectată!</div>
-                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă de 15 secunde.<br>Vrei o pauză de 1 minut?</div>
+                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă destul de mult.<br>Vrei o pauză de 1 minut?</div>
                 <div>
                     <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="raspunsPauza(true)">DA, vreau pauză</button>
                     <button class="btn-raspuns" style="background:#ff4444; color:#fff;" onclick="raspunsPauza(false)">NU, continuu</button>
@@ -128,8 +135,10 @@
         
         <div class="panel">
             <div class="card" id="c-scor"><div class="lbl">Scor Zilnic</div><div id="v-scor" class="val">0%</div></div>
-            <div class="card" id="c-gat"><div class="lbl">Postură Cervicală</div><div id="v-gat" class="val">---</div></div>
-            <div class="card" id="c-umeri"><div class="lbl">Aliniament Umeri</div><div id="v-umeri" class="val">---</div></div>
+            <div class="card" id="c-gat"><div class="lbl">Postură & Gât</div><div id="v-gat" class="val">---</div></div>
+            <div class="card" id="c-ochi"><div class="lbl">Distanță Monitor</div><div id="v-ochi" class="val">---</div></div>
+            <div class="card" id="c-umeri"><div class="lbl">Asimetrie Umeri</div><div id="v-umeri" class="val">---</div></div>
+            <div class="card" id="c-mediu"><div class="lbl">Mediu & Dinamism</div><div id="v-mediu" class="val info">ANALIZĂ...</div></div>
         </div>
     </div>
 
@@ -137,12 +146,12 @@
 
     <div id="modal-analytics">
         <div id="raport-printabil">
-            <div class="header-raport"><h2>📊 Analiză Biometrică</h2><div class="badge" id="data-raport">Azi</div></div>
+            <div class="header-raport"><h2>📊 Analiză Biometrică 360°</h2><div class="badge" id="data-raport">Azi</div></div>
             <div class="stats-grid">
                 <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Scor Sănătate</span><div class="grade-circle" id="stat-grade">A</div></div>
                 <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Lucru</span></div>
-                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții</span></div>
-                <div class="stat-box"><span class="stat-val" id="stat-exercitii" style="color:#00b8ff;">0</span><span class="stat-lbl">Kineto</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții Totale</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Erori Text Neck</span></div>
             </div>
             <div class="charts-layout">
                 <div class="chart-history"><canvas id="historyChart"></canvas></div>
@@ -163,6 +172,7 @@
         if (ultimaZiSalvata !== dataCurenta) {
             localStorage.setItem('zenAlarmsToday', 0); localStorage.setItem('zenEroriGat', 0);
             localStorage.setItem('zenEroriOchi', 0); localStorage.setItem('zenEroriUmeri', 0);
+            localStorage.setItem('zenEroriTextNeck', 0); // NOU
             localStorage.setItem('zenExercitiiAzi', 0); localStorage.setItem('zenUltimaZi', dataCurenta);
         }
 
@@ -170,16 +180,17 @@
         let eroriGat = parseInt(localStorage.getItem('zenEroriGat')) || 0;
         let eroriOchi = parseInt(localStorage.getItem('zenEroriOchi')) || 0;
         let eroriUmeri = parseInt(localStorage.getItem('zenEroriUmeri')) || 0;
+        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; // NOU
         let exercitiiAzi = parseInt(localStorage.getItem('zenExercitiiAzi')) || 0;
 
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
         let contextAudio = null, alarmeActive = true, ultimulAvertisment = 0; 
-        const COOLDOWN_NOTIFICARE = 6000; 
         
         let PRAG_POSTURA = localStorage.getItem('zenPragGat') ? parseInt(localStorage.getItem('zenPragGat')) : 75;  
         let PRAG_DISTANTA = localStorage.getItem('zenPragOchi') ? parseInt(localStorage.getItem('zenPragOchi')) : 65; 
         const PRAG_UMERI = 40; 
+        let PRAG_TEXT_NECK = PRAG_POSTURA * 0.45; // NOU: Nasul scade extrem de mult față de umeri
         
         let modCalibrare = false, dateCalibrare = [];
         let timpInceputOboseala = 0; 
@@ -189,15 +200,20 @@
         const INTERVAL_NOTIFICARE_ORA = 3600000; 
         let asteaptaRaspunsOra = false;
 
+        // --- NOU: VARIABILE ANALIZĂ MEDIU (Lumină & Dinamism) ---
+        let ultimulCheckSecunda = 0;
+        let luminaSlaba = false;
+        let ultimaPozitieUmeri = 0;
+        let miscareAcumulata = 0;
+        let cronometruStatie = 0; // numără secundele în care ai fost analizat
+        let stareDinamism = "ACTIV"; 
+
         let timerPauza = null, pipVideoElement;
         let bannerVizual = "", timerBanner = 0, sistemInPauza = false;
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
         
-        // Memorie UI (PENTRU A PREVENI BLOCAJUL / DOM THRASHING)
-        let cacheScor = -1;
-        let cacheStareGat = "";
-        let cacheStareUmeri = "";
+        let cacheScor = -1, cacheStareGat = "", cacheStareUmeri = "", cacheStareOchi = "", cacheStareMediu = "";
 
         const exScaun = ["Rotește gâtul ușor stânga-dreapta.", "Întinde brațele deasupra capului.", "Răsucește trunchiul spre spătar.", "Privește la distanță."];
         const exPicioare = ["Apleacă-te ușor spre vârfuri.", "Rotește bazinul.", "Deschide pieptul, mâinile la spate.", "Ridică-te pe vârfuri."];
@@ -211,8 +227,8 @@
             pipVideoElement.srcObject = cnv.elt.captureStream(30);
 
             if (!localStorage.getItem('zenPostureHistory')) {
-                localStorage.setItem('zenPostureHistory', JSON.stringify({"01.04": 85, "02.04": 78}));
-                localStorage.setItem('zenExercisesHistory', JSON.stringify({"01.04": 2, "02.04": 1}));
+                localStorage.setItem('zenPostureHistory', JSON.stringify({"Luni": 85, "Marți": 78}));
+                localStorage.setItem('zenExercisesHistory', JSON.stringify({"Luni": 2, "Marți": 1}));
             }
         }
 
@@ -221,10 +237,7 @@
             document.getElementById('status-msg').innerText = "Permite accesul...";
             if ("Notification" in window) Notification.requestPermission();
             
-            try {
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                contextAudio = new AudioContext();
-            } catch (e) {}
+            try { window.AudioContext = window.AudioContext || window.webkitAudioContext; contextAudio = new AudioContext(); } catch (e) {}
 
             video = createCapture(VIDEO, () => {
                 bodyPose = ml5.bodyPose(() => {
@@ -244,18 +257,15 @@
         }
 
         function acceptaExercitiiOra() {
-            document.getElementById('modal-ora').style.display = 'none';
-            asteaptaRaspunsOra = false; deschideMeniuExercitii(); timpUltimaNotificareOra = millis();
+            document.getElementById('modal-ora').style.display = 'none'; asteaptaRaspunsOra = false; deschideMeniuExercitii(); timpUltimaNotificareOra = millis();
         }
 
         function amanaExercitiiOra() {
-            document.getElementById('modal-ora').style.display = 'none';
-            asteaptaRaspunsOra = false; timpUltimaNotificareOra = millis(); 
+            document.getElementById('modal-ora').style.display = 'none'; asteaptaRaspunsOra = false; timpUltimaNotificareOra = millis(); 
         }
 
         function deschideMeniuExercitii() {
-            if (sistemInPauza || esteInZenBreak) return;
-            document.getElementById('modal-meniu-exercitii').style.display = "flex";
+            if (sistemInPauza || esteInZenBreak) return; document.getElementById('modal-meniu-exercitii').style.display = "flex";
         }
 
         function pornesteExercitii(tip) {
@@ -281,8 +291,8 @@
         }
 
         function togglePauzaManual() {
-            sistemInPauza = !sistemInPauza;
-            let btn = document.getElementById('btn-pauza');
+            if(sistemInExercitii) return; 
+            sistemInPauza = !sistemInPauza; let btn = document.getElementById('btn-pauza');
             if (sistemInPauza) {
                 btn.className = "btn-sec in-pauza"; btn.innerText = "▶️ RELUARE";
                 momentInceputPauzaManual = Date.now(); timpInceputOboseala = 0; 
@@ -293,8 +303,7 @@
         }
 
         function pornesteCalibrare() {
-            modCalibrare = true; dateCalibrare = [];
-            document.getElementById('status-msg').innerText = "🔄 CALIBRARE: Stai drept!";
+            modCalibrare = true; dateCalibrare = []; document.getElementById('status-msg').innerText = "🔄 CALIBRARE: Stai drept!";
         }
 
         function finalizeazaCalibrare() {
@@ -303,21 +312,58 @@
             for(let i = 0; i < dateCalibrare.length; i++) { sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi; }
             PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.70); 
             PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.25); 
+            PRAG_TEXT_NECK = Math.floor(PRAG_POSTURA * 0.45); // Recalculăm și pragul extrem
             localStorage.setItem('zenPragGat', PRAG_POSTURA); localStorage.setItem('zenPragOchi', PRAG_DISTANTA);
             document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`;
         }
 
         function draw() {
             background(0);
-            if (video && video.loadedmetadata) image(video, 0, 0, 640, 480);
+            if (video && video.loadedmetadata) {
+                image(video, 0, 0, 640, 480);
+                
+                // --- ANALIZĂ 1 DATA PE SECUNDĂ (Lumină & Dinamism) ---
+                if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
+                    ultimulCheckSecunda = millis();
+                    
+                    // 1. Calcul Luminos (Eșantionare redusă pentru super-performanță)
+                    video.loadPixels();
+                    if (video.pixels.length > 0) {
+                        let sumLumina = 0; let pixelCount = 0;
+                        for(let i = 0; i < video.pixels.length; i += 800) { 
+                            sumLumina += (video.pixels[i] + video.pixels[i+1] + video.pixels[i+2]) / 3;
+                            pixelCount++;
+                        }
+                        let avgLumina = sumLumina / pixelCount;
+                        luminaSlaba = avgLumina < 35; // Prag de întuneric
+                    }
+                    
+                    // 2. Calcul Dinamism (Statue Syndrome)
+                    if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder) {
+                        let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
+                        if (ultimaPozitieUmeri !== 0) {
+                            miscareAcumulata += Math.abs(umeriXCurent - ultimaPozitieUmeri);
+                        }
+                        ultimaPozitieUmeri = umeriXCurent;
+                        
+                        cronometruStatie++;
+                        // La fiecare 60 de secunde verificăm dacă s-a mișcat suficient
+                        if (cronometruStatie >= 60) {
+                            if (miscareAcumulata < 120) { // Foarte rigid (ex. < 120 pixeli mișcare totală în 60s)
+                                stareDinamism = "STATIC ⚠️";
+                                bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA (EȘTI PREA RIGID)!"; timerBanner = millis();
+                            } else {
+                                stareDinamism = "ACTIV";
+                            }
+                            miscareAcumulata = 0; cronometruStatie = 0;
+                        }
+                    }
+                }
+            }
 
             if (timpStartSesiune && !sistemInPauza && !sistemInExercitii && !asteaptaRaspunsOra) {
                 if (millis() - timpUltimaNotificareOra > INTERVAL_NOTIFICARE_ORA) {
-                    asteaptaRaspunsOra = true;
-                    document.getElementById('modal-ora').style.display = 'flex';
-                    if ("Notification" in window && Notification.permission === "granted") {
-                        new Notification("Zen Posture", { body: "A trecut o oră! Timp pentru o pauză scurtă." });
-                    }
+                    asteaptaRaspunsOra = true; document.getElementById('modal-ora').style.display = 'flex';
                 }
             }
 
@@ -330,8 +376,7 @@
             }
 
             if (sistemInPauza) {
-                background(0, 0, 0, 180); fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); text("⏸️ PAUZĂ MANUALĂ", 320, 200);
-                return; 
+                background(0, 0, 0, 180); fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); text("⏸️ PAUZĂ MANUALĂ", 320, 200); return; 
             }
 
             if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { background(0, 0, 0, 150); return; }
@@ -341,6 +386,7 @@
                 if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
                     let cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2;
                     let cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
+                    
                     let dGat = cUY - p.nose.y;
                     let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     let diffUm = Math.abs(p.left_shoulder.y - p.right_shoulder.y);
@@ -353,7 +399,12 @@
                     }
 
                     cadreTotale++;
-                    let gOk = dGat > PRAG_POSTURA; 
+                    
+                    // --- NOU: LOGICĂ TEXT NECK ---
+                    let isTextNeck = dGat < PRAG_TEXT_NECK;
+                    let isAplecat = !isTextNeck && dGat < PRAG_POSTURA; 
+                    let gOk = !isTextNeck && !isAplecat; // Gâtul e OK doar dacă nu e nici aplecat, nici în text neck
+                    
                     let dOk = dOchi < PRAG_DISTANTA; 
                     let uOk = diffUm < PRAG_UMERI;
 
@@ -361,20 +412,18 @@
                         cadreCorecte++; timpInceputOboseala = 0; 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
-                        
                         if (millis() - timpInceputOboseala > 15000) { 
-                            timpInceputOboseala = 0; 
-                            document.getElementById('modal-intrebare').style.display = "flex"; 
-                            asteaptaRaspunsPauza = true; return; 
+                            timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; 
                         }
-
-                        // Alarma se va declanșa controlat și stabil
-                        if (!gOk) declanseazaAlarma('gat');
+                        
+                        // Declanșare alarme specifice (Prioritate la Text Neck, apoi la Aplecat)
+                        if (isTextNeck) declanseazaAlarma('textneck');
+                        else if (isAplecat) declanseazaAlarma('gat');
                         else if (!dOk) declanseazaAlarma('distanta');
                         else if (!uOk) declanseazaAlarma('umeri');
                     }
 
-                    // --- SISTEMUL ANTI-BLOCAJ (Prevenire DOM Thrashing) ---
+                    // --- ACTUALIZARE UI OPTIMIZATĂ ---
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
                     if (scor !== cacheScor) {
                         document.getElementById('v-scor').innerText = scor + "%";
@@ -382,11 +431,18 @@
                         cacheScor = scor;
                     }
 
-                    let stareGatAsteptata = gOk ? "OPTIMĂ" : "APLECAT ⚠️";
+                    let stareGatAsteptata = isTextNeck ? "TELEFON 📱" : (isAplecat ? "APLECAT ⚠️" : "OPTIMĂ");
                     if (stareGatAsteptata !== cacheStareGat) {
                         document.getElementById('v-gat').innerText = stareGatAsteptata;
                         document.getElementById('c-gat').className = gOk ? "card ok" : "card bad";
                         cacheStareGat = stareGatAsteptata;
+                    }
+                    
+                    let stareOchiAsteptata = dOk ? "SIGURĂ" : "APROAPE 🚨";
+                    if (stareOchiAsteptata !== cacheStareOchi) {
+                        document.getElementById('v-ochi').innerText = stareOchiAsteptata;
+                        document.getElementById('c-ochi').className = dOk ? "card ok" : "card bad";
+                        cacheStareOchi = stareOchiAsteptata;
                     }
 
                     let stareUmeriAsteptata = uOk ? "DREPȚI" : "STRÂMBI ⚖️";
@@ -395,11 +451,20 @@
                         document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn";
                         cacheStareUmeri = stareUmeriAsteptata;
                     }
-                    // --------------------------------------------------------
+                    
+                    let stareMediuAsteptata = (luminaSlaba ? "ÎNTUNERIC / " : "LUMINOS / ") + stareDinamism;
+                    if (stareMediuAsteptata !== cacheStareMediu) {
+                        document.getElementById('v-mediu').innerText = stareMediuAsteptata;
+                        document.getElementById('c-mediu').className = (luminaSlaba || stareDinamism.includes("STATIC")) ? "card warn" : "card info";
+                        cacheStareMediu = stareMediuAsteptata;
+                    }
+                    // ------------------------------------
 
-                    stroke(uOk ? (gOk ? "#00ff88" : "#ff4444") : "#ffaa00"); strokeWeight(8);
-                    line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                    stroke("#00ff88"); strokeWeight(4); line(p.nose.x, p.nose.y, cUX, cUY);
+                    // Desenare dinamică (Linia se face ROȘIE puternic la Text Neck, portocaliu la asimetrie)
+                    stroke(isTextNeck ? "#ff0000" : (uOk ? (gOk ? "#00ff88" : "#ff4444") : "#ffaa00")); 
+                    strokeWeight(8); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
+                    stroke(isTextNeck ? "#ff0000" : "#00ff88"); 
+                    strokeWeight(4); line(p.nose.x, p.nose.y, cUX, cUY);
                 }
             }
             if (bannerVizual !== "" && millis() - timerBanner < 4000) { 
@@ -409,8 +474,7 @@
         }
 
         function raspunsPauza(vrea) {
-            document.getElementById('modal-intrebare').style.display = "none";
-            asteaptaRaspunsPauza = false;
+            document.getElementById('modal-intrebare').style.display = "none"; asteaptaRaspunsPauza = false;
             if (vrea) pornestePauzaZen(); else timpInceputOboseala = 0;
         }
 
@@ -445,11 +509,35 @@
             let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
             document.getElementById('stat-live-score').innerText = s + "%";
             document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
-            document.getElementById('stat-exercitii').innerText = exercitiiAzi;
+            document.getElementById('stat-textneck').innerText = eroriTextNeck;
+            
             let g = document.getElementById('stat-grade');
             if(s >= 90) { g.innerText = "A+"; g.style.color = "#00ff88"; }
             else if(s >= 80) { g.innerText = "A"; g.style.color = "#00ff88"; }
             else { g.innerText = "B"; g.style.color = "#ffaa00"; }
+
+            // Update Insights cu toate variabilele
+            let insightBox = document.getElementById('smart-insights');
+            if(insightBox.innerHTML.includes("Se analizează") || insightBox.innerHTML.includes("Biomecanic")) {
+                if (eroriTextNeck > 10) {
+                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Scade utilizarea telefonului! Stai cu capul extrem de aplecat, punând 25kg presiune pe cervicală.";
+                    insightBox.style.borderLeftColor = "#ff0000";
+                } else if (luminaSlaba) {
+                    insightBox.innerHTML = "💡 <strong>Atenție Mediu:</strong> Lumina ambientală este prea slabă! Riști să îți obosești ochii sever. Aprinde o lampă de birou.";
+                    insightBox.style.borderLeftColor = "#ffaa00";
+                } else if (stareDinamism.includes("STATIC")) {
+                    insightBox.innerHTML = "💡 <strong>Atenție Circulație:</strong> Ești prea rigid. Fă o mică întindere sau folosește butonul Kineto pentru a activa sângele.";
+                    insightBox.style.borderLeftColor = "#00b8ff";
+                } else if (s >= 85) {
+                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Excelent! Ești activ, mediul este optim, iar spatele este drept.";
+                    insightBox.style.borderLeftColor = "#00ff88";
+                }
+            }
+
+            if (errorChartInstance) { 
+                errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck]; 
+                errorChartInstance.update(); 
+            }
         }
 
         function deschideAnalytics() {
@@ -463,10 +551,19 @@
             let ctx = document.getElementById('historyChart').getContext('2d');
             historyChartInstance = new Chart(ctx, {
                 data: { labels: labs, datasets: [
-                    { type: 'line', label: 'Kineto', data: datEx, borderColor: '#00b8ff', yAxisID: 'y1' },
+                    { type: 'line', label: 'Kineto', data: datEx, borderColor: '#00b8ff', tension: 0.4, yAxisID: 'y1' },
                     { type: 'bar', label: 'Scor', data: datS, backgroundColor: '#00ff88', borderRadius: 10, yAxisID: 'y' }
                 ]},
-                options: { scales: { y: { max: 100, position: 'left' }, y1: { min: 0, position: 'right', grid: { drawOnChartArea: false } } } }
+                options: { scales: { y: { max: 100, position: 'left' }, y1: { min: 0, position: 'right', grid: { drawOnChartArea: false }, ticks:{stepSize:1} } } }
+            });
+
+            if (errorChartInstance) errorChartInstance.destroy();
+            let ctxErr = document.getElementById('errorChart').getContext('2d');
+            errorChartInstance = new Chart(ctxErr, {
+                type: 'doughnut',
+                // NOU: Am integrat TEXT NECK în graficul de tort
+                data: { labels: ['Aplecat', 'Ochi', 'Umeri', 'Text Neck (Telefon)'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ff4444', '#00b8ff', '#ffaa00', '#ff0000'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ccc', font: {size: 11} } } }, cutout: '70%' }
             });
         }
 
@@ -484,31 +581,23 @@
             if (!alarmeActive || sistemInPauza || sistemInExercitii) return; 
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
             
-            ultimulAvertisment = millis(); 
-            totalAlarmeAzi++; 
-            localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
+            ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
             
             if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
             if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
             if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
+            if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
             
             timerBanner = millis();
             
             try { 
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                let o = contextAudio.createOscillator(); 
-                let v = contextAudio.createGain();
-                
-                o.connect(v); 
-                v.connect(contextAudio.destination);
-                o.frequency.value = tip === 'umeri' ? 250 : 440; 
-                
-                // Plic de sunet sigur pentru browser
-                v.gain.setValueAtTime(0.1, contextAudio.currentTime);
-                v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
-                
-                o.start(); 
-                o.stop(contextAudio.currentTime + 0.3);
+                let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
+                o.connect(v); v.connect(contextAudio.destination);
+                // Sunet acut și enervant pentru Telefon
+                o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
+                v.gain.setValueAtTime(0.1, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
+                o.start(); o.stop(contextAudio.currentTime + 0.3);
             } catch (e) {}
         }
 
