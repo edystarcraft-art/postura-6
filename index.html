@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - The Ultimate Fix</title>
+    <title>Zen Posture Pro - Final Stability</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -34,9 +34,8 @@
 
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1100px; width: 100%; align-items: flex-start; }
 
-        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; position: relative; z-index: 1;}
-        #camera-wrapper canvas { display: block; position: absolute; top: 0; left: 0; z-index: 2; }
-        /* Nu mai folosim display:none la video! Am eliminat CSS-ul care tăia curentul */
+        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #050508; width: 640px; height: 480px; position: relative; z-index: 1;}
+        #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
 
         .panel { display: flex; flex-direction: column; gap: 15px; width: 280px; max-height: 480px; overflow-y: auto; padding-right: 5px; position: relative; z-index: 10; }
         .panel::-webkit-scrollbar { width: 6px; }
@@ -89,4 +88,210 @@
         .chart-history { flex: 2; min-width: 300px; height: 280px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
         .chart-doughnut { flex: 1; min-width: 200px; height: 280px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05);}
         
-        .insights-box { background: rgba(0, 184, 255, 0.1); padding: 25px; border-radius: 20px; margin-top: 30px; text-align: left
+        .insights-box { background: rgba(0, 184, 255, 0.1); padding: 25px; border-radius: 20px; margin-top: 30px; text-align: left; border-left: 5px solid #00b8ff; font-size: 1.15rem; line-height: 1.6; color: #ddd; transition: transform 0.2s ease-out; }
+        .actions-raport { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+        #btn-export { background: #fff; color: #000; }
+    </style>
+</head>
+<body>
+
+    <div id="global-tooltip"></div>
+
+    <div class="header">
+        <h1>ZEN POSTURE <span style="color:white">PRO</span> <span style="font-size:0.4em; color:#00b8ff; vertical-align:top;">ENTERPRISE</span></h1>
+        
+        <div class="controale">
+            <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
+            <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
+            <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ PAUZĂ</button>
+            <button id="btn-exercitii" class="btn-sec" onclick="deschideMeniuExercitii()">🏋️ KINETO</button>
+            <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
+            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT</button>
+            <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE</button>
+        </div>
+        
+        <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
+    </div>
+    
+    <div class="dashboard">
+        <div id="camera-wrapper">
+            <div id="modal-intrebare" class="modal-overlay">
+                <div class="modal-titlu">Oboseală detectată!</div>
+                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă destul de mult.<br>Vrei o pauză de 1 minut?</div>
+                <div>
+                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="raspunsPauza(true)">DA, vreau pauză</button>
+                    <button class="btn-raspuns" style="background:#ff4444; color:#fff;" onclick="raspunsPauza(false)">NU, continuu</button>
+                </div>
+            </div>
+
+            <div id="modal-ora" class="modal-overlay">
+                <div class="modal-titlu" style="color: #00b8ff;">⏱️ O ORĂ DE LUCRU!</div>
+                <div style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; font-weight: bold;">Coloana ta are nevoie de o mică întindere.</div>
+                <div style="font-size: 1.1rem; color: #aaa; margin-bottom: 30px;">Vrei să faci o sesiune scurtă de Kineto?</div>
+                <div>
+                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="acceptaExercitiiOra()">DA, facem Kineto</button>
+                    <button class="btn-raspuns" style="background:#333; color:#fff;" onclick="amanaExercitiiOra()">Peste încă o oră</button>
+                </div>
+            </div>
+
+            <div id="modal-meniu-exercitii" class="modal-overlay">
+                <div class="modal-titlu">Alege tipul de pauză</div>
+                <div>
+                    <button class="btn-raspuns" style="background: #00b8ff; color: #000;" onclick="pornesteExercitii('scaun')">🪑 La Birou (Scaun)</button>
+                    <button class="btn-raspuns" style="background: #00ff88; color: #000;" onclick="pornesteExercitii('picioare')">🧍 În Picioare</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <div class="card" id="c-scor">
+                <div class="lbl">
+                    Scor Zilnic 
+                    <span class="info-icon">ℹ️
+                        <div class="tooltip-content">
+                            <h4>🛡️ Indexul de Sănătate Posturală</h4>
+                            <strong>Ce reprezintă?</strong> Rata de cadre video în care spatele, umerii și ochii tăi sunt în limitele de siguranță.<br>
+                            <strong>Aplicație Medicală:</strong> Un scor > 80% reduce cu 65% riscul de hernie de disc la nivel lombar.<br>
+                            <strong>Calcul AI:</strong> (Timp Corect / Timp Total Monitorizat) * 100.
+                        </div>
+                    </span>
+                </div>
+                <div id="v-scor" class="val">0%</div>
+            </div>
+
+            <div class="card" id="c-gat">
+                <div class="lbl">
+                    Postură & Gât 
+                    <span class="info-icon">ℹ️
+                        <div class="tooltip-content">
+                            <h4>🦒 Extensia Cervicală (Text Neck)</h4>
+                            <strong>Ce reprezintă?</strong> Gradul în care îți apleci capul spre ecran sau spre telefon.<br>
+                            <strong>Aplicație Medicală:</strong> Când te apleci la 45 de grade, presiunea pe gât ajunge la 22kg, provocând "Cocoașa IT-istului".<br>
+                            <strong>Calcul AI:</strong> Măsoară distanța verticală dintre nas și umeri. Ajustat biometric prin calibrare.
+                        </div>
+                    </span>
+                </div>
+                <div id="v-gat" class="val">---</div>
+            </div>
+
+            <div class="card" id="c-ochi">
+                <div class="lbl">
+                    Distanță Monitor 
+                    <span class="info-icon">ℹ️
+                        <div class="tooltip-content">
+                            <h4>👁️ Computer Vision Syndrome</h4>
+                            <strong>Ce reprezintă?</strong> Cât de mult îți apropii fața de ecran atunci când te concentrezi.<br>
+                            <strong>Aplicație Medicală:</strong> Previne oboseala oculară cronică. Distanța ideală este lungimea brațului (50-70cm).<br>
+                            <strong>Calcul AI:</strong> Calculează variația distanței dintre ochiul stâng și cel drept pentru a deduce adâncimea (apropierea de cameră).
+                        </div>
+                    </span>
+                </div>
+                <div id="v-ochi" class="val">---</div>
+            </div>
+
+            <div class="card" id="c-umeri">
+                <div class="lbl">
+                    Asimetrie Umeri 
+                    <span class="info-icon">ℹ️
+                        <div class="tooltip-content">
+                            <h4>⚖️ Aliniament și Scolioză</h4>
+                            <strong>Ce reprezintă?</strong> Cât de "strâmb" stai (dacă te sprijini pe un cot constant).<br>
+                            <strong>Aplicație Medicală:</strong> Un umăr ridicat scurtează mușchiul trapez și provoacă scolioză funcțională.<br>
+                            <strong>Calcul AI:</strong> Calculează diferența absolută de înălțime dintre umărul stâng și drept.
+                        </div>
+                    </span>
+                </div>
+                <div id="v-umeri" class="val">---</div>
+            </div>
+
+            <div class="card" id="c-mediu">
+                <div class="lbl">
+                    Dinamism Corp 
+                    <span class="info-icon">ℹ️
+                        <div class="tooltip-content">
+                            <h4>🩸 Analiza Fidgeting & Tromboză</h4>
+                            <strong>Ce reprezintă?</strong> Cât de "înghețat" ești pe scaun.<br>
+                            <strong>Aplicație Medicală:</strong> Lipsa mișcărilor blochează circulația sângelui. "Cea mai bună postură e următoarea postură".<br>
+                            <strong>Calcul AI:</strong> Înregistrează deplasările umerilor în calupuri de 60s. Necesită minim 120 pixeli de mișcare/minut.
+                        </div>
+                    </span>
+                </div>
+                <div id="v-mediu" class="val info">ANALIZĂ...</div>
+            </div>
+        </div>
+    </div>
+
+    <video id="pip-video" muted autoplay playsinline style="display:none;"></video>
+
+    <div id="modal-analytics">
+        <div id="raport-printabil">
+            <div class="header-raport"><h2>📊 Analiză Biometrică 360°</h2><div class="badge" id="data-raport">Azi</div></div>
+            <div class="stats-grid">
+                <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Scor Sănătate</span><div class="grade-circle" id="stat-grade">A</div></div>
+                <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Lucru</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții Totale</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Erori Text Neck</span></div>
+            </div>
+            <div class="charts-layout">
+                <div class="chart-history"><canvas id="historyChart"></canvas></div>
+                <div class="chart-doughnut"><canvas id="errorChart"></canvas></div>
+            </div>
+            <div class="insights-box" id="smart-insights">Se analizează datele...</div>
+        </div>
+        <div class="actions-raport">
+            <button class="btn-sec" id="btn-export" onclick="exportaRaport()">📸 DESCARCĂ RAPORT</button>
+            <button class="btn-sec" style="background: #333;" onclick="inchideAnalytics()">✖ ÎNCHIDE</button>
+        </div>
+    </div>
+
+    <script>
+        // Funcția de Tooltips Inovatoare
+        window.addEventListener('DOMContentLoaded', () => {
+            const globalTooltip = document.getElementById('global-tooltip');
+            const infoIcons = document.querySelectorAll('.info-icon');
+
+            function updateTooltipPosition(e) {
+                let tooltipHeight = globalTooltip.offsetHeight || 200; 
+                let topPos = e.clientY + 15;
+                let leftPos = e.clientX - 340;
+                
+                if (topPos + tooltipHeight > window.innerHeight) {
+                    topPos = e.clientY - tooltipHeight - 15;
+                }
+                globalTooltip.style.top = topPos + 'px';
+                globalTooltip.style.left = leftPos + 'px'; 
+            }
+
+            infoIcons.forEach(icon => {
+                icon.addEventListener('mouseenter', (e) => {
+                    globalTooltip.innerHTML = icon.querySelector('.tooltip-content').innerHTML;
+                    globalTooltip.style.visibility = 'visible';
+                    globalTooltip.style.opacity = '1';
+                    updateTooltipPosition(e);
+                });
+                icon.addEventListener('mousemove', updateTooltipPosition);
+                icon.addEventListener('mouseleave', () => {
+                    globalTooltip.style.visibility = 'hidden';
+                    globalTooltip.style.opacity = '0';
+                });
+            });
+        });
+
+        let dataCurenta = new Date().toLocaleDateString('ro-RO');
+
+        let ultimaZiSalvata = localStorage.getItem('zenUltimaZi');
+        if (ultimaZiSalvata !== dataCurenta) {
+            localStorage.setItem('zenAlarmsToday', 0); localStorage.setItem('zenEroriGat', 0);
+            localStorage.setItem('zenEroriOchi', 0); localStorage.setItem('zenEroriUmeri', 0);
+            localStorage.setItem('zenEroriTextNeck', 0); localStorage.setItem('zenExercitiiAzi', 0); 
+            localStorage.setItem('zenUltimaZi', dataCurenta);
+        }
+
+        let totalAlarmeAzi = parseInt(localStorage.getItem('zenAlarmsToday')) || 0;
+        let eroriGat = parseInt(localStorage.getItem('zenEroriGat')) || 0;
+        let eroriOchi = parseInt(localStorage.getItem('zenEroriOchi')) || 0;
+        let eroriUmeri = parseInt(localStorage.getItem('zenEroriUmeri')) || 0;
+        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; 
+        let exercitiiAzi = parseInt(localStorage.getItem('zenExercitiiAzi')) || 0;
+
+        let video, bodyPose, poses = [];
