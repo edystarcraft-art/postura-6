@@ -727,4 +727,36 @@
         function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; clearInterval(updateLiveStatsInterval); analizatorIstoricActiv = false;}
 
         function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#050508", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Raport_ZenPosture.png'; link.click(); }); }
-        async function activeazaModFundal() { if (document
+        async function activeazaModFundal() { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); }
+
+        function declanseazaAlarma(tip) {
+            if (!alarmeActive && !modSedinta) return; 
+            if (sistemInPauza || sistemInExercitii) return;
+            if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
+            
+            ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
+            
+            if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
+            if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
+            if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
+            if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
+            
+            timerBanner = millis();
+            
+            if (modSedinta) { document.body.classList.add('sedinta-alert'); return; }
+            
+            try { 
+                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
+                if (contextAudio) {
+                    let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
+                    o.connect(v); v.connect(contextAudio.destination);
+                    o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
+                    v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
+                    o.start(); o.stop(contextAudio.currentTime + 0.3);
+                }
+            } catch (e) {}
+        }
+        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF"; }
+    </script>
+</body>
+</html>
