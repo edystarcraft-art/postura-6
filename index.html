@@ -2,14 +2,13 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Clinical & Gamified</title>
+    <title>Zen Posture Pro - Clean UI & Reset</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* --- DESIGN PREMIUM --- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
         body { background: radial-gradient(circle at top, #111827, #050508 80%); color: #e2e8f0; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; transition: box-shadow 0.3s ease; }
@@ -48,9 +47,17 @@
         .quests-container { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .quests-header { color: #fff; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;}
         
-        /* NOU: Buton Start Misiuni */
         #btn-start-quests { background: #00ff88; color: #000; border: none; padding: 6px 15px; font-size: 0.75rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px rgba(0,255,136,0.3); display: none;}
         #btn-start-quests:hover { transform: scale(1.05); }
+
+        /* NOU: Buton de Reset Misiune */
+        .btn-reset-quest {
+            background: rgba(255, 68, 68, 0.1); color: #ff4444; border: 1px solid rgba(255, 68, 68, 0.3);
+            border-radius: 6px; padding: 2px 8px; font-size: 0.7rem; font-weight: bold; cursor: pointer;
+            margin-left: 10px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center;
+        }
+        .btn-reset-quest:hover { background: #ff4444; color: #fff; }
+        .quest-header-flex { display: flex; align-items: center; }
 
         .xp-badge { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; padding: 5px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); display: flex; align-items: center; gap: 5px;}
         
@@ -77,18 +84,16 @@
         .info-icon:hover { color: #00b8ff; transform: scale(1.1);}
         .tooltip-content { display: none; }
 
-        /* --- TOOLTIP EXTINS (TEXT MAI MIC, LĂȚIME MAI MARE PT DETALII MEDICALE) --- */
         #global-tooltip {
             position: fixed; z-index: 999999; background: rgba(10, 15, 30, 0.98); backdrop-filter: blur(25px);
             border: 1px solid rgba(0, 184, 255, 0.5); border-radius: 12px; padding: 20px; 
             box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05); 
-            color: #cbd5e1; font-size: 0.85rem; width: 450px; pointer-events: none; 
+            color: #cbd5e1; font-size: 0.85rem; width: 400px; pointer-events: none; 
             opacity: 0; visibility: hidden; line-height: 1.5; transition: opacity 0.15s ease;
         }
         #global-tooltip h4 { margin: 0 0 12px 0; color: #f8fafc; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;}
-        #global-tooltip strong { color: #00ff88; font-weight: 600;}
+        #global-tooltip strong { color: #00ff88; font-weight: 600; display: inline-block; margin-top: 8px;}
         #global-tooltip ul { margin: 5px 0 10px 0; padding-left: 20px; }
-        #global-tooltip .code-block { background: #000; padding: 5px 8px; border-radius: 6px; font-family: monospace; color: #00b8ff; font-size: 0.8rem; margin-top: 5px; display: inline-block;}
 
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.85); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 24px; backdrop-filter: blur(10px); }
         .modal-titlu { color: #fff; font-size: 1.8rem; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px;}
@@ -185,13 +190,15 @@
                 
                 <div class="quest-item" id="q-miscare">
                     <div class="quest-title">
-                        <span id="lbl-miscare">🩸 Dinamism Lvl 1: 2000 Mișcări</span>
+                        <div class="quest-header-flex">
+                            <span id="lbl-miscare">🩸 Dinamism Lvl 1: 2000 Mișcări</span>
+                            <button class="btn-reset-quest" onclick="resetQuest('miscare')" title="Resetează misiunea la Nivel 1">↺</button>
+                        </div>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
                                 <h4>🩸 Funcția Endotelială (Dinamism)</h4>
-                                <strong>Impact Medical:</strong> Contracțiile musculare subtile (fidgeting) pompează sângele venos înapoi spre inimă, prevenind staza venoasă și tromboza (DVT) la nivelul picioarelor.<br>
-                                <strong>Mecanică Misiune:</strong> Adună puncte de mișcare ale umerilor (minim 2000 per nivel).<br>
-                                <strong>Calcul AI:</strong> Algoritmul monitorizează centrul umerilor și calculează <i>Diferența de Mișcare:</i> <span class="code-block">delta = abs(umeriX_curent - umeriX_anterior)</span>. Această valoare se adună cumulat în bară.
+                                <strong>Impact Medical:</strong> Contracțiile musculare subtile pompează sângele venos înapoi spre inimă, prevenind staza venoasă și tromboza (DVT) la nivelul picioarelor.<br>
+                                <strong>Mecanică Misiune:</strong> Adună puncte de mișcare ale umerilor (minim 2000 per nivel). Targetul crește la fiecare Level Up.
                             </div>
                         </span>
                     </div>
@@ -200,13 +207,15 @@
 
                 <div class="quest-item" id="q-cervical">
                     <div class="quest-title">
-                        <span id="lbl-cervical">🦒 Cervical Lvl 1: 60s Streak</span>
+                        <div class="quest-header-flex">
+                            <span id="lbl-cervical">🦒 Cervical Lvl 1: 60s Streak</span>
+                            <button class="btn-reset-quest" onclick="resetQuest('cervical')" title="Resetează misiunea la Nivel 1">↺</button>
+                        </div>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
                                 <h4>🦒 Hidratarea Discurilor Cervicale</h4>
-                                <strong>Impact Medical:</strong> Când capul stă drept, discurile C4-C7 se hidratează natural. Când te apleci, presiunea asimetrică expulzează fluidele, ducând la degenerare și dureri iradiante pe braț.<br>
-                                <strong>Mecanică Misiune:</strong> Menține capul drept pentru un "Streak" continuu. Dacă te apleci în față, pierzi progresul (bara revine la ZERO).<br>
-                                <strong>Calcul AI:</strong> Verifică la fiecare secundă dacă: <span class="code-block">Distanța_Y(Nas, Umeri) < Prag_Calibrat * 0.45</span>. Dacă e True, detectează Text Neck și taie progresul.
+                                <strong>Impact Medical:</strong> Când capul stă drept, discurile C4-C7 se hidratează natural. Când te apleci, presiunea asimetrică expulzează fluidele, ducând la degenerare și dureri iradiante.<br>
+                                <strong>Mecanică Misiune:</strong> Menține capul drept neîntrerupt. Dacă te apleci în față peste pragul limită, pierzi progresul și bara revine la ZERO! Targetul crește la fiecare Level Up.
                             </div>
                         </span>
                     </div>
@@ -215,13 +224,15 @@
 
                 <div class="quest-item" id="q-postura">
                     <div class="quest-title">
-                        <span id="lbl-postura">🛡️ Memorie Lvl 1: 120s > 85%</span>
+                        <div class="quest-header-flex">
+                            <span id="lbl-postura">🛡️ Memorie Lvl 1: 120s > 85%</span>
+                            <button class="btn-reset-quest" onclick="resetQuest('postura')" title="Resetează misiunea la Nivel 1">↺</button>
+                        </div>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
                                 <h4>🛡️ Neuroplasticitate Posturală</h4>
-                                <strong>Impact Medical:</strong> Postura corectă nu se obține prin forță, ci prin reprogramarea cortexului motor (memorie musculară). Menținerea repetată a posturii creează noi sinapse neuronale.<br>
-                                <strong>Mecanică Misiune:</strong> Acumulează un timp total în care întregul tău corp e în zona verde.<br>
-                                <strong>Calcul AI:</strong> Agregă toți senzorii. Dacă la finalul unei secunde <span class="code-block">Scor_General >= 85%</span>, adaugă 1 secundă la progresul misiunii.
+                                <strong>Impact Medical:</strong> Postura corectă se obține prin reprogramarea cortexului motor (memorie musculară). Menținerea repetată a posturii creează noi sinapse neuronale.<br>
+                                <strong>Mecanică Misiune:</strong> Acumulează un timp total în care întregul tău corp e în zona verde (scor > 85%). Nu pierzi progresul dacă greșești temporar. Targetul crește la fiecare Level Up.
                             </div>
                         </span>
                     </div>
@@ -240,7 +251,6 @@
                             <li>Un scor > 80% reduce presiunea pe inelul fibros L4-L5 cu până la 65%.</li>
                             <li>Previne inflamarea nervului sciatic (sciatica).</li>
                         </ul>
-                        <strong>Logica AI:</strong> Calculează un raport global ponderat între cadrele perfecte și totalul de cadre analizate la 30 FPS.
                     </div>
                 </span></div>
                 <div id="v-scor" class="val">0%</div>
@@ -255,7 +265,6 @@
                             <li>Pentru fiecare 2.5 cm în care capul este dus în față, presiunea pe cervicală crește cu 4.5 kg.</li>
                             <li>Afectează curba lordotică naturală a gâtului.</li>
                         </ul>
-                        <strong>Logica AI:</strong> Măsoară distanța euclidiană pe axa Y dintre <span class="code-block">pose.nose.y</span> și mediana umerilor. Este ajustată la anatomia ta prin procesul de calibrare.
                     </div>
                 </span></div>
                 <div id="v-gat" class="val">---</div>
@@ -269,7 +278,6 @@
                         <ul>
                             <li>Statul la sub 50cm forțează ochii în stare de convergență continuă, provocând dureri frontale și oboseală (Astenopie).</li>
                         </ul>
-                        <strong>Logica AI:</strong> Deoarece o cameră 2D nu are senzor de adâncime, AI-ul măsoară lățimea în pixeli dintre <span class="code-block">left_eye</span> și <span class="code-block">right_eye</span>. Dacă această distanță crește peste pragul calibrat, deduce că te-ai apropiat periculos de lentilă.
                     </div>
                 </span></div>
                 <div id="v-ochi" class="val">---</div>
@@ -278,13 +286,12 @@
             <div class="card" id="c-umeri">
                 <div class="lbl"><span>⚖️ Aliniament Umeri</span> <span class="info-icon">ℹ️
                     <div class="tooltip-content">
-                        <h4>⚖️ Analiza Tensiunii Trapezului</h4>
-                        <strong>Semnificație Medicală:</strong> Detectează asimetria posturală (ex: sprijinitul pe cot, lucrul cu mouse-ul prea departe).<br>
+                        <h4>⚖️ Asimetrie și Scolioză Funcțională</h4>
+                        <strong>Semnificație Medicală:</strong> Detectează asimetria posturală (ex: sprijinitul pe cot).<br>
                         <ul>
-                            <li>Menținerea unui umăr ridicat blochează mușchiul levator scapulae în contracție, generând puncte trigger dureroase ("noduri").</li>
+                            <li>Menținerea unui umăr ridicat blochează mușchiul levator scapulae în contracție, generând puncte trigger dureroase.</li>
                             <li>Încurajează deviații scoliotice temporare.</li>
                         </ul>
-                        <strong>Logica AI:</strong> Calculează diferența: <span class="code-block">abs(left_shoulder.y - right_shoulder.y)</span>. Dacă deviația depășește 40 de pixeli, se declanșează alerta de asimetrie.
                     </div>
                 </span></div>
                 <div id="v-umeri" class="val">---</div>
@@ -296,10 +303,9 @@
                         <h4>🩸 Analiză Micro-Vibrații și Staring</h4>
                         <strong>Semnificație Medicală:</strong> Măsoară rigiditatea corpului (Statue Syndrome) și rata de clipire deductivă.<br>
                         <ul>
-                            <li><strong>Corp:</strong> O postură perfectă, dar complet nemișcată, este la fel de nocivă ca una strâmbă. Sistemul limfatic necesită contracții.</li>
-                            <li><strong>Ochi:</strong> "Holbatul" (lipsa mișcărilor sacadice oculare) reduce rata de clipit la o treime, uscând filmul lacrimal.</li>
+                            <li><strong>Corp:</strong> O postură perfectă, dar complet nemișcată, scade circulația sângelui spre creier.</li>
+                            <li><strong>Ochi:</strong> "Holbatul" (lipsa mișcărilor oculare) reduce rata de clipit la o treime, uscând corneea.</li>
                         </ul>
-                        <strong>Logica AI:</strong> Rulează un buffer de memorie (Rolling Window) de 60 de secunde pe coordonatele X/Y ale umerilor și ochilor pentru a asigura un "zgomot de fond" natural al mișcării.
                     </div>
                 </span></div>
                 <div id="v-mediu" class="val info">Se analizează...</div>
@@ -337,15 +343,14 @@
     </div>
 
     <script>
-        // --- TOOLTIP ENGINE MAI LARG & RESPONSIV ---
         window.addEventListener('DOMContentLoaded', () => {
             const globalTooltip = document.getElementById('global-tooltip');
             const infoIcons = document.querySelectorAll('.info-icon');
 
             function updateTooltipPosition(e) {
-                let tooltipHeight = globalTooltip.offsetHeight || 300; 
+                let tooltipHeight = globalTooltip.offsetHeight || 200; 
                 let topPos = e.clientY + 15; 
-                let leftPos = e.clientX - 460; // Compensam pentru latimea marita
+                let leftPos = e.clientX - 410; 
                 
                 if (topPos + tooltipHeight > window.innerHeight) topPos = e.clientY - tooltipHeight - 15;
                 if (leftPos < 10) leftPos = 10;
@@ -415,8 +420,6 @@
 
         let timerPauza = null, pipVideoElement;
         let bannerVizual = "", timerBanner = 0, sistemInPauza = false, sistemPornit = false, analizatorIstoricActiv = false;
-        
-        // --- NOU: VARIABILĂ PENTRU BUTONUL MISIUNILOR ---
         let misiuniPornite = false; 
 
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
@@ -457,7 +460,6 @@
                     let btns = document.getElementsByClassName('btn-sec');
                     for(let i=0; i<btns.length; i++) btns[i].style.display = 'flex';
                     
-                    // Afisăm butonul de misiuni doar după ce AI-ul a pornit
                     document.getElementById('btn-start-quests').style.display = 'inline-block';
                     
                     pipVideoElement.play();
@@ -469,7 +471,6 @@
             video.parent('video-container');
         }
 
-        // --- NOU: FUNCTIE START MISIUNI ---
         function toggleMisiuni() {
             misiuniPornite = !misiuniPornite;
             let btn = document.getElementById('btn-start-quests');
@@ -486,6 +487,16 @@
                 btn.style.boxShadow = "0 0 15px rgba(0,255,136,0.3)";
                 qItems.forEach(el => el.classList.remove('active'));
             }
+        }
+
+        // --- NOU: FUNCȚIE DE RESETARE A UNEI MISIUNI ---
+        function resetQuest(tip) {
+            if (tip === 'miscare') { questData.miscare = 0; questData.lvlM = 0; }
+            if (tip === 'cervical') { questData.cervical = 0; questData.lvlC = 0; }
+            if (tip === 'postura') { questData.postura = 0; questData.lvlP = 0; }
+            
+            localStorage.setItem('zenQuestsDyn', JSON.stringify(questData));
+            updateQuestUI();
         }
 
         function toggleSedinta() {
@@ -591,6 +602,7 @@
             document.getElementById('fill-postura').style.width = Math.min((questData.postura / tP) * 100, 100) + "%";
         }
 
+
         function draw() {
             background(15, 23, 42); 
             if (!sistemPornit) {
@@ -619,10 +631,9 @@
                         let isTextNeck = dGat < PRAG_TEXT_NECK;
                         let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
 
-                        // DOAR DACA MISIUNILE SUNT PORNITE
                         if (misiuniPornite) {
                             questData.miscare += miscareAcum;
-                            if (!isTextNeck) questData.cervical++; else questData.cervical = 0; // PENALIZARE
+                            if (!isTextNeck) questData.cervical++; else questData.cervical = 0; 
                             if (sH >= 85) questData.postura++;
                             
                             localStorage.setItem('zenQuestsDyn', JSON.stringify(questData));
@@ -717,7 +728,6 @@
                 }
             }
 
-            // PIP HUD BIONIC
             noStroke(); fill(0, 0, 0, 160); rect(0, 0, 640, 35); rect(0, 445, 640, 35);
             stroke(culoareHUDPip); noFill(); strokeWeight(2); rect(10, 10, 620, 460, 15);
             strokeWeight(4); line(10, 30, 10, 10); line(10, 10, 30, 10); line(630, 30, 630, 10); line(630, 10, 610, 10); line(10, 450, 10, 470); line(10, 470, 30, 470); line(630, 450, 630, 470); line(630, 470, 610, 470);
