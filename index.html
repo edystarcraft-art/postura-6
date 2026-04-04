@@ -2,103 +2,167 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Bionic HUD</title>
+    <title>Zen Posture Pro - Enterprise UI</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; transition: box-shadow 0.3s ease; }
-        body.sedinta-alert { box-shadow: inset 0 0 60px rgba(255, 68, 68, 0.8); }
-        .header { text-align: center; margin-bottom: 15px; }
-        h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
+        /* --- DESIGN PREMIUM: FOND & TYPOGRAPHY --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
-        .controale { display: flex; gap: 8px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; max-width: 1050px; }
-        button { border: none; padding: 10px 15px; font-size: 0.85rem; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; }
-        #btn-start { background: linear-gradient(135deg, #00ff88, #00cc6e); color: #000; box-shadow: 0 5px 20px rgba(0,255,136,0.3); font-size: 1rem; padding: 12px 25px; }
-        #btn-start:hover { transform: scale(1.05); }
+        body { 
+            background: radial-gradient(circle at top, #111827, #050508 80%);
+            color: #e2e8f0; 
+            font-family: 'Inter', sans-serif; 
+            margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; overflow-x: hidden; 
+            transition: box-shadow 0.3s ease; 
+        }
+        body.sedinta-alert { box-shadow: inset 0 0 80px rgba(255, 68, 68, 0.4); }
+
+        /* --- HEADER --- */
+        .header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
+        h1 { 
+            color: #fff; margin: 0 0 5px 0; font-size: 2.2rem; font-weight: 800; 
+            letter-spacing: -1px; text-shadow: 0 10px 30px rgba(0,255,136,0.2); 
+        }
+        h1 span.brand { color: #00ff88; }
+        .badge-ent { 
+            background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; 
+            font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; 
+            vertical-align: top; letter-spacing: 1px; font-weight: 600; margin-left: 5px;
+        }
+        .subtitle { color: #64748b; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
+
+        /* --- CONTROL DOCK (Bara de instrumente) --- */
+        .toolbar { 
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 100px;
+            padding: 10px 15px; display: flex; gap: 10px; justify-content: center; 
+            margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap;
+        }
+
+        button { 
+            border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; 
+            border-radius: 50px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            display: flex; align-items: center; gap: 8px;
+        }
         
-        .btn-sec { background: #333; color: #fff; display: none; }
-        .btn-sec:hover { background: #444; transform: scale(1.05); }
-        #btn-audio.activ { background: #00ff88; color: #000; }
+        #btn-start { background: #00ff88; color: #000; box-shadow: 0 0 20px rgba(0,255,136,0.3); font-size: 0.95rem; }
+        #btn-start:hover { background: #00cc6e; transform: translateY(-2px); box-shadow: 0 5px 25px rgba(0,255,136,0.5); }
         
-        #btn-sedinta { background: #555; color: #fff; border: 2px solid #777; }
-        #btn-sedinta.activ { background: #ff0055; color: #fff; border-color: #ff0055; box-shadow: 0 5px 20px rgba(255,0,85,0.4); animation: pulse 2s infinite; }
-
-        #btn-pip { background: #00b8ff; color: #000; box-shadow: 0 5px 20px rgba(0,184,255,0.3); }
-        #btn-analytics { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.3); }
-        #btn-calib { background: #ff00ff; color: #fff; box-shadow: 0 5px 20px rgba(255,0,255,0.3); }
-        #btn-pauza { background: #555; color: #fff; border: 2px solid #777; }
-        #btn-pauza.in-pauza { background: #ffaa00; color: #000; box-shadow: 0 5px 20px rgba(255,170,0,0.4); border-color: #ffaa00; animation: pulse 2s infinite; }
-        #btn-exercitii { background: #00ffcc; color: #000; box-shadow: 0 5px 20px rgba(0,255,204,0.4); }
-
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
-        #status-msg { margin-top: 5px; font-size: 1rem; color: #888; font-style: italic; font-weight: bold; }
-
-        .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1100px; width: 100%; align-items: flex-start; }
-
-        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; position: relative; z-index: 1;}
-        #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
-
-        .panel { display: flex; flex-direction: column; gap: 15px; width: 280px; max-height: 480px; overflow-y: auto; padding-right: 5px; position: relative; z-index: 10; }
-        .panel::-webkit-scrollbar { width: 6px; }
-        .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-        .card { background: #111122; border-radius: 12px; padding: 15px 20px; border-left: 5px solid #333; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transition: 0.3s; position: relative; }
-        .card.ok { border-left-color: #00ff88; }
-        .card.bad { border-left-color: #ff4444; background: #1a111a; }
-        .card.warn { border-left-color: #ffaa00; background: #221a11; }
-        .card.info { border-left-color: #00b8ff; }
+        .btn-sec { background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); display: none; }
+        .btn-sec:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
         
-        .lbl { font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; display: flex; align-items: center; justify-content: space-between; }
-        .val { font-size: 1.3rem; font-weight: bold; color: #fff; }
+        /* Stilizare butoane specifice */
+        #btn-audio.activ { background: rgba(0, 255, 136, 0.15); color: #00ff88; border-color: rgba(0,255,136,0.3); }
+        #btn-sedinta.activ { background: rgba(255, 0, 85, 0.15); color: #ff0055; border-color: rgba(255,0,85,0.3); animation: pulse-border 2s infinite; }
+        #btn-pauza.in-pauza { background: rgba(255, 170, 0, 0.15); color: #ffaa00; border-color: rgba(255,170,0,0.3); animation: pulse-border 2s infinite; }
+        #btn-exercitii { background: rgba(0, 184, 255, 0.15); color: #00b8ff; border-color: rgba(0,184,255,0.3); }
+        #btn-exercitii:hover { background: #00b8ff; color: #000; }
+        #btn-analytics { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+        @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); } 70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+
+        #status-msg { margin-top: -20px; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;}
+
+        /* --- DASHBOARD GRID --- */
+        .dashboard { 
+            display: grid; grid-template-columns: auto 320px; gap: 30px; 
+            max-width: 1200px; width: 100%; align-items: start; justify-content: center;
+        }
+        @media (max-width: 1000px) { .dashboard { grid-template-columns: 1fr; justify-items: center; } }
+
+        /* --- CAMERA WRAPPER --- */
+        #camera-wrapper { 
+            background: #000; border-radius: 24px; overflow: hidden; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.1);
+            position: relative; z-index: 1; width: 640px; height: 480px;
+        }
+        #camera-wrapper canvas { display: block; position: relative; z-index: 2; border-radius: 24px;}
+
+        /* --- WIDGET GRID (Panoul din dreapta) --- */
+        .panel { 
+            display: grid; grid-template-columns: 1fr; gap: 15px; 
+            width: 100%; max-height: 480px; overflow-y: auto; padding-right: 10px; z-index: 10; 
+        }
+        .panel::-webkit-scrollbar { width: 4px; }
+        .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+        /* Carduri Glassmorphism */
+        .card { 
+            background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 18px 20px; 
+            transition: all 0.3s ease; position: relative; overflow: visible;
+        }
+        .card:hover { transform: translateY(-2px); background: rgba(30, 41, 59, 0.8); }
+
+        /* Status Colors pe Carduri */
+        .card.ok { box-shadow: 0 10px 30px -10px rgba(0, 255, 136, 0.15); border-color: rgba(0, 255, 136, 0.2); }
+        .card.warn { box-shadow: 0 10px 30px -10px rgba(255, 170, 0, 0.15); border-color: rgba(255, 170, 0, 0.3); }
+        .card.bad { box-shadow: 0 10px 30px -10px rgba(255, 68, 68, 0.15); border-color: rgba(255, 68, 68, 0.4); }
+        .card.info { box-shadow: 0 10px 30px -10px rgba(0, 184, 255, 0.15); border-color: rgba(0, 184, 255, 0.2); }
+        
+        .lbl { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 600;}
+        .val { font-size: 1.25rem; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;}
+        
         .val.ok { color: #00ff88; }
         .val.bad { color: #ff4444; }
         .val.warn { color: #ffaa00; }
         .val.info { color: #00b8ff; }
 
-        .info-icon { cursor: help; font-size: 1.2rem; color: #00b8ff; opacity: 0.7; transition: 0.3s; display: inline-block; padding: 5px;}
-        .info-icon:hover { opacity: 1; transform: scale(1.1); }
+        /* --- GLOBAL TOOLTIP --- */
+        .info-icon { cursor: help; font-size: 1.1rem; color: #475569; transition: 0.3s; display: inline-block; padding: 2px;}
+        .info-icon:hover { color: #00b8ff; }
         .tooltip-content { display: none; }
 
-        #global-tooltip { position: fixed; z-index: 999999; background: #0b0b14; border: 2px solid #00b8ff; border-radius: 12px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); color: #e0e0e0; font-size: 0.95rem; width: 320px; pointer-events: none; opacity: 0; visibility: hidden; line-height: 1.5; transition: opacity 0.15s ease-in-out; }
-        #global-tooltip h4 { margin: 0 0 10px 0; color: #00ff88; font-size: 1.05rem; border-bottom: 1px solid #333; padding-bottom: 5px;}
-        #global-tooltip strong { color: #fff; display: inline-block; margin-top: 8px; }
+        #global-tooltip {
+            position: fixed; z-index: 999999; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 184, 255, 0.3); border-radius: 16px; padding: 20px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05); 
+            color: #cbd5e1; font-size: 0.9rem; width: 300px; pointer-events: none; 
+            opacity: 0; visibility: hidden; line-height: 1.6; transition: opacity 0.15s ease;
+        }
+        #global-tooltip h4 { margin: 0 0 12px 0; color: #f8fafc; font-size: 1rem; display: flex; align-items: center; gap: 8px;}
+        #global-tooltip strong { color: #00ff88; font-weight: 600; }
 
-        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 640px; height: 480px; background: rgba(5,5,8,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 20px; backdrop-filter: blur(8px); }
-        .modal-titlu { color: #ffaa00; font-size: 2rem; font-weight: bold; margin-bottom: 15px; }
-        .btn-raspuns { padding: 15px 30px; font-size: 1.1rem; margin: 10px; border-radius: 10px; cursor: pointer; border: none; font-weight: bold; transition: 0.2s;}
+        /* --- MODALS --- */
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.85); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 24px; backdrop-filter: blur(10px); }
+        .modal-titlu { color: #fff; font-size: 1.8rem; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px;}
+        .btn-raspuns { padding: 12px 25px; font-size: 1rem; margin: 8px; border-radius: 50px; cursor: pointer; border: none; font-weight: 600; transition: 0.2s;}
         .btn-raspuns:hover { transform: scale(1.05); }
 
-        #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; overflow-y: auto; padding: 20px 0; backdrop-filter: blur(10px); }
-        #raport-printabil { background: rgba(15, 15, 25, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 25px; padding: 40px; width: 90%; max-width: 950px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.8); margin: auto; position: relative; }
-        .header-raport { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 20px; }
-        .header-raport h2 { color: #fff; margin: 0; font-size: 1.8rem; display: flex; align-items: center; gap: 10px; }
-        .header-raport .badge { background: #00ff88; color: #000; padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: bold; }
+        /* --- ANALYTICS MODAL --- */
+        #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.9); z-index: 9999; justify-content: center; align-items: center; overflow-y: auto; padding: 40px 0; backdrop-filter: blur(20px); }
+        #raport-printabil { background: #0f172a; border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px; width: 90%; max-width: 1000px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); margin: auto; position: relative; }
+        
+        .header-raport { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; margin-bottom: 25px; }
+        .header-raport h2 { color: #fff; margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; font-weight: 800;}
+        .header-raport .badge { background: rgba(0,255,136,0.1); color: #00ff88; padding: 6px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(0,255,136,0.2);}
 
-        .stats-grid { display: flex; justify-content: space-between; gap: 15px; margin: 20px 0 10px 0; flex-wrap: wrap; }
-        .stat-box { background: linear-gradient(145deg, rgba(30,30,45,0.8), rgba(20,20,30,0.8)); padding: 20px; border-radius: 20px; flex: 1; min-width: 140px; text-align: left; border: 1px solid rgba(255,255,255,0.05); position: relative; }
-        .stat-val { font-size: 2.2rem; font-weight: 800; color: #fff; display: block; margin-bottom: 5px; }
-        .stat-lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .grade-circle { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 2px solid; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 20px; margin: 25px 0; }
+        .stat-box { background: rgba(255,255,255,0.02); padding: 20px; border-radius: 20px; text-align: left; border: 1px solid rgba(255,255,255,0.03); position: relative; }
+        .stat-val { font-size: 2.2rem; font-weight: 800; color: #fff; display: block; margin-bottom: 5px; letter-spacing: -1px;}
+        .stat-lbl { font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+        .grade-circle { position: absolute; top: 20px; right: 20px; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; background: rgba(0,0,0,0.4); border: 2px solid; }
 
-        .trofee-container { display: flex; gap: 15px; justify-content: center; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px dashed rgba(255,255,255,0.05); }
-        .trofeu { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.3; filter: grayscale(100%); transition: 0.5s; width: 100px;}
+        .trofee-container { display: flex; gap: 20px; justify-content: center; margin: 20px 0; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 20px; border: 1px solid rgba(255,255,255,0.02); }
+        .trofeu { display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0.3; filter: grayscale(100%); transition: 0.5s; width: 110px;}
         .trofeu.activ { opacity: 1; filter: grayscale(0%); transform: scale(1.05); }
-        .trofeu-icon { font-size: 2.5rem; background: rgba(255, 215, 0, 0.1); width: 60px; height: 60px; display: flex; justify-content: center; align-items: center; border-radius: 50%; border: 2px solid #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
-        .trofeu-titlu { font-size: 0.75rem; color: #ffd700; font-weight: bold; text-align: center; }
+        .trofeu-icon { font-size: 2.2rem; background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 170, 0, 0.05)); width: 65px; height: 65px; display: flex; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255, 215, 0, 0.5); box-shadow: 0 10px 20px rgba(255, 215, 0, 0.1); }
+        .trofeu-titlu { font-size: 0.7rem; color: #cbd5e1; font-weight: 600; text-align: center; text-transform: uppercase; letter-spacing: 0.5px;}
 
-        .charts-layout { display: flex; gap: 20px; margin-top: 15px; flex-wrap: wrap; }
-        .chart-history { flex: 2; min-width: 300px; height: 260px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .chart-doughnut { flex: 1; min-width: 200px; height: 260px; background: rgba(20,20,30,0.5); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.05);}
+        .charts-layout { display: flex; gap: 25px; margin-top: 25px; flex-wrap: wrap; }
+        .chart-history { flex: 2; min-width: 300px; height: 280px; background: rgba(255,255,255,0.02); border-radius: 24px; padding: 20px; border: 1px solid rgba(255,255,255,0.03); }
+        .chart-doughnut { flex: 1; min-width: 200px; height: 280px; background: rgba(255,255,255,0.02); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; align-items: center; border: 1px solid rgba(255,255,255,0.03);}
         
-        .insights-box { background: rgba(0, 184, 255, 0.1); padding: 25px; border-radius: 20px; margin-top: 20px; text-align: left; border-left: 5px solid #00b8ff; font-size: 1.15rem; line-height: 1.6; color: #ddd; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
-        .actions-raport { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
-        #btn-export { background: #fff; color: #000; }
-        
-        #achievement-popup { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; padding: 20px 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4); font-weight: bold; font-size: 1.2rem; transform: translateY(150px); opacity: 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999; display: flex; align-items: center; gap: 15px; }
+        .insights-box { background: rgba(0, 184, 255, 0.05); padding: 25px; border-radius: 20px; margin-top: 25px; text-align: left; border: 1px solid rgba(0, 184, 255, 0.2); font-size: 1rem; line-height: 1.6; color: #cbd5e1; transition: all 0.3s ease; }
+        .actions-raport { display: flex; gap: 15px; justify-content: center; margin-top: 30px; }
+
+        #achievement-popup { position: fixed; bottom: 30px; right: 30px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 215, 0, 0.5); color: #fff; padding: 20px 25px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 30px rgba(255,215,0,0.1); font-weight: 600; font-size: 1.1rem; transform: translateY(150px); opacity: 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999; display: flex; align-items: center; gap: 15px; }
         #achievement-popup.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
@@ -108,47 +172,47 @@
     <div id="achievement-popup">🏆 <span id="ach-text">Trofeu Deblocat!</span></div>
 
     <div class="header">
-        <h1>ZEN POSTURE <span style="color:white">PRO</span> <span style="font-size:0.4em; color:#ffd700; vertical-align:top;">UNICORN</span></h1>
-        
-        <div class="controale">
-            <button id="btn-start" onclick="initSistem()">1. INIȚIALIZARE SISTEM</button>
-            <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 ALARME: ON</button>
-            <button id="btn-sedinta" class="btn-sec" onclick="toggleSedinta()">🎧 ȘEDINȚĂ: OFF</button>
-            <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ PAUZĂ</button>
-            <button id="btn-exercitii" class="btn-sec" onclick="cereKinetoAI()">🏋️ KINETO AI</button>
-            <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
-            <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT</button>
-            <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE</button>
-        </div>
-        
-        <div id="status-msg">Apasă butonul pentru a porni AI-ul.</div>
+        <h1><span class="brand">ZEN POSTURE</span> PRO <span class="badge-ent">ENTERPRISE</span></h1>
+        <div class="subtitle">AI Biomechanics Dashboard</div>
     </div>
+    
+    <div class="toolbar">
+        <button id="btn-start" onclick="initSistem()">▶ INIȚIALIZARE</button>
+        <button id="btn-audio" class="btn-sec activ" onclick="toggleAudio()">🔔 Alarme</button>
+        <button id="btn-sedinta" class="btn-sec" onclick="toggleSedinta()">🎧 Ședință</button>
+        <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ Pauză</button>
+        <button id="btn-exercitii" class="btn-sec" onclick="cereKinetoAI()">🏋️ Kineto AI</button>
+        <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PiP</button>
+        <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 Raport</button>
+        <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 Calibrare</button>
+    </div>
+    
+    <div id="status-msg">Sistemul este pregătit. Apasă Inițializare.</div>
     
     <div class="dashboard">
         <div id="camera-wrapper">
             <div id="modal-intrebare" class="modal-overlay">
-                <div class="modal-titlu">Oboseală detectată!</div>
-                <div style="font-size: 1.2rem; margin-bottom: 30px;">Ai stat în poziție incorectă destul de mult.<br>Vrei o pauză ghidată de AI?</div>
+                <div class="modal-titlu">Oboseală detectată</div>
+                <div style="font-size: 1.1rem; margin-bottom: 30px; color:#cbd5e1;">Presiune ridicată pe coloană.<br>Vrei o rutină Kineto generată de AI?</div>
                 <div>
-                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="raspunsPauza(true)">DA, generează pauza</button>
-                    <button class="btn-raspuns" style="background:#ff4444; color:#fff;" onclick="raspunsPauza(false)">NU, continuu</button>
+                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="raspunsPauza(true)">Începe Kineto</button>
+                    <button class="btn-raspuns" style="background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.2);" onclick="raspunsPauza(false)">Ignoră</button>
                 </div>
             </div>
 
             <div id="modal-ora" class="modal-overlay">
-                <div class="modal-titlu" style="color: #00b8ff;">⏱️ O ORĂ DE LUCRU!</div>
-                <div style="font-size: 1.3rem; margin-bottom: 30px; color: #fff; font-weight: bold;">Coloana ta are nevoie de o mică întindere.</div>
-                <div style="font-size: 1.1rem; color: #aaa; margin-bottom: 30px;">Vrei să începi o sesiune Kineto generată automat?</div>
+                <div class="modal-titlu" style="color: #00b8ff;">O oră completă</div>
+                <div style="font-size: 1.1rem; margin-bottom: 30px; color: #cbd5e1;">Recomandăm activarea circulației sângelui.</div>
                 <div>
-                    <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="acceptaExercitiiOra()">DA, facem Kineto</button>
-                    <button class="btn-raspuns" style="background:#333; color:#fff;" onclick="amanaExercitiiOra()">Peste încă o oră</button>
+                    <button class="btn-raspuns" style="background:#00b8ff; color:#000;" onclick="acceptaExercitiiOra()">Pauză Activă (1m)</button>
+                    <button class="btn-raspuns" style="background:rgba(255,255,255,0.1); color:#fff;" onclick="amanaExercitiiOra()">Amână</button>
                 </div>
             </div>
 
             <div id="modal-meniu-exercitii" class="modal-overlay">
-                <div class="modal-titlu">Alege tipul de pauză</div>
+                <div class="modal-titlu">Selectează modul</div>
                 <div>
-                    <button class="btn-raspuns" style="background: #00b8ff; color: #000;" onclick="pornesteExercitii('scaun')">🪑 La Birou (Scaun)</button>
+                    <button class="btn-raspuns" style="background: #00b8ff; color: #000;" onclick="pornesteExercitii('scaun')">🪑 La Birou</button>
                     <button class="btn-raspuns" style="background: #00ff88; color: #000;" onclick="pornesteExercitii('picioare')">🧍 În Picioare</button>
                 </div>
             </div>
@@ -156,80 +220,83 @@
         
         <div class="panel">
             <div class="card" id="c-scor">
-                <div class="lbl">Scor Zilnic <span class="info-icon">ℹ️<div class="tooltip-content"><h4>🛡️ Indexul de Sănătate</h4><strong>Ce reprezintă?</strong> Rata cadrelor video de siguranță.<br><strong>Medical:</strong> Un scor > 80% reduce cu 65% riscul de hernie.<br><strong>Calcul AI:</strong> (Timp Corect / Timp Total) * 100.</div></span></div>
+                <div class="lbl"><span>🛡️ Index Sănătate</span> <span class="info-icon">ℹ️
+                    <div class="tooltip-content"><h4>🛡️ Index Postural</h4><strong>Medical:</strong> Previne hernia de disc.<br><strong>Calcul AI:</strong> (Timp Corect / Timp Total) * 100.</div>
+                </span></div>
                 <div id="v-scor" class="val">0%</div>
             </div>
 
             <div class="card" id="c-gat">
-                <div class="lbl">Postură & Gât <span class="info-icon">ℹ️<div class="tooltip-content"><h4>🦒 Extensia Cervicală (Text Neck)</h4><strong>Ce reprezintă?</strong> Gradul aplecării capului.<br><strong>Medical:</strong> Previne "Cocoașa IT-istului". 45 grade = 22kg presiune.<br><strong>Calcul AI:</strong> Măsoară distanța Y nas-umeri.</div></span></div>
+                <div class="lbl"><span>🦒 Axa Cervicală</span> <span class="info-icon">ℹ️
+                    <div class="tooltip-content"><h4>🦒 Text Neck</h4><strong>Medical:</strong> 45° aplecare = 22kg presiune pe gât.<br><strong>Calcul AI:</strong> Distanța Y nas-umeri.</div>
+                </span></div>
                 <div id="v-gat" class="val">---</div>
             </div>
 
             <div class="card" id="c-ochi">
-                <div class="lbl">Distanță Monitor <span class="info-icon">ℹ️<div class="tooltip-content"><h4>👁️ Computer Vision Syndrome</h4><strong>Ce reprezintă?</strong> Apropierea de ecran.<br><strong>Medical:</strong> Previne miopia. Distanța ideală 50-70cm.<br><strong>Calcul AI:</strong> Variația distanței dintre ochi (adâncime).</div></span></div>
+                <div class="lbl"><span>👁️ Distanță Monitor</span> <span class="info-icon">ℹ️
+                    <div class="tooltip-content"><h4>👁️ Oboseală Oculară</h4><strong>Medical:</strong> Previne miopia. Distanța ideală: 60cm.<br><strong>Calcul AI:</strong> Lățimea pupilelor în pixeli.</div>
+                </span></div>
                 <div id="v-ochi" class="val">---</div>
             </div>
 
             <div class="card" id="c-umeri">
-                <div class="lbl">Asimetrie Umeri <span class="info-icon">ℹ️<div class="tooltip-content"><h4>⚖️ Aliniament și Scolioză</h4><strong>Ce reprezintă?</strong> Cât de "strâmb" stai.<br><strong>Medical:</strong> Previne scurtarea mușchiului trapez și scolioza.<br><strong>Calcul AI:</strong> Diferența absolută în pixeli (Stâng-Drept).</div></span></div>
+                <div class="lbl"><span>⚖️ Aliniament Umeri</span> <span class="info-icon">ℹ️
+                    <div class="tooltip-content"><h4>⚖️ Risc Scolioză</h4><strong>Medical:</strong> Un umăr ridicat scurtează trapezul.<br><strong>Calcul AI:</strong> Diferența absolută înălțime stâng-drept.</div>
+                </span></div>
                 <div id="v-umeri" class="val">---</div>
             </div>
 
             <div class="card" id="c-mediu">
-                <div class="lbl">Ochi & Dinamism <span class="info-icon">ℹ️<div class="tooltip-content"><h4>🩸 Fidgeting & Oboseală Oculară</h4><strong>Ce reprezintă?</strong> Cât de "înghețat" ești pe scaun și cât de fix privești.<br><strong>Medical:</strong> Lipsa mișcărilor blochează circulația. Privești fix = ochi uscați.<br><strong>Calcul AI:</strong> Urmărește 60s macro-mișcarea umerilor și micro-mișcarea ochilor.</div></span></div>
-                <div id="v-mediu" class="val info">ANALIZĂ...</div>
+                <div class="lbl"><span>🩸 Dinamism & Focus</span> <span class="info-icon">ℹ️
+                    <div class="tooltip-content"><h4>🩸 Fidgeting & Clipit</h4><strong>Medical:</strong> "Cea mai bună postură e următoarea".<br><strong>Calcul AI:</strong> Tracker de micro-mișcări 60s.</div>
+                </span></div>
+                <div id="v-mediu" class="val info">Se analizează...</div>
             </div>
         </div>
     </div>
 
+    <div id="video-container" style="width:0; height:0; overflow:hidden;"></div>
     <video id="pip-video" muted autoplay playsinline style="display:none;"></video>
 
     <div id="modal-analytics">
         <div id="raport-printabil">
-            <div class="header-raport"><h2>📊 Analiză Biometrică 360°</h2><div class="badge" id="data-raport">Azi</div></div>
+            <div class="header-raport"><h2>📊 Raport Executiv Biomecanic</h2><div class="badge" id="data-raport">Azi</div></div>
             
             <div class="trofee-container">
-                <div class="trofeu" id="badge-titan">
-                    <div class="trofeu-icon">🛡️</div>
-                    <div class="trofeu-titlu">COLOANĂ DE TITAN<br><span style="color:#aaa; font-weight:normal; font-size:0.6rem;">Scor 90%+</span></div>
-                </div>
-                <div class="trofeu" id="badge-zen">
-                    <div class="trofeu-icon">🧘‍♂️</div>
-                    <div class="trofeu-titlu">MAESTRUL ZEN<br><span style="color:#aaa; font-weight:normal; font-size:0.6rem;">3 Sesiuni Kineto</span></div>
-                </div>
-                <div class="trofeu" id="badge-soim">
-                    <div class="trofeu-icon">🦅</div>
-                    <div class="trofeu-titlu">OCHI DE ȘOIM<br><span style="color:#aaa; font-weight:normal; font-size:0.6rem;">0 Erori Ochi/Distanță</span></div>
-                </div>
+                <div class="trofeu" id="badge-titan"><div class="trofeu-icon">🛡️</div><div class="trofeu-titlu">Coloană de Titan</div></div>
+                <div class="trofeu" id="badge-zen"><div class="trofeu-icon">🧘‍♂️</div><div class="trofeu-titlu">Maestrul Zen</div></div>
+                <div class="trofeu" id="badge-soim"><div class="trofeu-icon">🦅</div><div class="trofeu-titlu">Ochi de Șoim</div></div>
             </div>
 
             <div class="stats-grid">
-                <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Scor Sănătate</span><div class="grade-circle" id="stat-grade">A</div></div>
-                <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Lucru</span></div>
-                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții Totale</span></div>
-                <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Erori Text Neck</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Index General</span><div class="grade-circle" id="stat-grade">A</div></div>
+                <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Activ</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții</span></div>
+                <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Alerte Text-Neck</span></div>
             </div>
             
             <div class="charts-layout">
                 <div class="chart-history"><canvas id="historyChart"></canvas></div>
                 <div class="chart-doughnut"><canvas id="errorChart"></canvas></div>
             </div>
-            <div class="insights-box" id="smart-insights">Apasă pe o coloană din grafic pentru a vizualiza detaliile acelei zile...</div>
+            <div class="insights-box" id="smart-insights">Apasă pe o coloană din grafic pentru analiză istorică.</div>
         </div>
         <div class="actions-raport">
-            <button class="btn-sec" id="btn-export" onclick="exportaRaport()">📸 DESCARCĂ RAPORT</button>
-            <button class="btn-sec" style="background: #333;" onclick="inchideAnalytics()">✖ ÎNCHIDE</button>
+            <button class="btn-sec" id="btn-export" style="display:block; background:#fff; color:#000;" onclick="exportaRaport()">📸 Descarcă PDF/PNG</button>
+            <button class="btn-sec" style="display:block; background: rgba(255,255,255,0.1);" onclick="inchideAnalytics()">✖ Închide</button>
         </div>
     </div>
 
     <script>
+        // TOOLTIP ENGINE
         window.addEventListener('DOMContentLoaded', () => {
             const globalTooltip = document.getElementById('global-tooltip');
             const infoIcons = document.querySelectorAll('.info-icon');
 
             function updateTooltipPosition(e) {
-                let tooltipHeight = globalTooltip.offsetHeight || 200; 
-                let topPos = e.clientY + 15; let leftPos = e.clientX - 340;
+                let tooltipHeight = globalTooltip.offsetHeight || 150; 
+                let topPos = e.clientY + 15; let leftPos = e.clientX - 320;
                 if (topPos + tooltipHeight > window.innerHeight) topPos = e.clientY - tooltipHeight - 15;
                 globalTooltip.style.top = topPos + 'px'; globalTooltip.style.left = leftPos + 'px'; 
             }
@@ -248,6 +315,7 @@
             incarcaTrofee();
         });
 
+        // VARIABILE GLOBALE
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
 
         let ultimaZiSalvata = localStorage.getItem('zenUltimaZi');
@@ -278,13 +346,10 @@
         let timpInceputOboseala = 0, asteaptaRaspunsPauza = false, esteInZenBreak = false, secundeRamasePauza = 0;
         
         let timpUltimaNotificareOra = 0; const INTERVAL_NOTIFICARE_ORA = 3600000; let asteaptaRaspunsOra = false;
-
-        let ultimulCheckSecunda = 0;
-        let ultimaPozitieUmeri = 0, miscareAcumulata = 0, cronometruStatie = 0; 
+        let ultimulCheckSecunda = 0, ultimaPozitieUmeri = 0, miscareAcumulata = 0, cronometruStatie = 0; 
         let stareDinamism = "ACTIV"; 
 
-        let modSedinta = false;
-        let ultimaOchiX = 0, ultimaOchiY = 0, miscareOchiAcumulata = 0, cronometruOchi = 0;
+        let modSedinta = false, ultimaOchiX = 0, ultimaOchiY = 0, miscareOchiAcumulata = 0, cronometruOchi = 0;
         let alertaOchiUscati = false;
 
         const exCervical = ["Împinge bărbia în spate (Double Chin).", "Trage capul ușor spre umărul stâng.", "Trage capul ușor spre umărul drept.", "Rotește capul complet și lent."];
@@ -292,15 +357,10 @@
         const exGeneral = ["Apleacă-te ușor spre vârfuri.", "Rotește bazinul.", "Deschide pieptul, mâinile la spate.", "Privește la distanță (Regula 20-20-20)."];
 
         let timerPauza = null, pipVideoElement;
-        let bannerVizual = "", timerBanner = 0, sistemInPauza = false;
+        let bannerVizual = "", timerBanner = 0, sistemInPauza = false, sistemPornit = false, analizatorIstoricActiv = false;
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
-        let sistemPornit = false, analizatorIstoricActiv = false;
-        
-        // VARIABILE PENTRU HUD BIONIC IN PiP
-        let culoareHUDPip = "#00ff88";
-        let statusHUDPip = "OPTIMĂ";
-
+        let culoareHUDPip = "#00ff88", statusHUDPip = "OPTIMĂ";
         let cacheScor = -1, cacheStareGat = "", cacheStareUmeri = "", cacheStareOchi = "", cacheStareMediu = "";
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
@@ -314,28 +374,24 @@
                 localStorage.setItem('zenPostureHistory', JSON.stringify({"Luni": 85, "Marți": 78}));
                 localStorage.setItem('zenExercisesHistory', JSON.stringify({"Luni": 2, "Marți": 1}));
             }
-            if (!localStorage.getItem('zenRealizari')) {
-                localStorage.setItem('zenRealizari', JSON.stringify({titan: false, zen: false, soim: false}));
-            }
+            if (!localStorage.getItem('zenRealizari')) localStorage.setItem('zenRealizari', JSON.stringify({titan: false, zen: false, soim: false}));
         }
 
         function initSistem() {
             sistemPornit = true;
             document.getElementById('btn-start').style.display = 'none';
-            document.getElementById('status-msg').innerText = "Permite accesul...";
+            document.getElementById('status-msg').innerText = "Accesare Cameră...";
             if ("Notification" in window) Notification.requestPermission();
-            
             try { window.AudioContext = window.AudioContext || window.webkitAudioContext; contextAudio = new AudioContext(); } catch (e) {}
 
             video = createCapture(VIDEO, () => {
-                document.getElementById('status-msg').innerText = "AI-ul se descarcă...";
-                
+                document.getElementById('status-msg').innerText = "Pornire Motor AI...";
                 bodyPose = ml5.bodyPose(() => {
-                    document.getElementById('status-msg').innerText = `SISTEM ACTIV ✅`;
-                    document.getElementById('status-msg').style.color = "#00ff88";
+                    document.getElementById('status-msg').innerText = `SISTEM ENTERPRISE ONLINE ✅`;
+                    document.getElementById('status-msg').style.color = "#00b8ff";
                     
                     let btns = document.getElementsByClassName('btn-sec');
-                    for(let i=0; i<btns.length; i++) btns[i].style.display = 'block';
+                    for(let i=0; i<btns.length; i++) btns[i].style.display = 'flex';
                     
                     pipVideoElement.play();
                     timpStartSesiune = Date.now(); timpUltimaNotificareOra = millis(); 
@@ -343,20 +399,18 @@
                     setInterval(salveazaProgresul, 5000);
                 });
             });
-            video.parent('camera-wrapper'); video.size(640, 480);
-            video.style('position', 'absolute'); video.style('top', '0'); video.style('left', '0');
-            video.style('opacity', '0'); video.style('z-index', '1');
+            // Fix pentru Safari/Chrome: Video-ul e mutat într-un div ascuns, p5 funcționează perfect
+            video.parent('video-container');
         }
 
         function toggleSedinta() {
-            modSedinta = !modSedinta;
-            let btn = document.getElementById('btn-sedinta');
+            modSedinta = !modSedinta; let btn = document.getElementById('btn-sedinta');
             if(modSedinta) {
-                btn.className = "btn-sec activ"; btn.innerText = "🎧 ȘEDINȚĂ: ON (MUTE)";
-                alarmeActive = false; document.getElementById('btn-audio').innerText = "🔕 ALARME: OFF"; document.getElementById('btn-audio').className = "btn-sec";
+                btn.className = "btn-sec activ"; btn.innerHTML = "🎧 ȘEDINȚĂ: ON";
+                alarmeActive = false; document.getElementById('btn-audio').innerHTML = "🔕 Alarme Mute"; document.getElementById('btn-audio').className = "btn-sec";
             } else {
-                btn.className = "btn-sec"; btn.innerText = "🎧 ȘEDINȚĂ: OFF";
-                alarmeActive = true; document.getElementById('btn-audio').innerText = "🔔 ALARME: ON"; document.getElementById('btn-audio').className = "btn-sec activ";
+                btn.className = "btn-sec"; btn.innerHTML = "🎧 Ședință";
+                alarmeActive = true; document.getElementById('btn-audio').innerHTML = "🔔 Alarme"; document.getElementById('btn-audio').className = "btn-sec activ";
                 document.body.classList.remove('sedinta-alert');
             }
         }
@@ -364,23 +418,15 @@
         function cereKinetoAI() {
             if (sistemInPauza || esteInZenBreak) return;
             let maxErori = Math.max(eroriGat + eroriTextNeck, eroriUmeri, eroriOchi);
-            let recomandare = 'general';
-            if (maxErori > 0) {
-                if (maxErori === eroriGat + eroriTextNeck) recomandare = 'cervical';
-                else if (maxErori === eroriUmeri) recomandare = 'umeri';
-            }
-            pornesteExercitiiAI(recomandare);
+            let rec = 'general';
+            if (maxErori > 0) { if (maxErori === eroriGat + eroriTextNeck) rec = 'cervical'; else if (maxErori === eroriUmeri) rec = 'umeri'; }
+            pornesteExercitiiAI(rec);
         }
 
         function pornesteExercitiiAI(tip) {
-            document.getElementById('modal-meniu-exercitii').style.display = "none";
-            document.getElementById('modal-ora').style.display = "none";
+            document.getElementById('modal-meniu-exercitii').style.display = "none"; document.getElementById('modal-ora').style.display = "none";
             sistemInExercitii = true; secundeRamasePauza = 60; 
-            
-            let lista = exGeneral;
-            if (tip === 'cervical') lista = exCervical;
-            if (tip === 'umeri') lista = exUmeri;
-            
+            let lista = exGeneral; if (tip === 'cervical') lista = exCervical; if (tip === 'umeri') lista = exUmeri;
             exercitiuCurentText = lista[0]; momentInceputPauzaManual = Date.now(); 
             
             timerExercitii = setInterval(() => {
@@ -388,55 +434,57 @@
                 if (secundeRamasePauza === 45) exercitiuCurentText = lista[1];
                 if (secundeRamasePauza === 30) exercitiuCurentText = lista[2];
                 if (secundeRamasePauza === 15) exercitiuCurentText = lista[3];
-
                 if(secundeRamasePauza <= 0) { 
                     clearInterval(timerExercitii); sistemInExercitii = false; 
                     exercitiiAzi++; localStorage.setItem('zenExercitiiAzi', exercitiiAzi);
                     totalTimpPauza += (Date.now() - momentInceputPauzaManual); 
-                    bannerVizual = "✅ Sesiune AI Completă!"; timerBanner = millis();
-                    verificaRealizari(); 
+                    bannerVizual = "✅ Sesiune AI Completă!"; timerBanner = millis(); verificaRealizari(); 
                 }
             }, 1000);
         }
 
-        function acceptaExercitiiOra() { asteaptaRaspunsOra = false; cereKinetoAI(); timpUltimaNotificareOra = millis(); }
+        function acceptaExercitiiOra() { document.getElementById('modal-ora').style.display = 'none'; asteaptaRaspunsOra = false; cereKinetoAI(); timpUltimaNotificareOra = millis(); }
         function amanaExercitiiOra() { document.getElementById('modal-ora').style.display = 'none'; asteaptaRaspunsOra = false; timpUltimaNotificareOra = millis(); }
+        function deschideMeniuExercitii() { if (sistemInPauza || esteInZenBreak) return; document.getElementById('modal-meniu-exercitii').style.display = "flex"; }
+        function pornesteExercitii(tip) {
+            document.getElementById('modal-meniu-exercitii').style.display = "none"; sistemInExercitii = true; secundeRamasePauza = 60; 
+            let lista = tip === 'scaun' ? exScaun : exPicioare; exercitiuCurentText = lista[0]; momentInceputPauzaManual = Date.now(); 
+            timerExercitii = setInterval(() => {
+                secundeRamasePauza--;
+                if (secundeRamasePauza === 45) exercitiuCurentText = lista[1]; if (secundeRamasePauza === 30) exercitiuCurentText = lista[2]; if (secundeRamasePauza === 15) exercitiuCurentText = lista[3];
+                if(secundeRamasePauza <= 0) { 
+                    clearInterval(timerExercitii); sistemInExercitii = false; 
+                    exercitiiAzi++; localStorage.setItem('zenExercitiiAzi', exercitiiAzi);
+                    totalTimpPauza += (Date.now() - momentInceputPauzaManual); 
+                    bannerVizual = "✅ Sesiune Completă!"; timerBanner = millis(); verificaRealizari();
+                }
+            }, 1000);
+        }
 
         function togglePauzaManual() {
             if(sistemInExercitii) return; 
             sistemInPauza = !sistemInPauza; let btn = document.getElementById('btn-pauza');
             if (sistemInPauza) {
-                btn.className = "btn-sec in-pauza"; btn.innerText = "▶️ RELUARE";
+                btn.className = "btn-sec in-pauza"; btn.innerHTML = "▶️ Reluare";
                 momentInceputPauzaManual = Date.now(); timpInceputOboseala = 0; 
             } else {
-                btn.className = "btn-sec"; btn.innerText = "⏸️ PAUZĂ";
+                btn.className = "btn-sec"; btn.innerHTML = "⏸️ Pauză";
                 totalTimpPauza += (Date.now() - momentInceputPauzaManual);
             }
         }
 
         function pornesteCalibrare() { modCalibrare = true; dateCalibrare = []; document.getElementById('status-msg').innerText = "🔄 CALIBRARE: Stai drept!"; }
-
         function finalizeazaCalibrare() {
-            modCalibrare = false;
-            let sumaGat = 0, sumaOchi = 0;
+            modCalibrare = false; let sumaGat = 0, sumaOchi = 0;
             for(let i = 0; i < dateCalibrare.length; i++) { sumaGat += dateCalibrare[i].gat; sumaOchi += dateCalibrare[i].ochi; }
-            PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.70); 
-            PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.25); 
-            PRAG_TEXT_NECK = Math.floor(PRAG_POSTURA * 0.45); 
+            PRAG_POSTURA = Math.floor((sumaGat / dateCalibrare.length) * 0.70); PRAG_DISTANTA = Math.floor((sumaOchi / dateCalibrare.length) * 1.25); PRAG_TEXT_NECK = Math.floor(PRAG_POSTURA * 0.45); 
             localStorage.setItem('zenPragGat', PRAG_POSTURA); localStorage.setItem('zenPragOchi', PRAG_DISTANTA);
             document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`;
         }
 
         function draw() {
-            background(0);
-            
-            if (!sistemPornit) {
-                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(24); textStyle(BOLD);
-                text("Sistemul este pregătit", 320, 220);
-                fill(200); textSize(16); textStyle(NORMAL);
-                text("Apasă butonul de INIȚIALIZARE de sus pentru a porni.", 320, 260);
-                return; 
-            }
+            background(15, 23, 42); // Fundal elegant dark albastrui
+            if (!sistemPornit) return;
             
             if (video && video.loadedmetadata) {
                 image(video, 0, 0, 640, 480);
@@ -444,7 +492,6 @@
                 if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
                     ultimulCheckSecunda = millis();
                     if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder && poses[0].left_eye) {
-                        
                         let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
                         if (ultimaPozitieUmeri !== 0) miscareAcumulata += Math.abs(umeriXCurent - ultimaPozitieUmeri);
                         ultimaPozitieUmeri = umeriXCurent;
@@ -455,16 +502,11 @@
 
                         cronometruStatie++;
                         if (cronometruStatie % 30 === 0) {
-                            if(miscareOchiAcumulata < 30) { 
-                                alertaOchiUscati = true; bannerVizual = "👁️ CLIPEȘTE! Ochi Uscați."; timerBanner = millis();
-                            } else { alertaOchiUscati = false; }
+                            if(miscareOchiAcumulata < 30) { alertaOchiUscati = true; bannerVizual = "👁️ CLIPEȘTE! Ochi Uscați."; timerBanner = millis(); } else { alertaOchiUscati = false; }
                             miscareOchiAcumulata = 0;
                         }
-
                         if (cronometruStatie >= 60) {
-                            if (miscareAcumulata < 120) { 
-                                stareDinamism = "STATIC ⚠️"; bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA!"; timerBanner = millis();
-                            } else { stareDinamism = "ACTIV"; }
+                            if (miscareAcumulata < 120) { stareDinamism = "STATIC ⚠️"; bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA!"; timerBanner = millis(); } else { stareDinamism = "ACTIV"; }
                             miscareAcumulata = 0; cronometruStatie = 0;
                         }
                     }
@@ -472,39 +514,26 @@
             }
 
             if (timpStartSesiune && !sistemInPauza && !sistemInExercitii && !asteaptaRaspunsOra) {
-                if (millis() - timpUltimaNotificareOra > INTERVAL_NOTIFICARE_ORA) {
-                    asteaptaRaspunsOra = true; document.getElementById('modal-ora').style.display = 'flex';
-                }
+                if (millis() - timpUltimaNotificareOra > INTERVAL_NOTIFICARE_ORA) { asteaptaRaspunsOra = true; document.getElementById('modal-ora').style.display = 'flex'; }
             }
 
             if (sistemInExercitii) {
-                push(); fill(15, 35, 30, 230); rect(0, 0, 640, 480); pop();
-                fill(0, 255, 204); noStroke(); textAlign(CENTER, CENTER); textSize(35); textStyle(BOLD); text("🧘 KINETO AI ACTIV", 320, 80);
-                fill(255); textSize(24); textStyle(NORMAL); text(exercitiuCurentText, 320, 200); 
-                fill(0, 255, 204); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 350);
-                return; 
+                push(); fill(15, 23, 42, 230); rect(0, 0, 640, 480); pop();
+                fill(0, 184, 255); noStroke(); textAlign(CENTER, CENTER); textSize(35); textStyle(BOLD); text("🧘 KINETO AI ACTIV", 320, 180);
+                fill(255); textSize(24); textStyle(NORMAL); text(exercitiuCurentText, 320, 260); 
+                fill(0, 184, 255); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 360); return; 
             }
-
             if (sistemInPauza) {
                 push(); fill(0, 0, 0, 200); rect(0, 0, 640, 480); pop();
-                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ MANUALĂ", 320, 200);
-                return; 
+                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ", 320, 240); return; 
             }
-
             if (esteInZenBreak) {
-                push(); fill(10, 20, 30, 230); rect(0, 0, 640, 480); pop();
-                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("AI OBOSEALĂ DETECTATĂ", 320, 80);
-                fill(255); textSize(20); textStyle(NORMAL);
-                text("Relaxează-ți spatele imediat.", 320, 200); 
-                fill(0, 184, 255); textSize(60); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 410);
-                return; 
+                push(); fill(15, 23, 42, 230); rect(0, 0, 640, 480); pop();
+                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("RELAXEAZĂ SPATELE", 320, 150);
+                fill(0, 184, 255); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 300); return; 
             }
+            if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); return; }
 
-            if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { 
-                push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); return; 
-            }
-
-            // --- DESENAREA INTERFEȚEI BIONICE (HUD) ---
             let cUX = 0, cUY = 0;
             if (poses.length > 0) {
                 let p = poses[0];
@@ -513,120 +542,55 @@
                     let dGat = cUY - p.nose.y; let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     let diffUm = Math.abs(p.left_shoulder.y - p.right_shoulder.y);
 
-                    if (modCalibrare) {
-                        dateCalibrare.push({gat: dGat, ochi: dOchi}); if (dateCalibrare.length > 90) finalizeazaCalibrare();
-                        fill(255, 0, 255); noStroke(); textAlign(CENTER); text("Calibrare...", 320, 240); return; 
-                    }
+                    if (modCalibrare) { dateCalibrare.push({gat: dGat, ochi: dOchi}); if (dateCalibrare.length > 90) finalizeazaCalibrare(); fill(255, 0, 255); noStroke(); textAlign(CENTER); text("Calibrare...", 320, 240); return; }
 
                     cadreTotale++;
-                    
                     let isTextNeck = dGat < PRAG_TEXT_NECK; let isAplecat = !isTextNeck && dGat < PRAG_POSTURA; let gOk = !isTextNeck && !isAplecat; 
                     let dOk = dOchi < PRAG_DISTANTA; let uOk = diffUm < PRAG_UMERI;
 
                     if (gOk && dOk && uOk) {
-                        cadreCorecte++; timpInceputOboseala = 0; 
-                        culoareHUDPip = "#00ff88"; statusHUDPip = "POSTURĂ OPTIMĂ";
+                        cadreCorecte++; timpInceputOboseala = 0; culoareHUDPip = "#00ff88"; statusHUDPip = "OPTIMĂ";
                         if(modSedinta) document.body.classList.remove('sedinta-alert'); 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
-                        if (millis() - timpInceputOboseala > 15000 && !modSedinta) { 
-                            timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; 
-                        }
+                        if (millis() - timpInceputOboseala > 15000 && !modSedinta) { timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; }
                         
-                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff0000"; statusHUDPip = "PERICOL: TEXT NECK"; }
-                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ff4444"; statusHUDPip = "AVERTISMENT: APLECAT"; }
-                        else if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ff4444"; statusHUDPip = "AVERTISMENT: PREA APROAPE"; }
-                        else if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "ATENȚIE: ASIMETRIE UMERI"; }
+                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff4444"; statusHUDPip = "TEXT NECK"; }
+                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ff4444"; statusHUDPip = "APLECAT"; }
+                        else if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ffaa00"; statusHUDPip = "PREA APROAPE"; }
+                        else if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "ASIMETRIE"; }
                     }
 
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
-                    if (scor !== cacheScor) {
-                        document.getElementById('v-scor').innerText = scor + "%"; document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad";
-                        cacheScor = scor;
-                    }
+                    if (scor !== cacheScor) { document.getElementById('v-scor').innerText = scor + "%"; document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad"; cacheScor = scor; }
 
                     let stareGatAsteptata = isTextNeck ? "TELEFON 📱" : (isAplecat ? "APLECAT ⚠️" : "OPTIMĂ");
-                    if (stareGatAsteptata !== cacheStareGat) {
-                        document.getElementById('v-gat').innerText = stareGatAsteptata; document.getElementById('c-gat').className = gOk ? "card ok" : "card bad";
-                        cacheStareGat = stareGatAsteptata;
-                    }
+                    if (stareGatAsteptata !== cacheStareGat) { document.getElementById('v-gat').innerText = stareGatAsteptata; document.getElementById('c-gat').className = gOk ? "card ok" : "card bad"; cacheStareGat = stareGatAsteptata; }
                     
                     let stareOchiAsteptata = dOk ? "SIGURĂ" : "APROAPE 🚨";
-                    if (stareOchiAsteptata !== cacheStareOchi) {
-                        document.getElementById('v-ochi').innerText = stareOchiAsteptata; document.getElementById('c-ochi').className = dOk ? "card ok" : "card bad";
-                        cacheStareOchi = stareOchiAsteptata;
-                    }
+                    if (stareOchiAsteptata !== cacheStareOchi) { document.getElementById('v-ochi').innerText = stareOchiAsteptata; document.getElementById('c-ochi').className = dOk ? "card ok" : "card bad"; cacheStareOchi = stareOchiAsteptata; }
 
                     let stareUmeriAsteptata = uOk ? "DREPȚI" : "STRÂMBI ⚖️";
-                    if (stareUmeriAsteptata !== cacheStareUmeri) {
-                        document.getElementById('v-umeri').innerText = stareUmeriAsteptata; document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn";
-                        cacheStareUmeri = stareUmeriAsteptata;
-                    }
+                    if (stareUmeriAsteptata !== cacheStareUmeri) { document.getElementById('v-umeri').innerText = stareUmeriAsteptata; document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn"; cacheStareUmeri = stareUmeriAsteptata; }
                     
                     let stareMediuAsteptata = (alertaOchiUscati ? "HOLBAT / " : "") + stareDinamism;
-                    if (stareMediuAsteptata !== cacheStareMediu) {
-                        document.getElementById('v-mediu').innerText = stareMediuAsteptata; document.getElementById('c-mediu').className = (alertaOchiUscati || stareDinamism.includes("STATIC")) ? "card warn" : "card info";
-                        cacheStareMediu = stareMediuAsteptata;
-                    }
+                    if (stareMediuAsteptata !== cacheStareMediu) { document.getElementById('v-mediu').innerText = stareMediuAsteptata; document.getElementById('c-mediu').className = (alertaOchiUscati || stareDinamism.includes("STATIC")) ? "card warn" : "card info"; cacheStareMediu = stareMediuAsteptata; }
 
-                    // Desenare Schelet Bionic (Puncte si Linii Neoane)
-                    stroke(culoareHUDPip); strokeWeight(3); 
-                    line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                    line(p.nose.x, p.nose.y, cUX, cUY);
-                    
-                    noStroke(); fill(culoareHUDPip);
-                    ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8);
-                    ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8);
-                    ellipse(p.nose.x, p.nose.y, 8, 8);
+                    stroke(culoareHUDPip); strokeWeight(3); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y); line(p.nose.x, p.nose.y, cUX, cUY);
+                    noStroke(); fill(culoareHUDPip); ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8); ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8); ellipse(p.nose.x, p.nose.y, 8, 8);
                 }
             }
 
-            // OVERLAYS PENTRU HUD-UL PiP
+            // PIXELS HUD UI
+            noStroke(); fill(0, 0, 0, 100); rect(0, 0, 640, 30); rect(0, 450, 640, 30);
+            stroke(culoareHUDPip); noFill(); strokeWeight(2); rect(10, 10, 620, 460, 15);
+            strokeWeight(3); line(10, 30, 10, 10); line(10, 10, 30, 10); line(630, 30, 630, 10); line(630, 10, 610, 10); line(10, 450, 10, 470); line(10, 470, 30, 470); line(630, 450, 630, 470); line(630, 470, 610, 470);
             
-            // Margini Vignette
-            noStroke(); fill(0, 0, 0, 160);
-            rect(0, 0, 640, 40); // Banda sus
-            rect(0, 440, 640, 40); // Banda jos
+            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(12); textStyle(BOLD); text("AI CORE", 25, 15);
+            textAlign(RIGHT, CENTER); let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; fill(culoareHUDPip); text(`${sH}%`, 615, 15);
+            textAlign(LEFT, CENTER); fill(culoareHUDPip); text(statusHUDPip, 25, 465);
 
-            // Cadru grafic bionic
-            stroke(culoareHUDPip); noFill(); strokeWeight(4);
-            rect(5, 5, 630, 470, 15);
-            
-            // Colțare (Crosshairs)
-            strokeWeight(4);
-            // Stanga Sus
-            line(5, 25, 5, 5); line(5, 5, 25, 5);
-            // Dreapta Sus
-            line(635, 25, 635, 5); line(635, 5, 615, 5);
-            // Stanga Jos
-            line(5, 455, 5, 475); line(5, 475, 25, 475);
-            // Dreapta Jos
-            line(635, 455, 635, 475); line(635, 475, 615, 475);
-
-            // TEXT HUD
-            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(14); textStyle(BOLD);
-            text("ZEN PRO HUD", 20, 20);
-
-            textAlign(RIGHT, CENTER);
-            let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-            fill(culoareHUDPip); text(`SCOR: ${sH}%`, 620, 20);
-
-            textAlign(LEFT, CENTER); fill(culoareHUDPip);
-            text(`STATUS: ${statusHUDPip}`, 20, 460);
-
-            let tSesiune = "00:00";
-            if (timpStartSesiune) {
-                let te = Date.now() - timpStartSesiune - totalTimpPauza;
-                if (sistemInPauza || sistemInExercitii) te -= (Date.now() - momentInceputPauzaManual);
-                tSesiune = formatTime(te);
-            }
-            textAlign(RIGHT, CENTER); fill(255);
-            text(`TIMP: ${tSesiune}`, 620, 460);
-
-            if (bannerVizual !== "" && millis() - timerBanner < 4000) { 
-                push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 480, 60, 15); 
-                fill(255); textSize(26); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); 
-            }
+            if (bannerVizual !== "" && millis() - timerBanner < 4000) { push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 400, 50, 10); fill(255); textSize(20); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); }
         }
 
         function raspunsPauza(vrea) { document.getElementById('modal-intrebare').style.display = "none"; asteaptaRaspunsPauza = false; if (vrea) cereKinetoAI(); else timpInceputOboseala = 0; }
@@ -641,28 +605,15 @@
 
         function verificaRealizari() {
             let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false};
-            let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-            let updated = false;
-
+            let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; let updated = false;
             if (!realizari.titan && s >= 90 && cadreTotale > 300) { realizari.titan = true; updated = true; arataPopupRealizare("Coloană de Titan"); }
             if (!realizari.zen && exercitiiAzi >= 3) { realizari.zen = true; updated = true; arataPopupRealizare("Maestrul Zen"); }
             if (!realizari.soim && eroriOchi === 0 && cadreTotale > 500) { realizari.soim = true; updated = true; arataPopupRealizare("Ochi de Șoim"); }
-
             if (updated) { localStorage.setItem('zenRealizari', JSON.stringify(realizari)); incarcaTrofee(); }
         }
 
-        function arataPopupRealizare(nume) {
-            let popup = document.getElementById('achievement-popup'); document.getElementById('ach-text').innerText = "Trofeu Deblocat: " + nume + "!";
-            popup.classList.add('show'); setTimeout(() => { popup.classList.remove('show'); }, 5000);
-        }
-
-        function incarcaTrofee() {
-            let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false};
-            if(realizari.titan) document.getElementById('badge-titan').className = "trofeu activ";
-            if(realizari.zen) document.getElementById('badge-zen').className = "trofeu activ";
-            if(realizari.soim) document.getElementById('badge-soim').className = "trofeu activ";
-        }
-
+        function arataPopupRealizare(nume) { let popup = document.getElementById('achievement-popup'); document.getElementById('ach-text').innerText = nume; popup.classList.add('show'); setTimeout(() => { popup.classList.remove('show'); }, 5000); }
+        function incarcaTrofee() { let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false}; if(realizari.titan) document.getElementById('badge-titan').className = "trofeu activ"; if(realizari.zen) document.getElementById('badge-zen').className = "trofeu activ"; if(realizari.soim) document.getElementById('badge-soim').className = "trofeu activ"; }
         function formatTime(ms) { let s = Math.floor(ms / 1000); let m = Math.floor(s / 60); return (m < 10 ? "0" : "") + m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
 
         function updateStatisticiLive() {
@@ -672,18 +623,14 @@
                 document.getElementById('stat-time').innerText = formatTime(te);
             }
             let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-            document.getElementById('stat-live-score').innerText = s + "%";
-            document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
-            document.getElementById('stat-textneck').innerText = eroriTextNeck;
-            
+            document.getElementById('stat-live-score').innerText = s + "%"; document.getElementById('stat-alarms').innerText = totalAlarmeAzi; document.getElementById('stat-textneck').innerText = eroriTextNeck;
             let g = document.getElementById('stat-grade');
-            if(s >= 90) { g.innerText = "A+"; g.style.color = "#00ff88"; } else if(s >= 80) { g.innerText = "A"; g.style.color = "#00ff88"; } else { g.innerText = "B"; g.style.color = "#ffaa00"; }
-
+            if(s >= 90) { g.innerText = "A+"; g.style.color = "#00ff88"; g.style.borderColor = "#00ff88"; } else if(s >= 80) { g.innerText = "A"; g.style.color = "#00ff88"; g.style.borderColor = "#00ff88"; } else { g.innerText = "B"; g.style.color = "#ffaa00"; g.style.borderColor = "#ffaa00"; }
             let insightBox = document.getElementById('smart-insights');
             if(!analizatorIstoricActiv) {
-                if (eroriTextNeck > 10) { insightBox.innerHTML = "💡 <strong>Feedback:</strong> Stai cu capul extrem de aplecat (Text Neck)!"; insightBox.style.borderLeftColor = "#ff0000"; } 
-                else if (stareDinamism.includes("STATIC")) { insightBox.innerHTML = "💡 <strong>Circulație:</strong> Ești prea rigid. Folosește Kineto AI."; insightBox.style.borderLeftColor = "#00b8ff"; } 
-                else if (s >= 85) { insightBox.innerHTML = "💡 <strong>Status:</strong> Excelent! Ești activ, iar spatele este perfect drept."; insightBox.style.borderLeftColor = "#00ff88"; }
+                if (eroriTextNeck > 10) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Postură critică (Text Neck)."; insightBox.style.borderLeftColor = "#ff0000"; } 
+                else if (stareDinamism.includes("STATIC")) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Circulație scăzută. Ridică-te!"; insightBox.style.borderLeftColor = "#00b8ff"; } 
+                else if (s >= 85) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Postură Enterprise. Totul este perfect."; insightBox.style.borderLeftColor = "#00ff88"; }
             }
             if (errorChartInstance) { errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck]; errorChartInstance.update(); }
         }
@@ -693,70 +640,49 @@
             let exText = exercitii > 0 ? `<span style="color:#00b8ff">🏋️ ${exercitii} Sesiuni</span>` : `<span style="color:#ffaa00">⚠️ 0 Sesiuni</span>`;
             let culoare = scorul >= 85 ? "#00ff88" : (scorul >= 65 ? "#ffaa00" : "#ff4444");
             insightBox.style.borderLeftColor = culoare;
-            insightBox.innerHTML = `
-                <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
-                    <h4 style="margin:0; color:#fff;">📅 Ziua: <span style="color:#00b8ff">${ziua}</span></h4>
-                    <span style="background: ${culoare}22; color: ${culoare}; padding: 5px 15px; border-radius: 20px; font-weight: bold;">Scor: ${scorul}%</span>
-                </div>
-                <div style="font-size: 0.95rem; color: #ccc;">• <strong>Activitate:</strong> ${exText}</div>
-            `;
+            insightBox.innerHTML = `<div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;"><h4 style="margin:0; color:#fff;">📅 Ziua: <span style="color:#00b8ff">${ziua}</span></h4><span style="background: ${culoare}22; color: ${culoare}; padding: 5px 15px; border-radius: 20px; font-weight: bold;">Scor: ${scorul}%</span></div><div style="font-size: 0.95rem; color: #ccc;">• <strong>Activitate:</strong> ${exText}</div>`;
         }
 
         function deschideAnalytics() {
-            document.getElementById('modal-analytics').style.display = "flex";
-            analizatorIstoricActiv = false; document.getElementById('smart-insights').innerHTML = "Apasă pe o coloană din grafic pentru a vizualiza detaliile...";
+            document.getElementById('modal-analytics').style.display = "flex"; analizatorIstoricActiv = false; document.getElementById('smart-insights').innerHTML = "Selectează o coloană pentru raport detaliat.";
             updateStatisticiLive(); updateLiveStatsInterval = setInterval(updateStatisticiLive, 1000);
-            
             let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {}; let isEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {};
             let labs = Object.keys(is); let datS = Object.values(is); let datEx = labs.map(z => isEx[z] || (z === dataCurenta ? exercitiiAzi : 0));
-            if (historyChartInstance) historyChartInstance.destroy();
-            let ctx = document.getElementById('historyChart').getContext('2d');
+            if (historyChartInstance) historyChartInstance.destroy(); let ctx = document.getElementById('historyChart').getContext('2d');
+            
+            let bgGrad = ctx.createLinearGradient(0, 0, 0, 400); bgGrad.addColorStop(0, '#00ff88'); bgGrad.addColorStop(1, 'rgba(0,255,136,0.1)');
+            let hovGrad = ctx.createLinearGradient(0, 0, 0, 400); hovGrad.addColorStop(0, '#00b8ff'); hovGrad.addColorStop(1, 'rgba(0,184,255,0.1)');
+
             historyChartInstance = new Chart(ctx, {
-                data: { labels: labs, datasets: [{ type: 'line', label: 'Kineto', data: datEx, borderColor: '#00b8ff', tension: 0.4, yAxisID: 'y1' }, { type: 'bar', label: 'Scor', data: datS, backgroundColor: '#00ff88', borderRadius: 8, yAxisID: 'y' }]},
-                options: { responsive: true, maintainAspectRatio: false, onClick: (e, el) => { if (el.length > 0) afiseazaDetaliiZi(labs[el[0].index], datS[el[0].index], datEx[el[0].index]); }, scales: { y: { max: 100, position: 'left' }, y1: { min: 0, position: 'right', grid: { drawOnChartArea: false }, ticks:{stepSize:1} }, x:{grid:{display:false}} } }
+                data: { labels: labs, datasets: [{ type: 'line', label: 'Sesiuni Kineto', data: datEx, borderColor: '#00b8ff', borderWidth: 3, pointBackgroundColor: '#fff', pointRadius: 4, tension: 0.4, yAxisID: 'y1' }, { type: 'bar', label: 'Scor Bio', data: datS, backgroundColor: bgGrad, hoverBackgroundColor: hovGrad, borderRadius: 10, barThickness: 30, yAxisID: 'y' }]},
+                options: { responsive: true, maintainAspectRatio: false, onClick: (e, el) => { if (el.length > 0) afiseazaDetaliiZi(labs[el[0].index], datS[el[0].index], datEx[el[0].index]); }, plugins: { legend: { labels: {color: '#cbd5e1'} } }, scales: { y: { max: 100, grid: {color: 'rgba(255,255,255,0.05)'}, ticks: {color: '#64748b'} }, y1: { min: 0, suggestedMax: 4, position: 'right', grid: { drawOnChartArea: false }, ticks:{stepSize:1, color:'#00b8ff'} }, x: { grid: {display:false}, ticks: {color:'#cbd5e1'} } } }
             });
 
-            if (errorChartInstance) errorChartInstance.destroy();
-            let ctxErr = document.getElementById('errorChart').getContext('2d');
-            errorChartInstance = new Chart(ctxErr, {
-                type: 'doughnut', data: { labels: ['Aplecat', 'Ochi', 'Umeri', 'Text Neck'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ff4444', '#00b8ff', '#ffaa00', '#ff0000'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ccc', font: {size: 11} } } }, cutout: '70%' }
-            });
+            if (errorChartInstance) errorChartInstance.destroy(); let ctxErr = document.getElementById('errorChart').getContext('2d');
+            errorChartInstance = new Chart(ctxErr, { type: 'doughnut', data: { labels: ['Cervicală', 'Ochi', 'Umeri', 'Text Neck'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ff4444', '#00b8ff', '#ffaa00', '#ff0055'], borderWidth: 0, hoverOffset: 10 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1', padding: 20 } } }, cutout: '75%' } });
         }
 
         function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; clearInterval(updateLiveStatsInterval); analizatorIstoricActiv = false;}
-
-        function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#050508", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Raport_ZenPosture.png'; link.click(); }); }
+        function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#0f172a", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Raport_B2B_ZenPosture.png'; link.click(); }); }
         async function activeazaModFundal() { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); }
 
         function declanseazaAlarma(tip) {
             if (!alarmeActive && !modSedinta) return; 
             if (sistemInPauza || sistemInExercitii) return;
             if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
-            
             ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
-            
             if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
             if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
             if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
             if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
-            
             timerBanner = millis();
-            
             if (modSedinta) { document.body.classList.add('sedinta-alert'); return; }
-            
             try { 
                 if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                if (contextAudio) {
-                    let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
-                    o.connect(v); v.connect(contextAudio.destination);
-                    o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
-                    v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
-                    o.start(); o.stop(contextAudio.currentTime + 0.3);
-                }
+                if (contextAudio) { let o = contextAudio.createOscillator(); let v = contextAudio.createGain(); o.connect(v); v.connect(contextAudio.destination); o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3); o.start(); o.stop(contextAudio.currentTime + 0.3); }
             } catch (e) {}
         }
-        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF"; }
+        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerHTML = alarmeActive ? "🔔 Alarme" : "🔕 Mute"; }
     </script>
 </body>
 </html>
