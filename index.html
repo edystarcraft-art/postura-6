@@ -2,42 +2,30 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Enterprise UI</title>
+    <title>Zen Posture Pro - Advanced Telemetry</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
-        /* --- DESIGN PREMIUM: FOND & TYPOGRAPHY --- */
+        /* --- DESIGN PREMIUM --- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
         body { 
             background: radial-gradient(circle at top, #111827, #050508 80%);
-            color: #e2e8f0; 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; padding: 20px; 
-            display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; overflow-x: hidden; 
-            transition: box-shadow 0.3s ease; 
+            color: #e2e8f0; font-family: 'Inter', sans-serif; 
+            margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; 
+            min-height: 100vh; overflow-x: hidden; transition: box-shadow 0.3s ease; 
         }
         body.sedinta-alert { box-shadow: inset 0 0 80px rgba(255, 68, 68, 0.4); }
 
-        /* --- HEADER --- */
         .header { text-align: center; margin-bottom: 30px; margin-top: 10px; }
-        h1 { 
-            color: #fff; margin: 0 0 5px 0; font-size: 2.2rem; font-weight: 800; 
-            letter-spacing: -1px; text-shadow: 0 10px 30px rgba(0,255,136,0.2); 
-        }
+        h1 { color: #fff; margin: 0 0 5px 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; text-shadow: 0 10px 30px rgba(0,255,136,0.2); }
         h1 span.brand { color: #00ff88; }
-        .badge-ent { 
-            background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; 
-            font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; 
-            vertical-align: top; letter-spacing: 1px; font-weight: 600; margin-left: 5px;
-        }
+        .badge-ent { background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; vertical-align: top; letter-spacing: 1px; font-weight: 600; margin-left: 5px; }
         .subtitle { color: #64748b; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
 
-        /* --- CONTROL DOCK (Bara de instrumente) --- */
         .toolbar { 
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255,255,255,0.05); border-radius: 100px;
@@ -45,19 +33,13 @@
             margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap;
         }
 
-        button { 
-            border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; 
-            border-radius: 50px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; align-items: center; gap: 8px;
-        }
-        
+        button { border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; }
         #btn-start { background: #00ff88; color: #000; box-shadow: 0 0 20px rgba(0,255,136,0.3); font-size: 0.95rem; }
         #btn-start:hover { background: #00cc6e; transform: translateY(-2px); box-shadow: 0 5px 25px rgba(0,255,136,0.5); }
         
         .btn-sec { background: rgba(255,255,255,0.05); color: #cbd5e1; border: 1px solid rgba(255,255,255,0.1); display: none; }
         .btn-sec:hover { background: rgba(255,255,255,0.1); color: #fff; transform: translateY(-2px); }
         
-        /* Stilizare butoane specifice */
         #btn-audio.activ { background: rgba(0, 255, 136, 0.15); color: #00ff88; border-color: rgba(0,255,136,0.3); }
         #btn-sedinta.activ { background: rgba(255, 0, 85, 0.15); color: #ff0055; border-color: rgba(255,0,85,0.3); animation: pulse-border 2s infinite; }
         #btn-pauza.in-pauza { background: rgba(255, 170, 0, 0.15); color: #ffaa00; border-color: rgba(255,170,0,0.3); animation: pulse-border 2s infinite; }
@@ -69,38 +51,18 @@
 
         #status-msg { margin-top: -20px; margin-bottom: 20px; font-size: 0.9rem; color: #64748b; font-weight: 600; letter-spacing: 0.5px;}
 
-        /* --- DASHBOARD GRID --- */
-        .dashboard { 
-            display: grid; grid-template-columns: auto 320px; gap: 30px; 
-            max-width: 1200px; width: 100%; align-items: start; justify-content: center;
-        }
+        .dashboard { display: grid; grid-template-columns: auto 320px; gap: 30px; max-width: 1200px; width: 100%; align-items: start; justify-content: center; }
         @media (max-width: 1000px) { .dashboard { grid-template-columns: 1fr; justify-items: center; } }
 
-        /* --- CAMERA WRAPPER --- */
-        #camera-wrapper { 
-            background: #000; border-radius: 24px; overflow: hidden; 
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.1);
-            position: relative; z-index: 1; width: 640px; height: 480px;
-        }
+        #camera-wrapper { background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.1); position: relative; z-index: 1; width: 640px; height: 480px; }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; border-radius: 24px;}
 
-        /* --- WIDGET GRID (Panoul din dreapta) --- */
-        .panel { 
-            display: grid; grid-template-columns: 1fr; gap: 15px; 
-            width: 100%; max-height: 480px; overflow-y: auto; padding-right: 10px; z-index: 10; 
-        }
+        .panel { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-height: 480px; overflow-y: auto; padding-right: 10px; z-index: 10; }
         .panel::-webkit-scrollbar { width: 4px; }
         .panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
 
-        /* Carduri Glassmorphism */
-        .card { 
-            background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 18px 20px; 
-            transition: all 0.3s ease; position: relative; overflow: visible;
-        }
+        .card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 18px 20px; transition: all 0.3s ease; position: relative; overflow: visible; }
         .card:hover { transform: translateY(-2px); background: rgba(30, 41, 59, 0.8); }
-
-        /* Status Colors pe Carduri */
         .card.ok { box-shadow: 0 10px 30px -10px rgba(0, 255, 136, 0.15); border-color: rgba(0, 255, 136, 0.2); }
         .card.warn { box-shadow: 0 10px 30px -10px rgba(255, 170, 0, 0.15); border-color: rgba(255, 170, 0, 0.3); }
         .card.bad { box-shadow: 0 10px 30px -10px rgba(255, 68, 68, 0.15); border-color: rgba(255, 68, 68, 0.4); }
@@ -108,26 +70,24 @@
         
         .lbl { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; font-weight: 600;}
         .val { font-size: 1.25rem; font-weight: 800; color: #f8fafc; letter-spacing: -0.5px;}
-        
-        .val.ok { color: #00ff88; }
-        .val.bad { color: #ff4444; }
-        .val.warn { color: #ffaa00; }
-        .val.info { color: #00b8ff; }
+        .val.ok { color: #00ff88; } .val.bad { color: #ff4444; } .val.warn { color: #ffaa00; } .val.info { color: #00b8ff; }
 
-        /* --- GLOBAL TOOLTIP --- */
-        .info-icon { cursor: help; font-size: 1.1rem; color: #475569; transition: 0.3s; display: inline-block; padding: 2px;}
+        /* --- GLOBAL TOOLTIP (EXTINS PENTRU MAI MULTE DETALII) --- */
+        .info-icon { cursor: help; font-size: 1.2rem; color: #475569; transition: 0.3s; display: inline-block; padding: 2px;}
         .info-icon:hover { color: #00b8ff; }
         .tooltip-content { display: none; }
 
         #global-tooltip {
-            position: fixed; z-index: 999999; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 184, 255, 0.3); border-radius: 16px; padding: 20px; 
-            box-shadow: 0 30px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05); 
-            color: #cbd5e1; font-size: 0.9rem; width: 300px; pointer-events: none; 
-            opacity: 0; visibility: hidden; line-height: 1.6; transition: opacity 0.15s ease;
+            position: fixed; z-index: 999999; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(25px);
+            border: 1px solid rgba(0, 184, 255, 0.4); border-radius: 16px; padding: 20px; 
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.05); 
+            color: #cbd5e1; font-size: 0.9rem; width: 400px; /* MĂRIT PENTRU DETALII */
+            pointer-events: none; opacity: 0; visibility: hidden; line-height: 1.6; transition: opacity 0.15s ease;
         }
-        #global-tooltip h4 { margin: 0 0 12px 0; color: #f8fafc; font-size: 1rem; display: flex; align-items: center; gap: 8px;}
-        #global-tooltip strong { color: #00ff88; font-weight: 600; }
+        #global-tooltip h4 { margin: 0 0 12px 0; color: #f8fafc; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px;}
+        #global-tooltip strong { color: #00ff88; font-weight: 600; display: inline-block; margin-top: 8px;}
+        #global-tooltip ul { margin: 5px 0 0 0; padding-left: 20px; }
+        #global-tooltip li { margin-bottom: 5px; }
 
         /* --- MODALS --- */
         .modal-overlay { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.85); z-index: 200; flex-direction: column; justify-content: center; align-items: center; text-align: center; border-radius: 24px; backdrop-filter: blur(10px); }
@@ -135,10 +95,8 @@
         .btn-raspuns { padding: 12px 25px; font-size: 1rem; margin: 8px; border-radius: 50px; cursor: pointer; border: none; font-weight: 600; transition: 0.2s;}
         .btn-raspuns:hover { transform: scale(1.05); }
 
-        /* --- ANALYTICS MODAL --- */
         #modal-analytics { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,5,8,0.9); z-index: 9999; justify-content: center; align-items: center; overflow-y: auto; padding: 40px 0; backdrop-filter: blur(20px); }
         #raport-printabil { background: #0f172a; border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; padding: 40px; width: 90%; max-width: 1000px; box-shadow: 0 30px 60px rgba(0,0,0,0.8); margin: auto; position: relative; }
-        
         .header-raport { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 20px; margin-bottom: 25px; }
         .header-raport h2 { color: #fff; margin: 0; font-size: 1.6rem; display: flex; align-items: center; gap: 10px; font-weight: 800;}
         .header-raport .badge { background: rgba(0,255,136,0.1); color: #00ff88; padding: 6px 16px; border-radius: 50px; font-size: 0.85rem; font-weight: 600; border: 1px solid rgba(0,255,136,0.2);}
@@ -221,35 +179,85 @@
         <div class="panel">
             <div class="card" id="c-scor">
                 <div class="lbl"><span>🛡️ Index Sănătate</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🛡️ Index Postural</h4><strong>Medical:</strong> Previne hernia de disc.<br><strong>Calcul AI:</strong> (Timp Corect / Timp Total) * 100.</div>
+                    <div class="tooltip-content">
+                        <h4>🛡️ Indexul de Sănătate Posturală</h4>
+                        <strong>Ce reprezintă?</strong> Rata generală în care toți parametrii corpului tău se află în zona de siguranță.<br>
+                        <strong>Impact Medical:</strong>
+                        <ul>
+                            <li>Un scor peste 80% reduce cu 65% riscul de hernie de disc la nivel lombar (L4-L5).</li>
+                            <li>Diminuează presiunea pe nervul sciatic.</li>
+                        </ul>
+                        <strong>Recomandare Ergonomică:</strong> Păstrează tălpile lipite de podea și unghiul genunchilor la 90 de grade.<br>
+                        <strong>Calcul AI:</strong> Formula: <code>(Timp_Postură_Corectă / Timp_Total_Monitorizat) * 100</code>.
+                    </div>
                 </span></div>
                 <div id="v-scor" class="val">0%</div>
             </div>
 
             <div class="card" id="c-gat">
                 <div class="lbl"><span>🦒 Axa Cervicală</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🦒 Text Neck</h4><strong>Medical:</strong> 45° aplecare = 22kg presiune pe gât.<br><strong>Calcul AI:</strong> Distanța Y nas-umeri.</div>
+                    <div class="tooltip-content">
+                        <h4>🦒 Extensia Cervicală (Text Neck)</h4>
+                        <strong>Ce reprezintă?</strong> Gradul aplecării capului tău în față, spre monitor sau telefon.<br>
+                        <strong>Impact Medical:</strong>
+                        <ul>
+                            <li>Capul tău cântărește ~5kg. La o aplecare de 45°, coloana suportă 22kg.</li>
+                            <li>Aplecarea constantă cauzează hiper-cifoză (Cocoașa IT-istului) și spondiloză cervicală precoce.</li>
+                        </ul>
+                        <strong>Recomandare Ergonomică:</strong> Ridică monitorul (sau folosește un stand) astfel încât treimea superioară a ecranului să fie exact la nivelul ochilor tăi.<br>
+                        <strong>Calcul AI:</strong> Măsoară distanța pe axa verticală (Y) între punctul nasului și centrul imaginar al umerilor tăi.
+                    </div>
                 </span></div>
                 <div id="v-gat" class="val">---</div>
             </div>
 
             <div class="card" id="c-ochi">
                 <div class="lbl"><span>👁️ Distanță Monitor</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>👁️ Oboseală Oculară</h4><strong>Medical:</strong> Previne miopia. Distanța ideală: 60cm.<br><strong>Calcul AI:</strong> Lățimea pupilelor în pixeli.</div>
+                    <div class="tooltip-content">
+                        <h4>👁️ Sindromul Privitului la Calculator</h4>
+                        <strong>Ce reprezintă?</strong> Apropierea periculoasă a ochilor de sursa de lumină albastră.<br>
+                        <strong>Impact Medical:</strong>
+                        <ul>
+                            <li>Expunerea prea apropiată forțează mușchii ciliari ai ochiului, favorizând miopia.</li>
+                            <li>Crește incidența durerilor de cap frontale și a ochilor uscați.</li>
+                        </ul>
+                        <strong>Recomandare Ergonomică:</strong> Aplică Regula "Lungimii Brațului" - monitorul trebuie să fie la minim 50-70cm distanță de fața ta.<br>
+                        <strong>Calcul AI:</strong> Algoritmul monitorizează creșterea în lățime a distanței în pixeli dintre ochiul stâng și cel drept pentru a deduce adâncimea (apropierea de cameră).
+                    </div>
                 </span></div>
                 <div id="v-ochi" class="val">---</div>
             </div>
 
             <div class="card" id="c-umeri">
                 <div class="lbl"><span>⚖️ Aliniament Umeri</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>⚖️ Risc Scolioză</h4><strong>Medical:</strong> Un umăr ridicat scurtează trapezul.<br><strong>Calcul AI:</strong> Diferența absolută înălțime stâng-drept.</div>
+                    <div class="tooltip-content">
+                        <h4>⚖️ Asimetrie și Scolioză Funcțională</h4>
+                        <strong>Ce reprezintă?</strong> Înclinația stânga-dreapta a trunchiului tău (ex: sprijin constant pe un singur cot).<br>
+                        <strong>Impact Medical:</strong>
+                        <ul>
+                            <li>Ridicarea constantă a unui umăr scurtează mușchiul trapez pe o parte și îl supra-întinde pe cealaltă.</li>
+                            <li>În timp, forțează o curbură a coloanei numită scolioză funcțională.</li>
+                        </ul>
+                        <strong>Recomandare Ergonomică:</strong> Reglează cotierele scaunului astfel încât ambele coate să fie susținute egal, cu umerii perfect relaxați în jos.<br>
+                        <strong>Calcul AI:</strong> Calculează diferența absolută de înălțime (axa Y) dintre umărul stâng și cel drept. Toleranță setată la 40 de pixeli.
+                    </div>
                 </span></div>
                 <div id="v-umeri" class="val">---</div>
             </div>
 
             <div class="card" id="c-mediu">
                 <div class="lbl"><span>🩸 Dinamism & Focus</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🩸 Fidgeting & Clipit</h4><strong>Medical:</strong> "Cea mai bună postură e următoarea".<br><strong>Calcul AI:</strong> Tracker de micro-mișcări 60s.</div>
+                    <div class="tooltip-content">
+                        <h4>🩸 Fidgeting și Staring Fatigue</h4>
+                        <strong>Ce reprezintă?</strong> Lipsa totală de mișcare a corpului (Efectul de Statuie) și holbatul prelungit la ecran fără a clipi.<br>
+                        <strong>Impact Medical:</strong>
+                        <ul>
+                            <li><b>Corp Rigid:</b> Scade circulația sângelui spre creier și crește riscul de tromboză venoasă profundă (DVT).</li>
+                            <li><b>Ochi Imobili:</b> Rata normală de clipit scade de la 15 la 5 ori/minut în fața ecranelor, uscând corneea.</li>
+                        </ul>
+                        <strong>Recomandare Ergonomică:</strong> Aplică Regula 20-20-20 (La fiecare 20 min, uită-te la 20 feet distanță, timp de 20 secunde).<br>
+                        <strong>Calcul AI:</strong> Monitorizează în calupuri de 60s micro-mișcările ochilor și macro-mișcările umerilor pentru a te asigura că nu "îngheți" în fața ecranului.
+                    </div>
                 </span></div>
                 <div id="v-mediu" class="val info">Se analizează...</div>
             </div>
@@ -262,20 +270,17 @@
     <div id="modal-analytics">
         <div id="raport-printabil">
             <div class="header-raport"><h2>📊 Raport Executiv Biomecanic</h2><div class="badge" id="data-raport">Azi</div></div>
-            
             <div class="trofee-container">
                 <div class="trofeu" id="badge-titan"><div class="trofeu-icon">🛡️</div><div class="trofeu-titlu">Coloană de Titan</div></div>
                 <div class="trofeu" id="badge-zen"><div class="trofeu-icon">🧘‍♂️</div><div class="trofeu-titlu">Maestrul Zen</div></div>
                 <div class="trofeu" id="badge-soim"><div class="trofeu-icon">🦅</div><div class="trofeu-titlu">Ochi de Șoim</div></div>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Index General</span><div class="grade-circle" id="stat-grade">A</div></div>
                 <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Activ</span></div>
                 <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții</span></div>
                 <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Alerte Text-Neck</span></div>
             </div>
-            
             <div class="charts-layout">
                 <div class="chart-history"><canvas id="historyChart"></canvas></div>
                 <div class="chart-doughnut"><canvas id="errorChart"></canvas></div>
@@ -289,15 +294,20 @@
     </div>
 
     <script>
-        // TOOLTIP ENGINE
+        // --- TOOLTIP ENGINE ---
         window.addEventListener('DOMContentLoaded', () => {
             const globalTooltip = document.getElementById('global-tooltip');
             const infoIcons = document.querySelectorAll('.info-icon');
 
             function updateTooltipPosition(e) {
-                let tooltipHeight = globalTooltip.offsetHeight || 150; 
-                let topPos = e.clientY + 15; let leftPos = e.clientX - 320;
+                let tooltipHeight = globalTooltip.offsetHeight || 250; 
+                let topPos = e.clientY + 15; let leftPos = e.clientX - 410; // Mutat puțin mai la stânga pt lățimea mărită
+                
+                // Evităm ieșirea din ecran sus/jos
                 if (topPos + tooltipHeight > window.innerHeight) topPos = e.clientY - tooltipHeight - 15;
+                // Evităm ieșirea din ecran pe stânga
+                if (leftPos < 10) leftPos = 10;
+
                 globalTooltip.style.top = topPos + 'px'; globalTooltip.style.left = leftPos + 'px'; 
             }
 
@@ -315,7 +325,7 @@
             incarcaTrofee();
         });
 
-        // VARIABILE GLOBALE
+        // --- SISTEM DE BAZA AI ---
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
 
         let ultimaZiSalvata = localStorage.getItem('zenUltimaZi');
@@ -360,7 +370,11 @@
         let bannerVizual = "", timerBanner = 0, sistemInPauza = false, sistemPornit = false, analizatorIstoricActiv = false;
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
-        let culoareHUDPip = "#00ff88", statusHUDPip = "OPTIMĂ";
+        
+        // HUD Bionic PiP Statuses
+        let culoareHUDPip = "#00ff88", statusHUDPip = "OPTIM";
+        let stareGatHUDPip = "OK", stareOchiHUDPip = "OK", stareUmeriHUDPip = "OK";
+        
         let cacheScor = -1, cacheStareGat = "", cacheStareUmeri = "", cacheStareOchi = "", cacheStareMediu = "";
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
@@ -399,7 +413,6 @@
                     setInterval(salveazaProgresul, 5000);
                 });
             });
-            // Fix pentru Safari/Chrome: Video-ul e mutat într-un div ascuns, p5 funcționează perfect
             video.parent('video-container');
         }
 
@@ -483,7 +496,7 @@
         }
 
         function draw() {
-            background(15, 23, 42); // Fundal elegant dark albastrui
+            background(15, 23, 42);
             if (!sistemPornit) return;
             
             if (video && video.loadedmetadata) {
@@ -534,6 +547,9 @@
             }
             if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); return; }
 
+            // Pre-setează statusuri ca fiind OK înainte de cadru
+            stareGatHUDPip = "OK"; stareOchiHUDPip = "OK"; stareUmeriHUDPip = "OK";
+
             let cUX = 0, cUY = 0;
             if (poses.length > 0) {
                 let p = poses[0];
@@ -549,18 +565,20 @@
                     let dOk = dOchi < PRAG_DISTANTA; let uOk = diffUm < PRAG_UMERI;
 
                     if (gOk && dOk && uOk) {
-                        cadreCorecte++; timpInceputOboseala = 0; culoareHUDPip = "#00ff88"; statusHUDPip = "OPTIMĂ";
+                        cadreCorecte++; timpInceputOboseala = 0; culoareHUDPip = "#00ff88"; statusHUDPip = "STARE OPTIMĂ";
                         if(modSedinta) document.body.classList.remove('sedinta-alert'); 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
                         if (millis() - timpInceputOboseala > 15000 && !modSedinta) { timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; }
                         
-                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff4444"; statusHUDPip = "TEXT NECK"; }
-                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ff4444"; statusHUDPip = "APLECAT"; }
-                        else if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ffaa00"; statusHUDPip = "PREA APROAPE"; }
-                        else if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "ASIMETRIE"; }
+                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff4444"; statusHUDPip = "PERICOL CERVICAL"; stareGatHUDPip = "TEXT NECK"; }
+                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareGatHUDPip = "APLECAT"; }
+                        
+                        if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareOchiHUDPip = "APROAPE"; }
+                        if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareUmeriHUDPip = "ASIMETRIE"; }
                     }
 
+                    // Actualizare Dashboard UI
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
                     if (scor !== cacheScor) { document.getElementById('v-scor').innerText = scor + "%"; document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad"; cacheScor = scor; }
 
@@ -576,19 +594,62 @@
                     let stareMediuAsteptata = (alertaOchiUscati ? "HOLBAT / " : "") + stareDinamism;
                     if (stareMediuAsteptata !== cacheStareMediu) { document.getElementById('v-mediu').innerText = stareMediuAsteptata; document.getElementById('c-mediu').className = (alertaOchiUscati || stareDinamism.includes("STATIC")) ? "card warn" : "card info"; cacheStareMediu = stareMediuAsteptata; }
 
+                    // Desenare Oase
                     stroke(culoareHUDPip); strokeWeight(3); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y); line(p.nose.x, p.nose.y, cUX, cUY);
                     noStroke(); fill(culoareHUDPip); ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8); ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8); ellipse(p.nose.x, p.nose.y, 8, 8);
                 }
             }
 
-            // PIXELS HUD UI
-            noStroke(); fill(0, 0, 0, 100); rect(0, 0, 640, 30); rect(0, 450, 640, 30);
-            stroke(culoareHUDPip); noFill(); strokeWeight(2); rect(10, 10, 620, 460, 15);
-            strokeWeight(3); line(10, 30, 10, 10); line(10, 10, 30, 10); line(630, 30, 630, 10); line(630, 10, 610, 10); line(10, 450, 10, 470); line(10, 470, 30, 470); line(630, 450, 630, 470); line(630, 470, 610, 470);
+            // --- NOU: HUD BIONIC AVANSAT PENTRU PIP ---
+            // Benzi de fundal sus/jos
+            noStroke(); fill(0, 0, 0, 160); rect(0, 0, 640, 35); rect(0, 445, 640, 35);
             
-            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(12); textStyle(BOLD); text("AI CORE", 25, 15);
-            textAlign(RIGHT, CENTER); let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; fill(culoareHUDPip); text(`${sH}%`, 615, 15);
-            textAlign(LEFT, CENTER); fill(culoareHUDPip); text(statusHUDPip, 25, 465);
+            // Margine subțire
+            stroke(culoareHUDPip); noFill(); strokeWeight(2); rect(10, 10, 620, 460, 15);
+            // Colțare (Crosshairs)
+            strokeWeight(4);
+            line(10, 30, 10, 10); line(10, 10, 30, 10); // SS
+            line(630, 30, 630, 10); line(630, 10, 610, 10); // DS
+            line(10, 450, 10, 470); line(10, 470, 30, 470); // SJ
+            line(630, 450, 630, 470); line(630, 470, 610, 470); // DJ
+
+            // --- PANOURI LATERALE TELEMETRIE (Vizibile perfect în PiP) ---
+            noStroke(); fill(0, 0, 0, 130);
+            rect(15, 50, 140, 75, 10); // Panou Stânga
+            rect(485, 50, 140, 75, 10); // Panou Dreapta
+
+            // Text Telemetrie Stânga (Gât & Ochi)
+            fill(255); textSize(10); textAlign(LEFT, TOP); textStyle(BOLD); text("DIAGNOSTIC", 25, 58);
+            textStyle(NORMAL);
+            fill(stareGatHUDPip === "OK" ? "#00ff88" : "#ff4444");
+            text(`GÂT: ${stareGatHUDPip}`, 25, 78);
+            fill(stareOchiHUDPip === "OK" ? "#00ff88" : "#ffaa00");
+            text(`OCHI: ${stareOchiHUDPip}`, 25, 98);
+
+            // Text Telemetrie Dreapta (Umeri & Corp)
+            fill(255); textAlign(RIGHT, TOP); textStyle(BOLD); text("BIOMETRICS", 615, 58);
+            textStyle(NORMAL);
+            fill(stareUmeriHUDPip === "OK" ? "#00ff88" : "#ffaa00");
+            text(`UMERI: ${stareUmeriHUDPip}`, 615, 78);
+            let culDin = stareDinamism.includes("STATIC") ? "#ffaa00" : "#00ff88";
+            if (alertaOchiUscati) culDin = "#ff4444";
+            fill(culDin);
+            text(`CORP: ${alertaOchiUscati ? "HOLBAT" : stareDinamism}`, 615, 98);
+            // -------------------------------------------------------------
+
+            // HEADER HUD
+            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(12); textStyle(BOLD); text("ZEN TELEMETRY", 25, 17);
+            textAlign(RIGHT, CENTER); let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; fill(culoareHUDPip); text(`SCOR: ${sH}%`, 615, 17);
+            
+            // FOOTER HUD
+            textAlign(LEFT, CENTER); fill(culoareHUDPip); text(`STATUS: ${statusHUDPip}`, 25, 462);
+            let tSesiune = "00:00";
+            if (timpStartSesiune) {
+                let te = Date.now() - timpStartSesiune - totalTimpPauza;
+                if (sistemInPauza || sistemInExercitii) te -= (Date.now() - momentInceputPauzaManual);
+                tSesiune = formatTime(te);
+            }
+            textAlign(RIGHT, CENTER); fill(255); text(`TIMP: ${tSesiune}`, 615, 462);
 
             if (bannerVizual !== "" && millis() - timerBanner < 4000) { push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 400, 50, 10); fill(255); textSize(20); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); }
         }
@@ -629,8 +690,8 @@
             let insightBox = document.getElementById('smart-insights');
             if(!analizatorIstoricActiv) {
                 if (eroriTextNeck > 10) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Postură critică (Text Neck)."; insightBox.style.borderLeftColor = "#ff0000"; } 
-                else if (stareDinamism.includes("STATIC")) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Circulație scăzută. Ridică-te!"; insightBox.style.borderLeftColor = "#00b8ff"; } 
-                else if (s >= 85) { insightBox.innerHTML = "💡 <strong>Sugestie AI:</strong> Postură Enterprise. Totul este perfect."; insightBox.style.borderLeftColor = "#00ff88"; }
+                else if (stareDinamism.includes("STATIC")) { insightBox.innerHTML = "💡 <strong>Circulație:</strong> Ești prea rigid. Folosește Kineto AI."; insightBox.style.borderLeftColor = "#00b8ff"; } 
+                else if (s >= 85) { insightBox.innerHTML = "💡 <strong>Status:</strong> Excelent! Ești activ, iar spatele este perfect drept."; insightBox.style.borderLeftColor = "#00ff88"; }
             }
             if (errorChartInstance) { errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck]; errorChartInstance.update(); }
         }
