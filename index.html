@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Daily Quests Edition</title>
+    <title>Zen Posture Pro - Infinite Quests</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -43,15 +43,20 @@
         #camera-wrapper { background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.1); position: relative; z-index: 1; width: 640px; height: 480px; }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; border-radius: 24px;}
 
-        /* --- NOU: Container Misiuni Zilnice --- */
+        /* --- QUESTS CONTAINER --- */
         .quests-container { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-        .quests-header { color: #fff; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
+        .quests-header { color: #fff; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;}
+        
+        /* XP BADGE */
+        .xp-badge { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; padding: 5px 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 800; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); display: flex; align-items: center; gap: 5px;}
+        
         .quest-item { margin-bottom: 15px; }
         .quest-item:last-child { margin-bottom: 0; }
         .quest-title { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: 600; color: #cbd5e1; margin-bottom: 8px;}
         .quest-bar-bg { width: 100%; height: 12px; background: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);}
-        .quest-bar-fill { height: 100%; background: linear-gradient(90deg, #00b8ff, #00ff88); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease; border-radius: 10px; }
-        .quest-bar-fill.done { background: linear-gradient(90deg, #ffd700, #ffaa00); box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
+        .quest-bar-fill { height: 100%; background: linear-gradient(90deg, #00b8ff, #00ff88); width: 0%; transition: width 0.3s ease-out, background 0.3s ease; border-radius: 10px; }
+        /* Când face level up strălucește scurt */
+        .quest-bar-fill.levelup { background: linear-gradient(90deg, #ffd700, #ffaa00); box-shadow: 0 0 15px rgba(255, 215, 0, 0.8); }
 
         .panel { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-height: 800px; padding-right: 5px; z-index: 10; }
         .card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 18px 20px; transition: all 0.3s ease; position: relative; overflow: visible; }
@@ -114,7 +119,7 @@
 <body>
 
     <div id="global-tooltip"></div>
-    <div id="achievement-popup">🏆 <span id="ach-text">Trofeu Deblocat!</span></div>
+    <div id="achievement-popup">🏆 <span id="ach-text">Level Up!</span></div>
 
     <div class="header">
         <h1><span class="brand">ZEN POSTURE</span> PRO <span class="badge-ent">ENTERPRISE</span></h1>
@@ -165,16 +170,19 @@
             </div>
 
             <div class="quests-container">
-                <div class="quests-header">🎯 MISIUNI ZILNICE (Live)</div>
+                <div class="quests-header">
+                    <div>🎯 MISIUNI DINAMICE</div>
+                    <div class="xp-badge">⭐ <span id="xp-val">0</span> XP</div>
+                </div>
                 
                 <div class="quest-item">
                     <div class="quest-title">
-                        <span>🩸 Dinamism: 2000 Mișcări</span>
+                        <span id="lbl-miscare">🩸 Dinamism Lvl 1: 2000 Mișcări</span>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
                                 <h4>🩸 Activare Circulatorie</h4>
-                                <strong>De ce contează?</strong> Prin mișcări mici (fidgeting) eviți staza venoasă și aduci oxigen creierului.<br>
-                                <strong>Obiectiv:</strong> AI-ul trebuie să înregistreze 2000 de unități de mișcare ale umerilor. Fă rotiri ușoare în timp ce scrii!
+                                <strong>Mecanică:</strong> Acumulează puncte de mișcare ale umerilor.<br>
+                                <strong>Progresie:</strong> La fiecare Level Up, obiectivul crește cu 2000, iar tu primești mai mult XP!
                             </div>
                         </span>
                     </div>
@@ -183,12 +191,12 @@
 
                 <div class="quest-item">
                     <div class="quest-title">
-                        <span>🦒 Rezistență Cervicală: 60s Continuu</span>
+                        <span id="lbl-cervical">🦒 Cervical Lvl 1: 60s Streak</span>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
                                 <h4>🦒 Streak: Zero Text-Neck</h4>
-                                <strong>De ce contează?</strong> Permite regenerarea fluidelor din discurile intervertebrale C4-C7.<br>
-                                <strong>Obiectiv:</strong> Menține capul drept timp de 60 de secunde ININTERRUPT. Orice aplecare peste monitor va reseta bara la ZERO!
+                                <strong>Mecanică:</strong> Menține capul drept neîntrerupt. Dacă te apleci prea mult în ecran, bara scade la zero!<br>
+                                <strong>Progresie:</strong> La fiecare Level Up, trebuie să reziști cu 60 de secunde în plus.
                             </div>
                         </span>
                     </div>
@@ -197,12 +205,12 @@
 
                 <div class="quest-item">
                     <div class="quest-title">
-                        <span>🛡️ Memorie Musculară: 120s Postură 85%+</span>
+                        <span id="lbl-postura">🛡️ Memorie Lvl 1: 120s Peste 85%</span>
                         <span class="info-icon">ℹ️
                             <div class="tooltip-content">
-                                <h4>🛡️ Neuroplasticitate</h4>
-                                <strong>De ce contează?</strong> Pentru a-ți schimba postura pe termen lung, creierul are nevoie de antrenament repetat corect.<br>
-                                <strong>Obiectiv:</strong> Adună un total de 120 de secunde în care toți senzorii AI sunt "verzi". Nu se resetează dacă greșești.
+                                <h4>🛡️ Memorie Musculară</h4>
+                                <strong>Mecanică:</strong> Adună secunde în care scorul tău general este pe verde (peste 85%).<br>
+                                <strong>Progresie:</strong> Obiectivul crește cu 120s la fiecare nivel. Acumulează cât mai mult XP!
                             </div>
                         </span>
                     </div>
@@ -214,35 +222,55 @@
         <div class="panel">
             <div class="card" id="c-scor">
                 <div class="lbl"><span>🛡️ Index Sănătate</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🛡️ Index Postural</h4><strong>Medical:</strong> Previne hernia de disc.<br><strong>Calcul AI:</strong> (Timp Corect / Timp Total) * 100.</div>
+                    <div class="tooltip-content">
+                        <h4>🛡️ Indexul de Sănătate Posturală</h4>
+                        <strong>Medical:</strong> Un scor > 80% reduce cu 65% riscul de hernie de disc la nivel lombar (L4-L5).<br>
+                        <strong>Calcul AI:</strong> <code>(Timp_Corect / Timp_Total) * 100</code>.
+                    </div>
                 </span></div>
                 <div id="v-scor" class="val">0%</div>
             </div>
 
             <div class="card" id="c-gat">
                 <div class="lbl"><span>🦒 Axa Cervicală</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🦒 Text Neck</h4><strong>Medical:</strong> Previne "Cocoașa IT-istului". 45 grade = 22kg presiune.<br><strong>Calcul AI:</strong> Măsoară distanța Y nas-umeri.</div>
+                    <div class="tooltip-content">
+                        <h4>🦒 Extensia Cervicală (Text Neck)</h4>
+                        <strong>Medical:</strong> La o aplecare de 45°, coloana suportă 22kg de presiune.<br>
+                        <strong>Calcul AI:</strong> Măsoară distanța pe axa verticală (Y) între nas și umeri.
+                    </div>
                 </span></div>
                 <div id="v-gat" class="val">---</div>
             </div>
 
             <div class="card" id="c-ochi">
                 <div class="lbl"><span>👁️ Distanță Monitor</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>👁️ Computer Vision Syndrome</h4><strong>Medical:</strong> Previne miopia. Distanța ideală 50-70cm.<br><strong>Calcul AI:</strong> Variația distanței dintre ochi (adâncime).</div>
+                    <div class="tooltip-content">
+                        <h4>👁️ Sindromul Privitului la Calculator</h4>
+                        <strong>Medical:</strong> Previne miopia și durerile de cap frontale. Distanța ideală: 50-70cm.<br>
+                        <strong>Calcul AI:</strong> Variația distanței în pixeli dintre pupile (adâncime).
+                    </div>
                 </span></div>
                 <div id="v-ochi" class="val">---</div>
             </div>
 
             <div class="card" id="c-umeri">
                 <div class="lbl"><span>⚖️ Aliniament Umeri</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>⚖️ Risc Scolioză</h4><strong>Medical:</strong> Un umăr ridicat scurtează trapezul.<br><strong>Calcul AI:</strong> Diferența absolută înălțime stâng-drept.</div>
+                    <div class="tooltip-content">
+                        <h4>⚖️ Asimetrie și Scolioză Funcțională</h4>
+                        <strong>Medical:</strong> Ridicarea unui umăr scurtează trapezul, forțând curbura coloanei.<br>
+                        <strong>Calcul AI:</strong> Diferența absolută de înălțime dintre umeri.
+                    </div>
                 </span></div>
                 <div id="v-umeri" class="val">---</div>
             </div>
 
             <div class="card" id="c-mediu">
                 <div class="lbl"><span>🩸 Dinamism & Focus</span> <span class="info-icon">ℹ️
-                    <div class="tooltip-content"><h4>🩸 Fidgeting & Oboseală Oculară</h4><strong>Medical:</strong> Lipsa mișcărilor blochează circulația. Privești fix = ochi uscați.<br><strong>Calcul AI:</strong> Urmărește 60s macro-mișcarea umerilor și micro-mișcarea ochilor.</div>
+                    <div class="tooltip-content">
+                        <h4>🩸 Fidgeting și Staring Fatigue</h4>
+                        <strong>Medical:</strong> Scade riscul de tromboză venoasă. Previne uscarea corneei.<br>
+                        <strong>Calcul AI:</strong> Monitorizează micro-mișcările ochilor și umerilor la fiecare 60s.
+                    </div>
                 </span></div>
                 <div id="v-mediu" class="val info">Se analizează...</div>
             </div>
@@ -255,20 +283,17 @@
     <div id="modal-analytics">
         <div id="raport-printabil">
             <div class="header-raport"><h2>📊 Raport Executiv Biomecanic</h2><div class="badge" id="data-raport">Azi</div></div>
-            
             <div class="trofee-container">
                 <div class="trofeu" id="badge-titan"><div class="trofeu-icon">🛡️</div><div class="trofeu-titlu">Coloană de Titan</div></div>
                 <div class="trofeu" id="badge-zen"><div class="trofeu-icon">🧘‍♂️</div><div class="trofeu-titlu">Maestrul Zen</div></div>
                 <div class="trofeu" id="badge-soim"><div class="trofeu-icon">🦅</div><div class="trofeu-titlu">Ochi de Șoim</div></div>
             </div>
-
             <div class="stats-grid">
                 <div class="stat-box"><span class="stat-val" id="stat-live-score" style="color: #00ff88;">0%</span><span class="stat-lbl">Index General</span><div class="grade-circle" id="stat-grade">A</div></div>
                 <div class="stat-box"><span class="stat-val" id="stat-time">00:00</span><span class="stat-lbl">Timp Activ</span></div>
                 <div class="stat-box"><span class="stat-val" id="stat-alarms" style="color:#ffaa00;">0</span><span class="stat-lbl">Corecții</span></div>
                 <div class="stat-box"><span class="stat-val" id="stat-textneck" style="color:#ff4444;">0</span><span class="stat-lbl">Alerte Text-Neck</span></div>
             </div>
-            
             <div class="charts-layout">
                 <div class="chart-history"><canvas id="historyChart"></canvas></div>
                 <div class="chart-doughnut"><canvas id="errorChart"></canvas></div>
@@ -282,13 +307,13 @@
     </div>
 
     <script>
-        // TOOLTIP ENGINE
+        // --- TOOLTIP ENGINE ---
         window.addEventListener('DOMContentLoaded', () => {
             const globalTooltip = document.getElementById('global-tooltip');
             const infoIcons = document.querySelectorAll('.info-icon');
 
             function updateTooltipPosition(e) {
-                let tooltipHeight = globalTooltip.offsetHeight || 150; 
+                let tooltipHeight = globalTooltip.offsetHeight || 250; 
                 let topPos = e.clientY + 15; let leftPos = e.clientX - 410;
                 if (topPos + tooltipHeight > window.innerHeight) topPos = e.clientY - tooltipHeight - 15;
                 if (leftPos < 10) leftPos = 10;
@@ -309,7 +334,7 @@
             incarcaTrofee();
         });
 
-        // VARIABILE GLOBALE
+        // --- VARIABILE GLOBALE ---
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
 
         let ultimaZiSalvata = localStorage.getItem('zenUltimaZi');
@@ -317,8 +342,8 @@
             localStorage.setItem('zenAlarmsToday', 0); localStorage.setItem('zenEroriGat', 0);
             localStorage.setItem('zenEroriOchi', 0); localStorage.setItem('zenEroriUmeri', 0);
             localStorage.setItem('zenEroriTextNeck', 0); localStorage.setItem('zenExercitiiAzi', 0); 
-            // Resetam si quest-urile zilnice
-            localStorage.setItem('zenQuests', JSON.stringify({miscare:0, cervical:0, postura:0, mDone:false, cDone:false, pDone:false}));
+            // Resetam misiunile dinamice
+            localStorage.setItem('zenQuestsDyn', JSON.stringify({miscare:0, cervical:0, postura:0, lvlM:0, lvlC:0, lvlP:0, xp:0}));
             localStorage.setItem('zenUltimaZi', dataCurenta);
         }
 
@@ -329,11 +354,8 @@
         let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; 
         let exercitiiAzi = parseInt(localStorage.getItem('zenExercitiiAzi')) || 0;
 
-        // Variabile Misiuni (Quests)
-        let questData = JSON.parse(localStorage.getItem('zenQuests')) || {miscare:0, cervical:0, postura:0, mDone:false, cDone:false, pDone:false};
-        const TARGET_MISCARE = 2000; // pixeli
-        const TARGET_CERVICAL = 60; // secunde continuu
-        const TARGET_POSTURA = 120; // secunde total
+        // --- DATE MISIUNI DINAMICE INFINITE ---
+        let questData = JSON.parse(localStorage.getItem('zenQuestsDyn')) || {miscare:0, cervical:0, postura:0, lvlM:0, lvlC:0, lvlP:0, xp:0};
 
         let video, bodyPose, poses = [];
         let cadreCorecte = 0, cadreTotale = 0;
@@ -379,7 +401,6 @@
             }
             if (!localStorage.getItem('zenRealizari')) localStorage.setItem('zenRealizari', JSON.stringify({titan: false, zen: false, soim: false}));
             
-            // Desenăm barele inițial
             updateQuestUI();
         }
 
@@ -487,27 +508,48 @@
             document.getElementById('status-msg').innerText = `CALIBRARE COMPLETĂ ✅`;
         }
 
-        // --- NOU: LOGICA MISIUNILOR (QUESTS) ZILNICE ---
+        // --- SISTEM LOGICĂ MISIUNI INFINITE ---
         function updateQuestUI() {
-            let mBar = document.getElementById('fill-miscare');
-            let cBar = document.getElementById('fill-cervical');
-            let pBar = document.getElementById('fill-postura');
+            // Targeturile cresc matematic în funcție de nivel
+            let tM = 2000 * (questData.lvlM + 1);
+            let tC = 60 * (questData.lvlC + 1);
+            let tP = 120 * (questData.lvlP + 1);
 
-            let mProc = Math.min((questData.miscare / TARGET_MISCARE) * 100, 100);
-            let cProc = Math.min((questData.cervical / TARGET_CERVICAL) * 100, 100);
-            let pProc = Math.min((questData.postura / TARGET_POSTURA) * 100, 100);
+            let changed = false;
 
-            mBar.style.width = mProc + "%";
-            cBar.style.width = cProc + "%";
-            pBar.style.width = pProc + "%";
+            // Verificăm Level Ups
+            if (questData.miscare >= tM) {
+                let xpGain = 50 * (questData.lvlM + 1);
+                questData.xp += xpGain; questData.lvlM++; questData.miscare = 0;
+                arataPopupRealizare(`Dinamism Nivel ${questData.lvlM}! +${xpGain} XP`);
+                tM = 2000 * (questData.lvlM + 1); changed = true;
+            }
+            if (questData.cervical >= tC) {
+                let xpGain = 50 * (questData.lvlC + 1);
+                questData.xp += xpGain; questData.lvlC++; questData.cervical = 0;
+                arataPopupRealizare(`Cervical Nivel ${questData.lvlC}! +${xpGain} XP`);
+                tC = 60 * (questData.lvlC + 1); changed = true;
+            }
+            if (questData.postura >= tP) {
+                let xpGain = 50 * (questData.lvlP + 1);
+                questData.xp += xpGain; questData.lvlP++; questData.postura = 0;
+                arataPopupRealizare(`Memorie Nivel ${questData.lvlP}! +${xpGain} XP`);
+                tP = 120 * (questData.lvlP + 1); changed = true;
+            }
 
-            if (mProc >= 100 && !questData.mDone) { questData.mDone = true; mBar.classList.add('done'); arataPopupRealizare("Misiune: Dinamism!"); }
-            if (cProc >= 100 && !questData.cDone) { questData.cDone = true; cBar.classList.add('done'); arataPopupRealizare("Misiune: Cervicală!"); }
-            if (pProc >= 100 && !questData.pDone) { questData.pDone = true; pBar.classList.add('done'); arataPopupRealizare("Misiune: Memorie Musculară!"); }
+            if (changed) localStorage.setItem('zenQuestsDyn', JSON.stringify(questData));
 
-            if(questData.mDone) mBar.classList.add('done');
-            if(questData.cDone) cBar.classList.add('done');
-            if(questData.pDone) pBar.classList.add('done');
+            // Updatăm UI
+            document.getElementById('xp-val').innerText = questData.xp;
+            
+            document.getElementById('lbl-miscare').innerHTML = `🩸 Dinamism Lvl ${questData.lvlM + 1}: ${tM} Mișcări`;
+            document.getElementById('fill-miscare').style.width = Math.min((questData.miscare / tM) * 100, 100) + "%";
+
+            document.getElementById('lbl-cervical').innerHTML = `🦒 Cervical Lvl ${questData.lvlC + 1}: ${tC}s Streak`;
+            document.getElementById('fill-cervical').style.width = Math.min((questData.cervical / tC) * 100, 100) + "%";
+
+            document.getElementById('lbl-postura').innerHTML = `🛡️ Memorie Lvl ${questData.lvlP + 1}: ${tP}s > 85%`;
+            document.getElementById('fill-postura').style.width = Math.min((questData.postura / tP) * 100, 100) + "%";
         }
 
 
@@ -518,38 +560,36 @@
             if (video && video.loadedmetadata) {
                 image(video, 0, 0, 640, 480);
                 
-                // TICK-UL DE 1 SECUNDĂ (Pentru Quest-uri și Oboseală)
+                // Procesare logică la fiecare 1 secundă
                 if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
                     ultimulCheckSecunda = millis();
                     
                     if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder && poses[0].left_eye && poses[0].nose) {
+                        
+                        // MISCARE (QUEST 1)
                         let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
                         let miscareAcum = 0;
                         if (ultimaPozitieUmeri !== 0) miscareAcum = Math.abs(umeriXCurent - ultimaPozitieUmeri);
                         miscareAcumulata += miscareAcum;
                         ultimaPozitieUmeri = umeriXCurent;
                         
-                        // QUEST 1: Adunăm mișcarea umerilor
-                        if (!questData.mDone) questData.miscare += miscareAcum;
-
+                        questData.miscare += miscareAcum; // Adaugam la misiune
+                        
+                        // CERVICAL (QUEST 2)
                         let cUY = (poses[0].left_shoulder.y + poses[0].right_shoulder.y) / 2;
                         let dGat = cUY - poses[0].nose.y;
-                        let isTextNeck = dGat < PRAG_TEXT_NECK;
+                        if (dGat >= PRAG_TEXT_NECK) questData.cervical++; // E ok
+                        else questData.cervical = 0; // PENALIZARE Text Neck -> Reset streak
                         
-                        // QUEST 2: Cervical Streak
-                        if (!questData.cDone) {
-                            if (!isTextNeck) questData.cervical++;
-                            else questData.cervical = 0; // PENALIZARE: A pierdut streak-ul!
-                        }
-
-                        // QUEST 3: Memorie Musculară (>85% scor)
+                        // POSTURA MEMORIE (QUEST 3)
                         let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-                        if (!questData.pDone && sH >= 85) questData.postura++;
+                        if (sH >= 85) questData.postura++;
 
-                        // Salvăm local și updatam UI
-                        localStorage.setItem('zenQuests', JSON.stringify(questData));
+                        // Salvează și afișează
+                        localStorage.setItem('zenQuestsDyn', JSON.stringify(questData));
                         updateQuestUI();
 
+                        // ANALIZĂ OCHI
                         let ochiXCurent = poses[0].left_eye.x; let ochiYCurent = poses[0].left_eye.y;
                         if(ultimaOchiX !== 0) miscareOchiAcumulata += Math.abs(ochiXCurent - ultimaOchiX) + Math.abs(ochiYCurent - ultimaOchiY);
                         ultimaOchiX = ochiXCurent; ultimaOchiY = ochiYCurent;
