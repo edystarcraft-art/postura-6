@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Unicorn Edition</title>
+    <title>Zen Posture Pro - Bionic HUD</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,9 +10,7 @@
     
     <style>
         body { background: #050508; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; transition: box-shadow 0.3s ease; }
-        /* Efect vizual tăcut pentru Modul Ședință */
         body.sedinta-alert { box-shadow: inset 0 0 60px rgba(255, 68, 68, 0.8); }
-
         .header { text-align: center; margin-bottom: 15px; }
         h1 { color: #00ff88; margin: 0 0 10px 0; text-shadow: 0 0 15px rgba(0,255,136,0.2); letter-spacing: 2px; }
         
@@ -25,7 +23,6 @@
         .btn-sec:hover { background: #444; transform: scale(1.05); }
         #btn-audio.activ { background: #00ff88; color: #000; }
         
-        /* NOU: Buton Ședință */
         #btn-sedinta { background: #555; color: #fff; border: 2px solid #777; }
         #btn-sedinta.activ { background: #ff0055; color: #fff; border-color: #ff0055; box-shadow: 0 5px 20px rgba(255,0,85,0.4); animation: pulse 2s infinite; }
 
@@ -66,12 +63,7 @@
         .info-icon:hover { opacity: 1; transform: scale(1.1); }
         .tooltip-content { display: none; }
 
-        #global-tooltip {
-            position: fixed; z-index: 999999; background: #0b0b14; border: 2px solid #00b8ff; 
-            border-radius: 12px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); 
-            color: #e0e0e0; font-size: 0.95rem; width: 320px; pointer-events: none; 
-            opacity: 0; visibility: hidden; line-height: 1.5; transition: opacity 0.15s ease-in-out;
-        }
+        #global-tooltip { position: fixed; z-index: 999999; background: #0b0b14; border: 2px solid #00b8ff; border-radius: 12px; padding: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.9); color: #e0e0e0; font-size: 0.95rem; width: 320px; pointer-events: none; opacity: 0; visibility: hidden; line-height: 1.5; transition: opacity 0.15s ease-in-out; }
         #global-tooltip h4 { margin: 0 0 10px 0; color: #00ff88; font-size: 1.05rem; border-bottom: 1px solid #333; padding-bottom: 5px;}
         #global-tooltip strong { color: #fff; display: inline-block; margin-top: 8px; }
 
@@ -92,7 +84,6 @@
         .stat-lbl { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
         .grade-circle { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.3); border: 2px solid; }
 
-        /* NOU: Secțiunea de Gamificare (Trofee) */
         .trofee-container { display: flex; gap: 15px; justify-content: center; margin: 20px 0; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 15px; border: 1px dashed rgba(255,255,255,0.05); }
         .trofeu { display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: 0.3; filter: grayscale(100%); transition: 0.5s; width: 100px;}
         .trofeu.activ { opacity: 1; filter: grayscale(0%); transform: scale(1.05); }
@@ -107,7 +98,6 @@
         .actions-raport { display: flex; gap: 15px; justify-content: center; margin-top: 20px; }
         #btn-export { background: #fff; color: #000; }
         
-        /* Banner Realizare Nouă */
         #achievement-popup { position: fixed; bottom: 30px; right: 30px; background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; padding: 20px 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(255, 215, 0, 0.4); font-weight: bold; font-size: 1.2rem; transform: translateY(150px); opacity: 0; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 999999; display: flex; align-items: center; gap: 15px; }
         #achievement-popup.show { transform: translateY(0); opacity: 1; }
     </style>
@@ -126,7 +116,6 @@
             <button id="btn-sedinta" class="btn-sec" onclick="toggleSedinta()">🎧 ȘEDINȚĂ: OFF</button>
             <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ PAUZĂ</button>
             <button id="btn-exercitii" class="btn-sec" onclick="cereKinetoAI()">🏋️ KINETO AI</button>
-            
             <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PIP (FUNDAL)</button>
             <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 RAPORT</button>
             <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 CALIBRARE</button>
@@ -153,6 +142,14 @@
                 <div>
                     <button class="btn-raspuns" style="background:#00ff88; color:#000;" onclick="acceptaExercitiiOra()">DA, facem Kineto</button>
                     <button class="btn-raspuns" style="background:#333; color:#fff;" onclick="amanaExercitiiOra()">Peste încă o oră</button>
+                </div>
+            </div>
+
+            <div id="modal-meniu-exercitii" class="modal-overlay">
+                <div class="modal-titlu">Alege tipul de pauză</div>
+                <div>
+                    <button class="btn-raspuns" style="background: #00b8ff; color: #000;" onclick="pornesteExercitii('scaun')">🪑 La Birou (Scaun)</button>
+                    <button class="btn-raspuns" style="background: #00ff88; color: #000;" onclick="pornesteExercitii('picioare')">🧍 În Picioare</button>
                 </div>
             </div>
         </div>
@@ -259,7 +256,6 @@
             localStorage.setItem('zenEroriOchi', 0); localStorage.setItem('zenEroriUmeri', 0);
             localStorage.setItem('zenEroriTextNeck', 0); localStorage.setItem('zenExercitiiAzi', 0); 
             localStorage.setItem('zenUltimaZi', dataCurenta);
-            // Păstrăm realizările (sunt permanente), dar resetăm restul
         }
 
         let totalAlarmeAzi = parseInt(localStorage.getItem('zenAlarmsToday')) || 0;
@@ -287,12 +283,10 @@
         let ultimaPozitieUmeri = 0, miscareAcumulata = 0, cronometruStatie = 0; 
         let stareDinamism = "ACTIV"; 
 
-        // --- NOU: VARIABILE MOD ȘEDINȚĂ & EYE TRACKING (Staring) ---
         let modSedinta = false;
         let ultimaOchiX = 0, ultimaOchiY = 0, miscareOchiAcumulata = 0, cronometruOchi = 0;
         let alertaOchiUscati = false;
 
-        // --- NOU: DATE PENTRU KINETO GENERATIV ---
         const exCervical = ["Împinge bărbia în spate (Double Chin).", "Trage capul ușor spre umărul stâng.", "Trage capul ușor spre umărul drept.", "Rotește capul complet și lent."];
         const exUmeri = ["Rotește umerii înapoi amplu.", "Trage omoplații unul spre celălalt.", "Întinde brațul peste piept și apasă.", "Ridică umerii spre urechi și eliberează."];
         const exGeneral = ["Apleacă-te ușor spre vârfuri.", "Rotește bazinul.", "Deschide pieptul, mâinile la spate.", "Privește la distanță (Regula 20-20-20)."];
@@ -303,6 +297,10 @@
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
         let sistemPornit = false, analizatorIstoricActiv = false;
         
+        // VARIABILE PENTRU HUD BIONIC IN PiP
+        let culoareHUDPip = "#00ff88";
+        let statusHUDPip = "OPTIMĂ";
+
         let cacheScor = -1, cacheStareGat = "", cacheStareUmeri = "", cacheStareOchi = "", cacheStareMediu = "";
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
@@ -350,13 +348,11 @@
             video.style('opacity', '0'); video.style('z-index', '1');
         }
 
-        // --- NOU: FUNCȚIE ȘEDINȚĂ ---
         function toggleSedinta() {
             modSedinta = !modSedinta;
             let btn = document.getElementById('btn-sedinta');
             if(modSedinta) {
                 btn.className = "btn-sec activ"; btn.innerText = "🎧 ȘEDINȚĂ: ON (MUTE)";
-                // Dezactivam automat si sunetul general pt siguranta
                 alarmeActive = false; document.getElementById('btn-audio').innerText = "🔕 ALARME: OFF"; document.getElementById('btn-audio').className = "btn-sec";
             } else {
                 btn.className = "btn-sec"; btn.innerText = "🎧 ȘEDINȚĂ: OFF";
@@ -365,35 +361,27 @@
             }
         }
 
-        // --- NOU: KINETO GENERATIV ---
         function cereKinetoAI() {
             if (sistemInPauza || esteInZenBreak) return;
-            
-            // Analizăm pe loc ce a greșit utilizatorul azi
             let maxErori = Math.max(eroriGat + eroriTextNeck, eroriUmeri, eroriOchi);
             let recomandare = 'general';
-            
             if (maxErori > 0) {
                 if (maxErori === eroriGat + eroriTextNeck) recomandare = 'cervical';
                 else if (maxErori === eroriUmeri) recomandare = 'umeri';
             }
-            
-            // Putem sări direct la exerciții sau arătăm un meniu AI
             pornesteExercitiiAI(recomandare);
         }
 
         function pornesteExercitiiAI(tip) {
             document.getElementById('modal-meniu-exercitii').style.display = "none";
             document.getElementById('modal-ora').style.display = "none";
-            
             sistemInExercitii = true; secundeRamasePauza = 60; 
             
             let lista = exGeneral;
             if (tip === 'cervical') lista = exCervical;
             if (tip === 'umeri') lista = exUmeri;
             
-            exercitiuCurentText = lista[0];
-            momentInceputPauzaManual = Date.now(); 
+            exercitiuCurentText = lista[0]; momentInceputPauzaManual = Date.now(); 
             
             timerExercitii = setInterval(() => {
                 secundeRamasePauza--;
@@ -406,7 +394,7 @@
                     exercitiiAzi++; localStorage.setItem('zenExercitiiAzi', exercitiiAzi);
                     totalTimpPauza += (Date.now() - momentInceputPauzaManual); 
                     bannerVizual = "✅ Sesiune AI Completă!"; timerBanner = millis();
-                    verificaRealizari(); // Verificăm dacă a luat badge la finalul sesiunii
+                    verificaRealizari(); 
                 }
             }, 1000);
         }
@@ -457,36 +445,26 @@
                     ultimulCheckSecunda = millis();
                     if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder && poses[0].left_eye) {
                         
-                        // 1. Dinamism (Statue Syndrome)
                         let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
                         if (ultimaPozitieUmeri !== 0) miscareAcumulata += Math.abs(umeriXCurent - ultimaPozitieUmeri);
                         ultimaPozitieUmeri = umeriXCurent;
                         
-                        // 2. NOU: Staring Fatigue (Ochi Uscati) - Masuram stabilitatea ochilor
-                        let ochiXCurent = poses[0].left_eye.x;
-                        let ochiYCurent = poses[0].left_eye.y;
-                        if(ultimaOchiX !== 0) {
-                            miscareOchiAcumulata += Math.abs(ochiXCurent - ultimaOchiX) + Math.abs(ochiYCurent - ultimaOchiY);
-                        }
+                        let ochiXCurent = poses[0].left_eye.x; let ochiYCurent = poses[0].left_eye.y;
+                        if(ultimaOchiX !== 0) miscareOchiAcumulata += Math.abs(ochiXCurent - ultimaOchiX) + Math.abs(ochiYCurent - ultimaOchiY);
                         ultimaOchiX = ochiXCurent; ultimaOchiY = ochiYCurent;
 
                         cronometruStatie++;
-                        // Verificăm ochii la fiecare 30 de secunde
                         if (cronometruStatie % 30 === 0) {
-                            if(miscareOchiAcumulata < 30) { // Ochii sunt complet imobili (se holbeaza)
-                                alertaOchiUscati = true;
-                                bannerVizual = "👁️ CLIPEȘTE! Ochi Uscați."; timerBanner = millis();
+                            if(miscareOchiAcumulata < 30) { 
+                                alertaOchiUscati = true; bannerVizual = "👁️ CLIPEȘTE! Ochi Uscați."; timerBanner = millis();
                             } else { alertaOchiUscati = false; }
                             miscareOchiAcumulata = 0;
                         }
 
-                        // Verificăm dinamismul la 60 de secunde
                         if (cronometruStatie >= 60) {
                             if (miscareAcumulata < 120) { 
                                 stareDinamism = "STATIC ⚠️"; bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA!"; timerBanner = millis();
-                            } else {
-                                stareDinamism = "ACTIV";
-                            }
+                            } else { stareDinamism = "ACTIV"; }
                             miscareAcumulata = 0; cronometruStatie = 0;
                         }
                     }
@@ -526,10 +504,12 @@
                 push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); return; 
             }
 
+            // --- DESENAREA INTERFEȚEI BIONICE (HUD) ---
+            let cUX = 0, cUY = 0;
             if (poses.length > 0) {
                 let p = poses[0];
                 if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
-                    let cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2; let cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
+                    cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2; cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
                     let dGat = cUY - p.nose.y; let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     let diffUm = Math.abs(p.left_shoulder.y - p.right_shoulder.y);
 
@@ -545,14 +525,18 @@
 
                     if (gOk && dOk && uOk) {
                         cadreCorecte++; timpInceputOboseala = 0; 
-                        if(modSedinta) document.body.classList.remove('sedinta-alert'); // Oprire alertă vizuală
+                        culoareHUDPip = "#00ff88"; statusHUDPip = "POSTURĂ OPTIMĂ";
+                        if(modSedinta) document.body.classList.remove('sedinta-alert'); 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
                         if (millis() - timpInceputOboseala > 15000 && !modSedinta) { 
                             timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; 
                         }
-                        if (isTextNeck) declanseazaAlarma('textneck'); else if (isAplecat) declanseazaAlarma('gat');
-                        else if (!dOk) declanseazaAlarma('distanta'); else if (!uOk) declanseazaAlarma('umeri');
+                        
+                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff0000"; statusHUDPip = "PERICOL: TEXT NECK"; }
+                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ff4444"; statusHUDPip = "AVERTISMENT: APLECAT"; }
+                        else if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ff4444"; statusHUDPip = "AVERTISMENT: PREA APROAPE"; }
+                        else if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "ATENȚIE: ASIMETRIE UMERI"; }
                     }
 
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
@@ -585,13 +569,63 @@
                         cacheStareMediu = stareMediuAsteptata;
                     }
 
-                    stroke(isTextNeck ? "#ff0000" : (uOk ? (gOk ? "#00ff88" : "#ff4444") : "#ffaa00")); strokeWeight(8); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
-                    stroke(isTextNeck ? "#ff0000" : "#00ff88"); strokeWeight(4); line(p.nose.x, p.nose.y, cUX, cUY);
+                    // Desenare Schelet Bionic (Puncte si Linii Neoane)
+                    stroke(culoareHUDPip); strokeWeight(3); 
+                    line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y);
+                    line(p.nose.x, p.nose.y, cUX, cUY);
+                    
+                    noStroke(); fill(culoareHUDPip);
+                    ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8);
+                    ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8);
+                    ellipse(p.nose.x, p.nose.y, 8, 8);
                 }
             }
+
+            // OVERLAYS PENTRU HUD-UL PiP
+            
+            // Margini Vignette
+            noStroke(); fill(0, 0, 0, 160);
+            rect(0, 0, 640, 40); // Banda sus
+            rect(0, 440, 640, 40); // Banda jos
+
+            // Cadru grafic bionic
+            stroke(culoareHUDPip); noFill(); strokeWeight(4);
+            rect(5, 5, 630, 470, 15);
+            
+            // Colțare (Crosshairs)
+            strokeWeight(4);
+            // Stanga Sus
+            line(5, 25, 5, 5); line(5, 5, 25, 5);
+            // Dreapta Sus
+            line(635, 25, 635, 5); line(635, 5, 615, 5);
+            // Stanga Jos
+            line(5, 455, 5, 475); line(5, 475, 25, 475);
+            // Dreapta Jos
+            line(635, 455, 635, 475); line(635, 475, 615, 475);
+
+            // TEXT HUD
+            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(14); textStyle(BOLD);
+            text("ZEN PRO HUD", 20, 20);
+
+            textAlign(RIGHT, CENTER);
+            let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
+            fill(culoareHUDPip); text(`SCOR: ${sH}%`, 620, 20);
+
+            textAlign(LEFT, CENTER); fill(culoareHUDPip);
+            text(`STATUS: ${statusHUDPip}`, 20, 460);
+
+            let tSesiune = "00:00";
+            if (timpStartSesiune) {
+                let te = Date.now() - timpStartSesiune - totalTimpPauza;
+                if (sistemInPauza || sistemInExercitii) te -= (Date.now() - momentInceputPauzaManual);
+                tSesiune = formatTime(te);
+            }
+            textAlign(RIGHT, CENTER); fill(255);
+            text(`TIMP: ${tSesiune}`, 620, 460);
+
             if (bannerVizual !== "" && millis() - timerBanner < 4000) { 
-                push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 60, 480, 60, 15); 
-                fill(255); textSize(26); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 60); pop(); 
+                push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 480, 60, 15); 
+                fill(255); textSize(26); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); 
             }
         }
 
@@ -605,34 +639,21 @@
             verificaRealizari();
         }
 
-        // --- NOU: LOGICĂ GAMIFICARE ---
         function verificaRealizari() {
             let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false};
             let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-            
             let updated = false;
 
-            if (!realizari.titan && s >= 90 && cadreTotale > 300) {
-                realizari.titan = true; updated = true; arataPopupRealizare("Coloană de Titan");
-            }
-            if (!realizari.zen && exercitiiAzi >= 3) {
-                realizari.zen = true; updated = true; arataPopupRealizare("Maestrul Zen");
-            }
-            if (!realizari.soim && eroriOchi === 0 && cadreTotale > 500) {
-                realizari.soim = true; updated = true; arataPopupRealizare("Ochi de Șoim");
-            }
+            if (!realizari.titan && s >= 90 && cadreTotale > 300) { realizari.titan = true; updated = true; arataPopupRealizare("Coloană de Titan"); }
+            if (!realizari.zen && exercitiiAzi >= 3) { realizari.zen = true; updated = true; arataPopupRealizare("Maestrul Zen"); }
+            if (!realizari.soim && eroriOchi === 0 && cadreTotale > 500) { realizari.soim = true; updated = true; arataPopupRealizare("Ochi de Șoim"); }
 
-            if (updated) {
-                localStorage.setItem('zenRealizari', JSON.stringify(realizari));
-                incarcaTrofee();
-            }
+            if (updated) { localStorage.setItem('zenRealizari', JSON.stringify(realizari)); incarcaTrofee(); }
         }
 
         function arataPopupRealizare(nume) {
-            let popup = document.getElementById('achievement-popup');
-            document.getElementById('ach-text').innerText = "Trofeu Deblocat: " + nume + "!";
-            popup.classList.add('show');
-            setTimeout(() => { popup.classList.remove('show'); }, 5000);
+            let popup = document.getElementById('achievement-popup'); document.getElementById('ach-text').innerText = "Trofeu Deblocat: " + nume + "!";
+            popup.classList.add('show'); setTimeout(() => { popup.classList.remove('show'); }, 5000);
         }
 
         function incarcaTrofee() {
@@ -642,10 +663,7 @@
             if(realizari.soim) document.getElementById('badge-soim').className = "trofeu activ";
         }
 
-        function formatTime(ms) {
-            let s = Math.floor(ms / 1000); let m = Math.floor(s / 60);
-            return (m < 10 ? "0" : "") + m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
-        }
+        function formatTime(ms) { let s = Math.floor(ms / 1000); let m = Math.floor(s / 60); return (m < 10 ? "0" : "") + m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
 
         function updateStatisticiLive() {
             if (timpStartSesiune) {
@@ -667,16 +685,13 @@
                 else if (stareDinamism.includes("STATIC")) { insightBox.innerHTML = "💡 <strong>Circulație:</strong> Ești prea rigid. Folosește Kineto AI."; insightBox.style.borderLeftColor = "#00b8ff"; } 
                 else if (s >= 85) { insightBox.innerHTML = "💡 <strong>Status:</strong> Excelent! Ești activ, iar spatele este perfect drept."; insightBox.style.borderLeftColor = "#00ff88"; }
             }
-
             if (errorChartInstance) { errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck]; errorChartInstance.update(); }
         }
 
         function afiseazaDetaliiZi(ziua, scorul, exercitii) {
-            analizatorIstoricActiv = true; 
-            let insightBox = document.getElementById('smart-insights');
+            analizatorIstoricActiv = true; let insightBox = document.getElementById('smart-insights');
             let exText = exercitii > 0 ? `<span style="color:#00b8ff">🏋️ ${exercitii} Sesiuni</span>` : `<span style="color:#ffaa00">⚠️ 0 Sesiuni</span>`;
             let culoare = scorul >= 85 ? "#00ff88" : (scorul >= 65 ? "#ffaa00" : "#ff4444");
-            
             insightBox.style.borderLeftColor = culoare;
             insightBox.innerHTML = `
                 <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
@@ -712,40 +727,4 @@
         function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; clearInterval(updateLiveStatsInterval); analizatorIstoricActiv = false;}
 
         function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#050508", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Raport_ZenPosture.png'; link.click(); }); }
-        async function activeazaModFundal() { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); }
-
-        function declanseazaAlarma(tip) {
-            if (!alarmeActive && !modSedinta) return; 
-            if (sistemInPauza || sistemInExercitii) return;
-            if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
-            
-            ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
-            
-            if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
-            if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
-            if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
-            if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
-            
-            timerBanner = millis();
-            
-            // Daca e in sedinta, facem doar o pulsatie pe ecran, fara sunet
-            if (modSedinta) {
-                document.body.classList.add('sedinta-alert');
-                return;
-            }
-            
-            try { 
-                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                if (contextAudio) {
-                    let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
-                    o.connect(v); v.connect(contextAudio.destination);
-                    o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
-                    v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
-                    o.start(); o.stop(contextAudio.currentTime + 0.3);
-                }
-            } catch (e) {}
-        }
-        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF"; }
-    </script>
-</body>
-</html>
+        async function activeazaModFundal() { if (document
