@@ -585,3 +585,183 @@
         function afiseazaDetaliiZi(ziua, scorul, exercitii) {
             analizatorIstoricActiv = true; // Oprim suprascrierea datelor Live peste caseta
             let insightBox = document.getElementById('smart-insights');
+            
+            let exText = exercitii > 0 ? `<span style="color:#00b8ff">🏋️ ${exercitii} Sesiuni Kineto</span>` : `<span style="color:#ffaa00">⚠️ 0 Sesiuni Kineto</span>`;
+            let culoare = scorul >= 85 ? "#00ff88" : (scorul >= 65 ? "#ffaa00" : "#ff4444");
+            let diagnostic = scorul >= 85 ? "Postură Excelentă (Risc Minim)" : (scorul >= 65 ? "Tensiune Moderată" : "Risc Ridicat (Scolioză/Cervicală)");
+
+            insightBox.style.borderLeftColor = culoare;
+            insightBox.innerHTML = `
+                <div style="display:flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 10px;">
+                    <h4 style="margin:0; color:#fff; font-size:1.2rem;">📅 Detalii Ziua: <span style="color:#00b8ff">${ziua}</span></h4>
+                    <span style="background: ${culoare}22; color: ${culoare}; padding: 5px 15px; border-radius: 20px; font-weight: bold;">Scor: ${scorul}%</span>
+                </div>
+                <div style="font-size: 0.95rem; color: #ccc; line-height: 1.8;">
+                    • <strong>Diagnostic AI:</strong> ${diagnostic}<br>
+                    • <strong>Activitate:</strong> ${exText}<br>
+                    <em style="color:#888; font-size:0.85rem; display:block; margin-top:5px;">*Date extrase din arhiva biometrică locală.</em>
+                </div>
+            `;
+            
+            // Animăm caseta pentru a atrage atenția
+            insightBox.style.transform = "scale(1.03)";
+            insightBox.style.backgroundColor = "rgba(0, 184, 255, 0.15)";
+            setTimeout(() => { 
+                insightBox.style.transform = "scale(1)"; 
+                insightBox.style.backgroundColor = "rgba(0, 184, 255, 0.1)";
+            }, 300);
+        }
+
+        function updateStatisticiLive() {
+            if (timpStartSesiune) {
+                let te = Date.now() - timpStartSesiune - totalTimpPauza;
+                if (sistemInPauza || sistemInExercitii) te -= (Date.now() - momentInceputPauzaManual);
+                document.getElementById('stat-time').innerText = formatTime(te);
+            }
+            let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
+            document.getElementById('stat-live-score').innerText = s + "%";
+            document.getElementById('stat-alarms').innerText = totalAlarmeAzi;
+            document.getElementById('stat-textneck').innerText = eroriTextNeck;
+            
+            let g = document.getElementById('stat-grade');
+            if(s >= 90) { g.innerText = "A+"; g.style.color = "#00ff88"; } else if(s >= 80) { g.innerText = "A"; g.style.color = "#00ff88"; } else { g.innerText = "B"; g.style.color = "#ffaa00"; }
+
+            let insightBox = document.getElementById('smart-insights');
+            
+            // Actualizăm caseta LIVE doar dacă utilizatorul nu se uită la istoricul unei zile specifice
+            if(!analizatorIstoricActiv) {
+                if (eroriTextNeck > 10) {
+                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Scade utilizarea telefonului! Stai cu capul extrem de aplecat, punând presiune pe cervicală.";
+                    insightBox.style.borderLeftColor = "#ff0000";
+                } else if (stareDinamism.includes("STATIC")) {
+                    insightBox.innerHTML = "💡 <strong>Atenție Circulație:</strong> Ești prea rigid. Fă o mică întindere sau folosește butonul Kineto pentru a activa sângele.";
+                    insightBox.style.borderLeftColor = "#00b8ff";
+                } else if (s >= 85) {
+                    insightBox.innerHTML = "💡 <strong>Feedback Biomecanic:</strong> Excelent! Ești activ, mediul este optim, iar spatele este drept.";
+                    insightBox.style.borderLeftColor = "#00ff88";
+                }
+            }
+
+            if (errorChartInstance) { errorChartInstance.data.datasets[0].data = [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck]; errorChartInstance.update(); }
+        }
+
+        function deschideAnalytics() {
+            document.getElementById('modal-analytics').style.display = "flex";
+            analizatorIstoricActiv = false; // Resetăm la intrare
+            document.getElementById('smart-insights').innerHTML = "Apasă pe o coloană din grafic pentru a vizualiza detaliile acelei zile...";
+            
+            updateStatisticiLive(); updateLiveStatsInterval = setInterval(updateStatisticiLive, 1000);
+            
+            let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {}; let isEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {};
+            let labs = Object.keys(is); let datS = Object.values(is); let datEx = labs.map(z => isEx[z] || (z === dataCurenta ? exercitiiAzi : 0));
+            
+            if (historyChartInstance) historyChartInstance.destroy();
+            let ctx = document.getElementById('historyChart').getContext('2d');
+            
+            // --- NOU: GRAFICĂ NEON GLASSMORPHISM PENTRU COLOANE ---
+            let neonGradient = ctx.createLinearGradient(0, 0, 0, 400);
+            neonGradient.addColorStop(0, 'rgba(0, 255, 136, 0.9)'); // Verde luminos sus
+            neonGradient.addColorStop(1, 'rgba(0, 102, 51, 0.6)');  // Verde închis jos
+
+            let hoverGradient = ctx.createLinearGradient(0, 0, 0, 400);
+            hoverGradient.addColorStop(0, 'rgba(0, 184, 255, 1)'); // Albastru strălucitor pe Hover
+            hoverGradient.addColorStop(1, 'rgba(0, 255, 136, 0.8)');
+
+            historyChartInstance = new Chart(ctx, {
+                data: { 
+                    labels: labs, 
+                    datasets: [
+                        { type: 'line', label: 'Kineto', data: datEx, borderColor: '#00b8ff', tension: 0.4, yAxisID: 'y1' }, 
+                        { 
+                            type: 'bar', 
+                            label: 'Scor', 
+                            data: datS, 
+                            backgroundColor: neonGradient, 
+                            hoverBackgroundColor: hoverGradient, 
+                            borderRadius: 8, // Colțuri mai rotunjite
+                            borderSkipped: false, // Rotunjește și jos
+                            barThickness: 35, // Coloane mai solide
+                            yAxisID: 'y' 
+                        }
+                    ]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    
+                    // --- NOU: LOGICĂ CLICK & HOVER ---
+                    onHover: (event, chartElement) => {
+                        event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    },
+                    onClick: (event, activeElements) => {
+                        if (activeElements.length > 0) {
+                            const dataIndex = activeElements[0].index;
+                            const ziua = labs[dataIndex];
+                            const scorul = datS[dataIndex];
+                            const exercitii = datEx[dataIndex];
+                            afiseazaDetaliiZi(ziua, scorul, exercitii);
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: true, labels: { color: '#ccc', boxWidth: 15 } },
+                        tooltip: { 
+                            backgroundColor: 'rgba(15, 15, 25, 0.95)', 
+                            titleColor: '#00b8ff', 
+                            bodyFont: {size: 14}, 
+                            padding: 12, 
+                            borderColor: 'rgba(0, 255, 136, 0.5)', 
+                            borderWidth: 1, 
+                            cornerRadius: 10 
+                        } 
+                    },
+                    scales: { 
+                        y: { max: 100, position: 'left', grid: { color: 'rgba(255,255,255,0.05)', borderDash: [5, 5] }, ticks: { color: '#888' } }, 
+                        y1: { min: 0, suggestedMax: 5, position: 'right', grid: { drawOnChartArea: false }, ticks:{stepSize:1, color: '#00b8ff'} },
+                        x: { grid: { display: false }, ticks: { color: '#e0e0e0', font: {weight: 'bold'} } }
+                    } 
+                }
+            });
+
+            if (errorChartInstance) errorChartInstance.destroy();
+            let ctxErr = document.getElementById('errorChart').getContext('2d');
+            errorChartInstance = new Chart(ctxErr, {
+                type: 'doughnut', data: { labels: ['Aplecat', 'Ochi', 'Umeri', 'Text Neck'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ff4444', '#00b8ff', '#ffaa00', '#ff0000'], borderWidth: 0, hoverOffset: 10 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ccc', font: {size: 11} } } }, cutout: '75%' }
+            });
+        }
+
+        function inchideAnalytics() { 
+            document.getElementById('modal-analytics').style.display = "none"; 
+            clearInterval(updateLiveStatsInterval); 
+            analizatorIstoricActiv = false;
+        }
+
+        function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#050508", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Raport_ZenPosture.png'; link.click(); }); }
+        async function activeazaModFundal() { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); }
+
+        function declanseazaAlarma(tip) {
+            if (!alarmeActive || sistemInPauza || sistemInExercitii) return; 
+            if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
+            
+            ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
+            
+            if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
+            if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
+            if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
+            if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
+            
+            timerBanner = millis();
+            try { 
+                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
+                if (contextAudio) {
+                    let o = contextAudio.createOscillator(); let v = contextAudio.createGain();
+                    o.connect(v); v.connect(contextAudio.destination);
+                    o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); 
+                    v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3);
+                    o.start(); o.stop(contextAudio.currentTime + 0.3);
+                }
+            } catch (e) {}
+        }
+        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerText = alarmeActive ? "🔔 ALARME: ON" : "🔕 ALARME: OFF"; }
+    </script>
+</body>
+</html>
