@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Final Stability</title>
+    <title>Zen Posture Pro - Flawless Start</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -34,8 +34,9 @@
 
         .dashboard { display: flex; gap: 30px; flex-wrap: wrap; justify-content: center; max-width: 1100px; width: 100%; align-items: flex-start; }
 
-        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #050508; width: 640px; height: 480px; position: relative; z-index: 1;}
+        #camera-wrapper { border: 2px solid rgba(0, 255, 136, 0.7); box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); border-radius: 20px; overflow: hidden; background: #000; width: 640px; height: 480px; position: relative; z-index: 1;}
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; }
+        video { display: none !important; } 
 
         .panel { display: flex; flex-direction: column; gap: 15px; width: 280px; max-height: 480px; overflow-y: auto; padding-right: 5px; position: relative; z-index: 10; }
         .panel::-webkit-scrollbar { width: 6px; }
@@ -245,7 +246,6 @@
     </div>
 
     <script>
-        // Funcția de Tooltips Inovatoare
         window.addEventListener('DOMContentLoaded', () => {
             const globalTooltip = document.getElementById('global-tooltip');
             const infoIcons = document.querySelectorAll('.info-icon');
@@ -291,7 +291,4 @@
         let eroriGat = parseInt(localStorage.getItem('zenEroriGat')) || 0;
         let eroriOchi = parseInt(localStorage.getItem('zenEroriOchi')) || 0;
         let eroriUmeri = parseInt(localStorage.getItem('zenEroriUmeri')) || 0;
-        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0; 
-        let exercitiiAzi = parseInt(localStorage.getItem('zenExercitiiAzi')) || 0;
-
-        let video, bodyPose, poses = [];
+        let eroriTextNeck = parseInt(localStorage.getItem('zenEroriTextNeck')) || 0
