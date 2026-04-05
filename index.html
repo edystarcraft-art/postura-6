@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Ultimate Clinical Edition</title>
+    <title>Zen Posture Pro - Modern Document PiP</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,7 +21,7 @@
         .badge-ent { background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; vertical-align: top; letter-spacing: 1px; font-weight: 600; margin-left: 5px; }
         .subtitle { color: #64748b; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
 
-        .toolbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 100px; padding: 10px 15px; display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap; }
+        .toolbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 100px; padding: 10px 15px; display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap; }
         button { border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; }
         #btn-start { background: #00ff88; color: #000; box-shadow: 0 0 20px rgba(0,255,136,0.3); font-size: 0.95rem; }
         #btn-start:hover { background: #00cc6e; transform: translateY(-2px); box-shadow: 0 5px 25px rgba(0,255,136,0.5); }
@@ -44,7 +44,7 @@
         #camera-wrapper { background: #000; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.1); position: relative; z-index: 1; width: 640px; height: 480px; }
         #camera-wrapper canvas { display: block; position: relative; z-index: 2; border-radius: 24px;}
 
-        /* --- QUESTS CONTAINER (GAMIFICARE) --- */
+        /* --- QUESTS CONTAINER --- */
         .quests-container { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .quests-header { color: #fff; font-weight: 800; font-size: 1.1rem; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;}
         #btn-start-quests { background: #00ff88; color: #000; border: none; padding: 6px 15px; font-size: 0.75rem; font-weight: 800; border-radius: 50px; cursor: pointer; transition: 0.3s; box-shadow: 0 0 15px rgba(0,255,136,0.3); display: none;}
@@ -60,7 +60,6 @@
         .quest-bar-bg { width: 100%; height: 12px; background: rgba(0,0,0,0.5); border-radius: 10px; overflow: hidden; position: relative; border: 1px solid rgba(255,255,255,0.05);}
         .quest-bar-fill { height: 100%; background: linear-gradient(90deg, #00b8ff, #00ff88); width: 0%; transition: width 0.3s ease-out, background 0.3s ease; border-radius: 10px; }
 
-        /* --- CARDS TELEMETRIE --- */
         .panel { display: grid; grid-template-columns: 1fr; gap: 15px; width: 100%; max-height: 800px; padding-right: 5px; z-index: 10; }
         .card { background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 18px 20px; transition: all 0.3s ease; position: relative; overflow: visible; }
         .card:hover { transform: translateY(-2px); background: rgba(30, 41, 59, 0.8); }
@@ -158,7 +157,7 @@
         <button id="btn-sedinta" class="btn-sec" onclick="toggleSedinta()">🎧 Ședință</button>
         <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ Pauză</button>
         <button id="btn-exercitii" class="btn-sec" onclick="cereKinetoAI()">🏋️ Kineto AI</button>
-        <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PiP HUD</button>
+        <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PiP Modern (HTML)</button>
         <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 Raport Medical</button>
         <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 Calibrare</button>
     </div>
@@ -210,13 +209,7 @@
                             <span id="lbl-miscare">🩸 Dinamism Lvl 1: 2000 Mișcări</span>
                             <button class="btn-reset-quest" onclick="resetQuest('miscare')" title="Resetează misiunea la Nivel 1">↺</button>
                         </div>
-                        <span class="info-icon">ℹ️
-                            <div class="tooltip-content">
-                                <h4>🩸 Funcția Endotelială (Dinamism)</h4>
-                                <strong>Impact Medical:</strong> Contracțiile musculare subtile pompează sângele venos înapoi spre inimă, prevenind staza venoasă și tromboza (DVT) la nivelul picioarelor.<br>
-                                <strong>Mecanică Misiune:</strong> Adună puncte de mișcare ale umerilor (minim 2000 per nivel). Targetul crește la fiecare Level Up.
-                            </div>
-                        </span>
+                        <span class="info-icon" onmouseenter="showT(event, 'dinamism')">ℹ️</span>
                     </div>
                     <div class="quest-bar-bg"><div class="quest-bar-fill" id="fill-miscare"></div></div>
                 </div>
@@ -227,13 +220,7 @@
                             <span id="lbl-cervical">🦒 Cervical Lvl 1: 60s Streak</span>
                             <button class="btn-reset-quest" onclick="resetQuest('cervical')" title="Resetează misiunea la Nivel 1">↺</button>
                         </div>
-                        <span class="info-icon">ℹ️
-                            <div class="tooltip-content">
-                                <h4>🦒 Hidratarea Discurilor Cervicale</h4>
-                                <strong>Impact Medical:</strong> Când capul stă drept, discurile C4-C7 se hidratează natural. Când te apleci, presiunea asimetrică expulzează fluidele, ducând la degenerare și dureri iradiante.<br>
-                                <strong>Mecanică Misiune:</strong> Menține capul drept neîntrerupt. Dacă te apleci în față peste pragul limită, pierzi progresul și bara revine la ZERO! Targetul crește la fiecare Level Up.
-                            </div>
-                        </span>
+                        <span class="info-icon" onmouseenter="showT(event, 'cervical')">ℹ️</span>
                     </div>
                     <div class="quest-bar-bg"><div class="quest-bar-fill" id="fill-cervical"></div></div>
                 </div>
@@ -244,13 +231,7 @@
                             <span id="lbl-postura">🛡️ Memorie Lvl 1: 120s > 85%</span>
                             <button class="btn-reset-quest" onclick="resetQuest('postura')" title="Resetează misiunea la Nivel 1">↺</button>
                         </div>
-                        <span class="info-icon">ℹ️
-                            <div class="tooltip-content">
-                                <h4>🛡️ Neuroplasticitate Posturală</h4>
-                                <strong>Impact Medical:</strong> Postura corectă se obține prin reprogramarea cortexului motor (memorie musculară). Menținerea repetată a posturii creează noi sinapse neuronale.<br>
-                                <strong>Mecanică Misiune:</strong> Acumulează un timp total în care întregul tău corp e în zona verde (scor > 85%). Nu pierzi progresul dacă greșești temporar. Targetul crește la fiecare Level Up.
-                            </div>
-                        </span>
+                        <span class="info-icon" onmouseenter="showT(event, 'lombar')">ℹ️</span>
                     </div>
                     <div class="quest-bar-bg"><div class="quest-bar-fill" id="fill-postura"></div></div>
                 </div>
@@ -295,12 +276,12 @@
                     <div class="lbl">🩸 Dinamism Corp <span class="info-icon" onmouseenter="showT(event, 'dinamism')">ℹ️</span></div>
                     <button class="btn-reset-small" onclick="resetMetric('mediu')" title="Resetează timer-ul">↺</button>
                 </div>
-                <div id="v-mediu" class="val info">Se analizează...</div>
+                <div id="v-mediu" class="val info">Analiză...</div>
             </div>
         </div>
     </div>
 
-    <div id="video-container" style="width:0; height:0; overflow:hidden;"></div>
+    <div id="video-container" style="display:none;"></div>
     <video id="pip-video" muted autoplay playsinline style="display:none;"></video>
 
     <div id="modal-analytics">
@@ -369,7 +350,7 @@
     </div>
 
     <script>
-        // TOOLTIP CONTENT EXTINS (MEDICAL + AI)
+        // --- TOOLTIP CONTENT EXTINS (MEDICAL + AI) ---
         const tooltips = {
             lombar: "<h4>🛡️ Indexul de Compresie Lombară</h4><strong>Semnificație Medicală:</strong> Indică procentul de timp în care presiunea intervertebrală este în cote sigure.<br><ul><li>Un scor > 80% reduce presiunea pe inelul fibros L4-L5 cu până la 65%.</li><li>Previne inflamarea nervului sciatic (sciatica).</li></ul><strong>Logica AI:</strong> Calculează un raport global ponderat între cadrele perfecte și totalul de cadre analizate la 30 FPS.",
             cervical: "<h4>🦒 Analiză Anterior Head Carriage</h4><strong>Semnificație Medicală:</strong> Identifică sindromul de 'Gât de corporatist'.<br><ul><li>Pentru fiecare 2.5 cm în care capul este dus în față, presiunea pe cervicală crește cu 4.5 kg.</li><li>Afectează curba lordotică naturală a gâtului.</li></ul><strong>Logica AI:</strong> Măsoară distanța euclidiană pe axa Y dintre <span class='code-block'>pose.nose.y</span> și mediana umerilor.",
@@ -392,9 +373,12 @@
 
             infoIcons.forEach(icon => {
                 icon.addEventListener('mouseenter', (e) => {
-                    globalTooltip.innerHTML = tooltips[icon.getAttribute('onmouseenter').match(/'([^']+)'/)[1]];
-                    globalTooltip.style.visibility = 'visible'; globalTooltip.style.opacity = '1';
-                    updateTooltipPosition(e);
+                    let key = icon.getAttribute('onmouseenter') ? icon.getAttribute('onmouseenter').match(/'([^']+)'/)[1] : null;
+                    if(key && tooltips[key]) {
+                        globalTooltip.innerHTML = tooltips[key];
+                        globalTooltip.style.visibility = 'visible'; globalTooltip.style.opacity = '1';
+                        updateTooltipPosition(e);
+                    }
                 });
                 icon.addEventListener('mousemove', updateTooltipPosition);
                 icon.addEventListener('mouseleave', () => {
@@ -404,7 +388,7 @@
             incarcaTrofee();
         });
 
-        // VARIABILE GLOBALE
+        // --- VARIABILE GLOBALE ---
         let dataCurenta = new Date().toLocaleDateString('ro-RO');
 
         let ultimaZiSalvata = localStorage.getItem('zenUltimaZi');
@@ -451,6 +435,7 @@
         let timerPauza = null, pipVideoElement;
         let bannerVizual = "", timerBanner = 0, sistemInPauza = false, sistemPornit = false, analizatorIstoricActiv = false;
         let misiuniPornite = false; 
+        let pipWindow = null; // Variabila pentru noul Document PiP API
 
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
@@ -501,6 +486,87 @@
             video.parent('video-container');
         }
 
+        // --- MODIFICARE: DOCUMENT PICTURE-IN-PICTURE API ---
+        async function activeazaModFundal() {
+            // Verificam daca browserul suporta noul API HTML pentru PiP (ex: Chrome, Edge desktop)
+            if (!('documentPictureInPicture' in window)) {
+                // FALLBACK: PiP Clasic Video (Doar imagine) pt Safari / Firefox
+                if (document.pictureInPictureElement) await document.exitPictureInPicture(); 
+                else await pipVideoElement.requestPictureInPicture();
+                return;
+            }
+
+            if (pipWindow) {
+                pipWindow.close();
+                return;
+            }
+
+            try {
+                // Deschidem o fereastra HTML reala, totdeauna deasupra
+                pipWindow = await window.documentPictureInPicture.requestWindow({
+                    width: 320, height: 420
+                });
+
+                // Inseram CSS-ul ferestrei PiP
+                const style = pipWindow.document.createElement('style');
+                style.textContent = `
+                    body { margin: 0; background: #050508; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
+                    .video-container { position: relative; width: 100%; height: 240px; background: #000; flex-shrink: 0; border-bottom: 2px solid #1e293b;}
+                    canvas { width: 100%; height: 100%; object-fit: cover; }
+                    .hud-overlay { position: absolute; top:0; left:0; right:0; bottom:0; pointer-events: none; border: 2px solid #00b8ff; box-sizing: border-box; transition: border-color 0.3s; }
+                    .hud-overlay.alert { box-shadow: inset 0 0 30px rgba(255, 68, 68, 0.5); }
+                    .stats { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 8px; background: #0f172a; }
+                    .stat-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+                    .stat-row:last-child { border-bottom: none; }
+                    .val-good { color: #00ff88; font-weight: 800;} .val-warn { color: #ffaa00; font-weight: 800;} .val-bad { color: #ff4444; font-weight: 800;}
+                    .controls { display: flex; gap: 10px; padding: 12px; background: #1e293b; flex-shrink: 0;}
+                    button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.2s; }
+                    button:hover { transform: scale(1.02); }
+                    .btn-mute { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
+                    .btn-mute.active { background: rgba(0, 255, 136, 0.15); color: #00ff88; border-color: rgba(0,255,136,0.3);}
+                    .btn-kineto { background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; box-shadow: 0 5px 15px rgba(0,184,255,0.3);}
+                `;
+                pipWindow.document.head.appendChild(style);
+
+                // Inseram HTML-ul ferestrei PiP
+                pipWindow.document.body.innerHTML = `
+                    <div class="video-container">
+                        <canvas id="pip-canvas" width="640" height="480"></canvas>
+                        <div class="hud-overlay" id="pip-hud-border"></div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-row"><span>Status General:</span><span id="pip-status" class="val-good">OPTIM</span></div>
+                        <div class="stat-row"><span>Sarcină Cervicală:</span><span id="pip-gat" class="val-good">5.0 kg</span></div>
+                        <div class="stat-row"><span>Aliniament Umeri:</span><span id="pip-umeri" class="val-good">OK</span></div>
+                    </div>
+                    <div class="controls">
+                        <button class="btn-mute ${alarmeActive ? 'active' : ''}" id="pip-btn-mute">${alarmeActive ? '🔔 Alarme ON' : '🔕 Mute'}</button>
+                        <button class="btn-kineto" id="pip-btn-kineto">🏋️ Kineto AI</button>
+                    </div>
+                `;
+
+                // Logica butoanelor din PiP
+                let btnMutePip = pipWindow.document.getElementById('pip-btn-mute');
+                btnMutePip.addEventListener('click', () => {
+                    toggleAudio(); // Apelează funcția din fereastra principală
+                    btnMutePip.className = alarmeActive ? "btn-mute active" : "btn-mute";
+                    btnMutePip.innerText = alarmeActive ? "🔔 Alarme ON" : "🔕 Mute";
+                });
+                
+                pipWindow.document.getElementById('pip-btn-kineto').addEventListener('click', () => {
+                    cereKinetoAI(); // Apelează funcția din fereastra principală
+                });
+
+                // Când fereastra PiP se închide
+                pipWindow.addEventListener('pagehide', () => {
+                    pipWindow = null;
+                });
+
+            } catch (error) {
+                console.error("Document PiP error:", error);
+            }
+        }
+
         // --- RESET GRANULAR ---
         function resetMetric(tip) {
             if(tip === 'scor') { cadreCorecte = 0; cadreTotale = 0; cacheScor = -1; }
@@ -509,7 +575,6 @@
             if(tip === 'umeri') { eroriUmeri = 0; localStorage.setItem('zenEroriUmeri', 0); cacheStareUmeri = ""; }
             if(tip === 'mediu') { cronometruStatie = 0; miscareAcumulata = 0; miscareOchiAcumulata = 0; cacheStareMediu = ""; stareDinamism = "ACTIV"; alertaOchiUscati = false; }
             
-            // Fortam o redesenare instanta pe panou
             document.getElementById('v-scor').innerText = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) + "%" : "0%";
             document.getElementById('v-gat').innerText = "---";
             document.getElementById('v-ochi').innerText = "---";
@@ -631,276 +696,4 @@
             document.getElementById('xp-val').innerText = questData.xp;
             document.getElementById('lbl-miscare').innerHTML = `🩸 Dinamism Lvl ${questData.lvlM + 1}: ${tM} Mișcări`; document.getElementById('fill-miscare').style.width = Math.min((questData.miscare / tM) * 100, 100) + "%";
             document.getElementById('lbl-cervical').innerHTML = `🦒 Cervical Lvl ${questData.lvlC + 1}: ${tC}s Streak`; document.getElementById('fill-cervical').style.width = Math.min((questData.cervical / tC) * 100, 100) + "%";
-            document.getElementById('lbl-postura').innerHTML = `🛡️ Memorie Lvl ${questData.lvlP + 1}: ${tP}s > 85%`; document.getElementById('fill-postura').style.width = Math.min((questData.postura / tP) * 100, 100) + "%";
-        }
-
-
-        function draw() {
-            background(15, 23, 42); 
-            if (!sistemPornit) {
-                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(24); textStyle(BOLD);
-                text("Sistemul este pregătit", 320, 220); fill(200); textSize(16); textStyle(NORMAL);
-                text("Apasă butonul de INIȚIALIZARE de sus pentru a porni.", 320, 260);
-                return; 
-            }
-            
-            if (video && video.loadedmetadata) {
-                image(video, 0, 0, 640, 480);
-                
-                if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
-                    ultimulCheckSecunda = millis();
-                    
-                    if (poses.length > 0 && poses[0].left_shoulder && poses[0].right_shoulder && poses[0].left_eye && poses[0].nose) {
-                        
-                        let umeriXCurent = (poses[0].left_shoulder.x + poses[0].right_shoulder.x) / 2;
-                        let miscareAcum = 0;
-                        if (ultimaPozitieUmeri !== 0) miscareAcum = Math.abs(umeriXCurent - ultimaPozitieUmeri);
-                        miscareAcumulata += miscareAcum;
-                        ultimaPozitieUmeri = umeriXCurent;
-                        
-                        let cUY = (poses[0].left_shoulder.y + poses[0].right_shoulder.y) / 2;
-                        let dGat = cUY - poses[0].nose.y;
-                        let isTextNeck = dGat < PRAG_TEXT_NECK;
-                        let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-
-                        if (misiuniPornite) {
-                            questData.miscare += miscareAcum;
-                            if (!isTextNeck) questData.cervical++; else questData.cervical = 0; 
-                            if (sH >= 85) questData.postura++;
-                            
-                            localStorage.setItem('zenQuestsDyn', JSON.stringify(questData));
-                            updateQuestUI();
-                        }
-
-                        let ochiXCurent = poses[0].left_eye.x; let ochiYCurent = poses[0].left_eye.y;
-                        if(ultimaOchiX !== 0) miscareOchiAcumulata += Math.abs(ochiXCurent - ultimaOchiX) + Math.abs(ochiYCurent - ultimaOchiY);
-                        ultimaOchiX = ochiXCurent; ultimaOchiY = ochiYCurent;
-
-                        cronometruStatie++;
-                        if (cronometruStatie % 30 === 0) {
-                            if(miscareOchiAcumulata < 30) { alertaOchiUscati = true; bannerVizual = "👁️ CLIPEȘTE! Ochi Uscați."; timerBanner = millis(); } else { alertaOchiUscati = false; }
-                            miscareOchiAcumulata = 0;
-                        }
-                        if (cronometruStatie >= 60) {
-                            if (miscareAcumulata < 120) { stareDinamism = "STATIC ⚠️"; bannerVizual = "⚠️ SCHIMBĂ-ȚI POZIȚIA!"; timerBanner = millis(); } else { stareDinamism = "ACTIV"; }
-                            miscareAcumulata = 0; cronometruStatie = 0;
-                        }
-                    }
-                }
-            }
-
-            if (timpStartSesiune && !sistemInPauza && !sistemInExercitii && !asteaptaRaspunsOra) {
-                if (millis() - timpUltimaNotificareOra > INTERVAL_NOTIFICARE_ORA) { asteaptaRaspunsOra = true; document.getElementById('modal-ora').style.display = 'flex'; }
-            }
-
-            if (sistemInExercitii) {
-                push(); fill(15, 23, 42, 230); rect(0, 0, 640, 480); pop();
-                fill(0, 184, 255); noStroke(); textAlign(CENTER, CENTER); textSize(35); textStyle(BOLD); text("🧘 KINETO AI ACTIV", 320, 180);
-                fill(255); textSize(24); textStyle(NORMAL); text(exercitiuCurentText, 320, 260); 
-                fill(0, 184, 255); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 360); return; 
-            }
-            if (sistemInPauza) {
-                push(); fill(0, 0, 0, 200); rect(0, 0, 640, 480); pop();
-                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ", 320, 240); return; 
-            }
-            if (esteInZenBreak) {
-                push(); fill(15, 23, 42, 230); rect(0, 0, 640, 480); pop();
-                fill(0, 255, 136); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("RELAXEAZĂ SPATELE", 320, 150);
-                fill(0, 184, 255); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 300); return; 
-            }
-            if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); return; }
-
-            stareGatHUDPip = "OK"; stareOchiHUDPip = "OK"; stareUmeriHUDPip = "OK";
-
-            let cUX = 0, cUY = 0;
-            if (poses.length > 0) {
-                let p = poses[0];
-                if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
-                    cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2; cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
-                    let dGat = cUY - p.nose.y; let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
-                    let diffUm = Math.abs(p.left_shoulder.y - p.right_shoulder.y);
-
-                    if (modCalibrare) { dateCalibrare.push({gat: dGat, ochi: dOchi}); if (dateCalibrare.length > 90) finalizeazaCalibrare(); fill(255, 0, 255); noStroke(); textAlign(CENTER); text("Calibrare...", 320, 240); return; }
-
-                    cadreTotale++;
-                    let isTextNeck = dGat < PRAG_TEXT_NECK; let isAplecat = !isTextNeck && dGat < PRAG_POSTURA; let gOk = !isTextNeck && !isAplecat; 
-                    let dOk = dOchi < PRAG_DISTANTA; let uOk = diffUm < PRAG_UMERI;
-
-                    if (gOk && dOk && uOk) {
-                        cadreCorecte++; timpInceputOboseala = 0; culoareHUDPip = "#00ff88"; statusHUDPip = "STARE OPTIMĂ";
-                        if(modSedinta) document.body.classList.remove('sedinta-alert'); 
-                    } else {
-                        if (timpInceputOboseala === 0) timpInceputOboseala = millis();
-                        if (millis() - timpInceputOboseala > 15000 && !modSedinta) { timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; }
-                        
-                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff4444"; statusHUDPip = "PERICOL CERVICAL"; stareGatHUDPip = "TEXT NECK"; }
-                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareGatHUDPip = "APLECAT"; }
-                        
-                        if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareOchiHUDPip = "APROAPE"; }
-                        if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareUmeriHUDPip = "ASIMETRIE"; }
-                    }
-
-                    let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
-                    if (scor !== cacheScor) { document.getElementById('v-scor').innerText = scor + "%"; document.getElementById('c-scor').className = scor > 80 ? "card ok" : "card bad"; cacheScor = scor; }
-
-                    let stareGatAsteptata = isTextNeck ? "TELEFON 📱" : (isAplecat ? "APLECAT ⚠️" : "OPTIMĂ");
-                    if (stareGatAsteptata !== cacheStareGat) { document.getElementById('v-gat').innerText = stareGatAsteptata; document.getElementById('c-gat').className = gOk ? "card ok" : "card bad"; cacheStareGat = stareGatAsteptata; }
-                    
-                    let stareOchiAsteptata = dOk ? "SIGURĂ" : "APROAPE 🚨";
-                    if (stareOchiAsteptata !== cacheStareOchi) { document.getElementById('v-ochi').innerText = stareOchiAsteptata; document.getElementById('c-ochi').className = dOk ? "card ok" : "card bad"; cacheStareOchi = stareOchiAsteptata; }
-
-                    let stareUmeriAsteptata = uOk ? "DREPȚI" : "STRÂMBI ⚖️";
-                    if (stareUmeriAsteptata !== cacheStareUmeri) { document.getElementById('v-umeri').innerText = stareUmeriAsteptata; document.getElementById('c-umeri').className = uOk ? "card ok" : "card warn"; cacheStareUmeri = stareUmeriAsteptata; }
-                    
-                    let stareMediuAsteptata = (alertaOchiUscati ? "HOLBAT / " : "") + stareDinamism;
-                    if (stareMediuAsteptata !== cacheStareMediu) { document.getElementById('v-mediu').innerText = stareMediuAsteptata; document.getElementById('c-mediu').className = (alertaOchiUscati || stareDinamism.includes("STATIC")) ? "card warn" : "card info"; cacheStareMediu = stareMediuAsteptata; }
-
-                    stroke(culoareHUDPip); strokeWeight(3); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y); line(p.nose.x, p.nose.y, cUX, cUY);
-                    noStroke(); fill(culoareHUDPip); ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8); ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8); ellipse(p.nose.x, p.nose.y, 8, 8);
-                }
-            }
-
-            // PIP HUD BIONIC
-            noStroke(); fill(0, 0, 0, 160); rect(0, 0, 640, 35); rect(0, 445, 640, 35);
-            stroke(culoareHUDPip); noFill(); strokeWeight(2); rect(10, 10, 620, 460, 15);
-            strokeWeight(4); line(10, 30, 10, 10); line(10, 10, 30, 10); line(630, 30, 630, 10); line(630, 10, 610, 10); line(10, 450, 10, 470); line(10, 470, 30, 470); line(630, 450, 630, 470); line(630, 470, 610, 470);
-
-            noStroke(); fill(0, 0, 0, 130); rect(15, 50, 140, 75, 10); rect(485, 50, 140, 75, 10);
-            fill(255); textSize(10); textAlign(LEFT, TOP); textStyle(BOLD); text("DIAGNOSTIC", 25, 58);
-            textStyle(NORMAL); fill(stareGatHUDPip === "OK" ? "#00ff88" : "#ff4444"); text(`GÂT: ${stareGatHUDPip}`, 25, 78);
-            fill(stareOchiHUDPip === "OK" ? "#00ff88" : "#ffaa00"); text(`OCHI: ${stareOchiHUDPip}`, 25, 98);
-
-            fill(255); textAlign(RIGHT, TOP); textStyle(BOLD); text("BIOMETRICS", 615, 58);
-            textStyle(NORMAL); fill(stareUmeriHUDPip === "OK" ? "#00ff88" : "#ffaa00"); text(`UMERI: ${stareUmeriHUDPip}`, 615, 78);
-            let culDin = stareDinamism.includes("STATIC") ? "#ffaa00" : "#00ff88"; if (alertaOchiUscati) culDin = "#ff4444";
-            fill(culDin); text(`CORP: ${alertaOchiUscati ? "HOLBAT" : stareDinamism}`, 615, 98);
-
-            fill(255); noStroke(); textAlign(LEFT, CENTER); textSize(12); textStyle(BOLD); text("ZEN TELEMETRY", 25, 17);
-            textAlign(RIGHT, CENTER); let sH = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; fill(culoareHUDPip); text(`SCOR: ${sH}%`, 615, 17);
-            textAlign(LEFT, CENTER); fill(culoareHUDPip); text(`STATUS: ${statusHUDPip}`, 25, 462);
-            let tSesiune = "00:00";
-            if (timpStartSesiune) { let te = Date.now() - timpStartSesiune - totalTimpPauza; if (sistemInPauza || sistemInExercitii) te -= (Date.now() - momentInceputPauzaManual); tSesiune = formatTime(te); }
-            textAlign(RIGHT, CENTER); fill(255); text(`TIMP: ${tSesiune}`, 615, 462);
-
-            if (bannerVizual !== "" && millis() - timerBanner < 4000) { push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 400, 50, 10); fill(255); textSize(20); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); }
-        }
-
-        function raspunsPauza(vrea) { document.getElementById('modal-intrebare').style.display = "none"; asteaptaRaspunsPauza = false; if (vrea) cereKinetoAI(); else timpInceputOboseala = 0; }
-
-        function salveazaProgresul() {
-            if (cadreTotale < 50 || sistemInPauza || sistemInExercitii) return; 
-            let s = Math.floor((cadreCorecte / cadreTotale) * 100);
-            let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {}; is[dataCurenta] = s; localStorage.setItem('zenPostureHistory', JSON.stringify(is));
-            let isEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {}; isEx[dataCurenta] = exercitiiAzi; localStorage.setItem('zenExercisesHistory', JSON.stringify(isEx));
-            verificaRealizari();
-        }
-
-        function verificaRealizari() {
-            let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false};
-            let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0; let updated = false;
-            if (!realizari.titan && s >= 90 && cadreTotale > 300) { realizari.titan = true; updated = true; arataPopupRealizare("Trofeu: Coloană de Titan"); }
-            if (!realizari.zen && exercitiiAzi >= 3) { realizari.zen = true; updated = true; arataPopupRealizare("Trofeu: Maestrul Zen"); }
-            if (!realizari.soim && eroriOchi === 0 && cadreTotale > 500) { realizari.soim = true; updated = true; arataPopupRealizare("Trofeu: Ochi de Șoim"); }
-            if (updated) { localStorage.setItem('zenRealizari', JSON.stringify(realizari)); incarcaTrofee(); }
-        }
-
-        function arataPopupRealizare(nume) { let popup = document.getElementById('achievement-popup'); document.getElementById('ach-text').innerText = nume; popup.classList.add('show'); setTimeout(() => { popup.classList.remove('show'); }, 5000); }
-        function incarcaTrofee() { let realizari = JSON.parse(localStorage.getItem('zenRealizari')) || {titan: false, zen: false, soim: false}; if(realizari.titan) document.getElementById('badge-titan').className = "trofeu activ"; if(realizari.zen) document.getElementById('badge-zen').className = "trofeu activ"; if(realizari.soim) document.getElementById('badge-soim').className = "trofeu activ"; }
-        function formatTime(ms) { let s = Math.floor(ms / 1000); let m = Math.floor(s / 60); return (m < 10 ? "0" : "") + m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60); }
-
-        function calculeazaStatisticiMedicale() {
-            let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-            
-            let loadCervical = 5.0; 
-            if (eroriTextNeck > 0) loadCervical += (eroriTextNeck * 0.1); 
-            if (loadCervical > 22.0) loadCervical = 22.0; 
-            
-            document.getElementById('stat-live-score').innerText = s + "%"; 
-            document.getElementById('stat-cervical-load').innerHTML = loadCervical.toFixed(1) + ` <span style="font-size:1rem; color:#64748b">kg</span>`;
-            document.getElementById('stat-alarms').innerText = totalAlarmeAzi; 
-            document.getElementById('stat-exercitii').innerText = exercitiiAzi;
-            
-            let cardScor = document.getElementById('clin-kpi-scor');
-            let txtGrade = document.getElementById('stat-grade-text');
-            if(s >= 90) { cardScor.className = "clin-card good"; txtGrade.innerText = "Risc Lombar: Aproape Inexistent"; } 
-            else if(s >= 75) { cardScor.className = "clin-card warn"; txtGrade.innerText = "Risc Lombar: Moderat"; } 
-            else { cardScor.className = "clin-card danger"; txtGrade.innerText = "Risc Lombar: Ridicat (Hernie)"; }
-
-            let cardCervical = document.getElementById('clin-kpi-cervical');
-            if(loadCervical < 6.0) cardCervical.className = "clin-card good";
-            else if(loadCervical < 12.0) cardCervical.className = "clin-card warn";
-            else cardCervical.className = "clin-card danger";
-
-            let insightBox = document.getElementById('smart-insights');
-            if(!analizatorIstoricActiv) {
-                let diagnostic = "";
-                if (eroriTextNeck > eroriOchi && eroriTextNeck > eroriUmeri) {
-                    diagnostic = "<b>Diagnostic: Sindrom Text-Neck Acut.</b><br>Pacientul a menținut o extensie cervicală periculoasă.<br><i>Recomandare:</i> Ajustați înălțimea monitorului și executați rutine de retracție a bărbiei (Double-chin).";
-                } else if (eroriOchi > eroriGat) {
-                    diagnostic = "<b>Diagnostic: Tensiune Oculară Ciliară.</b><br>Distanța față de ecran a fost încălcată în mod repetat.<br><i>Recomandare:</i> Aplicați regula 20-20-20 și măriți fontul la nivelul sistemului de operare.";
-                } else if (eroriUmeri > 5) {
-                    diagnostic = "<b>Diagnostic: Asimetrie Funcțională.</b><br>Un umăr este menținut în tensiune (posibil sprijin asimetric).<br><i>Recomandare:</i> Egalizați nivelul cotierelor scaunului de birou.";
-                } else if (s >= 85) {
-                    diagnostic = "<b>Diagnostic: Postură Optimă.</b><br>Axa coloanei și dinamismul se află în indici clinici perfecți.<br><i>Recomandare:</i> Continuați rutina actuală.";
-                } else {
-                    diagnostic = "Sistemul adună date telemetrice pentru emiterea evaluării.";
-                }
-                insightBox.innerHTML = diagnostic;
-            }
-        }
-
-        function deschideAnalytics() {
-            document.getElementById('modal-analytics').style.display = "flex"; 
-            analizatorIstoricActiv = false; 
-            calculeazaStatisticiMedicale(); 
-            updateLiveStatsInterval = setInterval(calculeazaStatisticiMedicale, 1000);
-            
-            let is = JSON.parse(localStorage.getItem('zenPostureHistory')) || {}; let isEx = JSON.parse(localStorage.getItem('zenExercisesHistory')) || {};
-            let labs = Object.keys(is); let datS = Object.values(is); let datEx = labs.map(z => isEx[z] || (z === dataCurenta ? exercitiiAzi : 0));
-            
-            if (historyChartInstance) historyChartInstance.destroy(); 
-            let ctx = document.getElementById('historyChart').getContext('2d');
-            
-            let bgGrad = ctx.createLinearGradient(0, 0, 0, 400); bgGrad.addColorStop(0, '#00ff88'); bgGrad.addColorStop(1, 'rgba(0,255,136,0.1)');
-            let hovGrad = ctx.createLinearGradient(0, 0, 0, 400); hovGrad.addColorStop(0, '#00b8ff'); hovGrad.addColorStop(1, 'rgba(0,184,255,0.1)');
-
-            historyChartInstance = new Chart(ctx, { 
-                data: { labels: labs, datasets: [{ type: 'line', label: 'Intervenții Kineto', data: datEx, borderColor: '#00b8ff', borderWidth: 3, pointBackgroundColor: '#fff', pointRadius: 4, tension: 0.4, yAxisID: 'y1' }, { type: 'bar', label: 'Index Postural', data: datS, backgroundColor: bgGrad, hoverBackgroundColor: hovGrad, borderRadius: 8, barThickness: 30, yAxisID: 'y' }]}, 
-                options: { responsive: true, maintainAspectRatio: false, onClick: (e, el) => { if (el.length > 0) {
-                    analizatorIstoricActiv = true;
-                    let z = labs[el[0].index]; let s = datS[el[0].index]; let k = datEx[el[0].index];
-                    document.getElementById('smart-insights').innerHTML = `<b>Analiză Istorică: Ziua ${z}</b><br>Index General: ${s}% | Sesiuni Recuperare: ${k}<br><i>Datele specifice privind erorile musculare nu sunt arhivate pentru zilele anterioare, doar performanța generală.</i>`;
-                } }, plugins: { legend: { labels: {color: '#cbd5e1'} } }, scales: { y: { max: 100, grid: {color: 'rgba(255,255,255,0.05)'}, ticks: {color: '#64748b'} }, y1: { min: 0, suggestedMax: 4, position: 'right', grid: { drawOnChartArea: false }, ticks:{stepSize:1, color:'#00b8ff'} }, x: { grid: {display:false}, ticks: {color:'#cbd5e1'} } } } 
-            });
-
-            if (errorChartInstance) errorChartInstance.destroy(); let ctxErr = document.getElementById('errorChart').getContext('2d');
-            errorChartInstance = new Chart(ctxErr, { 
-                type: 'doughnut', data: { labels: ['Cervicală (Gât)', 'Astenopie (Ochi)', 'Trapez (Umeri)', 'Text Neck Extrem'], datasets: [{ data: [eroriGat, eroriOchi, eroriUmeri, eroriTextNeck], backgroundColor: ['#ffaa00', '#00b8ff', '#f59e0b', '#ff4444'], borderWidth: 0, hoverOffset: 10 }] }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: '#cbd5e1', padding: 20 } } }, cutout: '75%' } 
-            });
-        }
-
-        function inchideAnalytics() { document.getElementById('modal-analytics').style.display = "none"; clearInterval(updateLiveStatsInterval); analizatorIstoricActiv = false;}
-        function exportaRaport() { html2canvas(document.getElementById('raport-printabil'), { backgroundColor: "#0f172a", scale: 2 }).then(canvas => { let link = document.createElement('a'); link.href = canvas.toDataURL(); link.download = 'Fisa_Clinica_ZenPosture.png'; link.click(); }); }
-        async function activeazaModFundal() { if (document.pictureInPictureElement) await document.exitPictureInPicture(); else await pipVideoElement.requestPictureInPicture(); }
-
-        function declanseazaAlarma(tip) {
-            if (!alarmeActive && !modSedinta) return; 
-            if (sistemInPauza || sistemInExercitii) return;
-            if (millis() - ultimulAvertisment < COOLDOWN_NOTIFICARE) return; 
-            ultimulAvertisment = millis(); totalAlarmeAzi++; localStorage.setItem('zenAlarmsToday', totalAlarmeAzi);
-            if (tip === 'gat') { eroriGat++; localStorage.setItem('zenEroriGat', eroriGat); bannerVizual = "⚠️ SPATE DREPT!"; }
-            if (tip === 'umeri') { eroriUmeri++; localStorage.setItem('zenEroriUmeri', eroriUmeri); bannerVizual = "⚖️ UMERI DREPȚI!"; }
-            if (tip === 'distanta') { eroriOchi++; localStorage.setItem('zenEroriOchi', eroriOchi); bannerVizual = "🚨 PREA APROAPE!"; }
-            if (tip === 'textneck') { eroriTextNeck++; localStorage.setItem('zenEroriTextNeck', eroriTextNeck); bannerVizual = "📱 LASĂ TELEFONUL!"; }
-            timerBanner = millis();
-            if (modSedinta) { document.body.classList.add('sedinta-alert'); return; }
-            try { 
-                if (contextAudio && contextAudio.state === 'suspended') contextAudio.resume();
-                if (contextAudio) { let o = contextAudio.createOscillator(); let v = contextAudio.createGain(); o.connect(v); v.connect(contextAudio.destination); o.frequency.value = tip === 'textneck' ? 800 : (tip === 'umeri' ? 250 : 440); v.gain.setValueAtTime(0.05, contextAudio.currentTime); v.gain.exponentialRampToValueAtTime(0.001, contextAudio.currentTime + 0.3); o.start(); o.stop(contextAudio.currentTime + 0.3); }
-            } catch (e) {}
-        }
-        function toggleAudio() { alarmeActive = !alarmeActive; let b = document.getElementById('btn-audio'); b.className = alarmeActive ? "btn-sec activ" : "btn-sec"; b.innerHTML = alarmeActive ? "🔔 Alarme" : "🔕 Mute"; }
-    </script>
-</body>
-</html>
+            document.getElementById('lbl-postura').innerHTML = `🛡️ Memorie Lvl ${questData.lvlP + 1}: ${tP}s > 85%`; document.getElementById('fill-postura').style.width = Math.min((questData.postura / tP) * 100, 100
