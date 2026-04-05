@@ -2,7 +2,7 @@
 <html lang="ro">
 <head>
     <meta charset="UTF-8">
-    <title>Zen Posture Pro - Modern Document PiP</title>
+    <title>Zen Posture Pro - Deep Sleep PiP</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ml5@1.2.1/dist/ml5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -21,7 +21,7 @@
         .badge-ent { background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; vertical-align: top; letter-spacing: 1px; font-weight: 600; margin-left: 5px; }
         .subtitle { color: #64748b; font-size: 0.9rem; letter-spacing: 1px; text-transform: uppercase; }
 
-        .toolbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 100px; padding: 10px 15px; display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap; }
+        .toolbar { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); border-radius: 100px; padding: 10px 15px; display: flex; gap: 10px; justify-content: center; margin-bottom: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); flex-wrap: wrap; }
         button { border: none; padding: 10px 20px; font-size: 0.85rem; font-weight: 600; border-radius: 50px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; gap: 8px; }
         #btn-start { background: #00ff88; color: #000; box-shadow: 0 0 20px rgba(0,255,136,0.3); font-size: 0.95rem; }
         #btn-start:hover { background: #00cc6e; transform: translateY(-2px); box-shadow: 0 5px 25px rgba(0,255,136,0.5); }
@@ -157,7 +157,7 @@
         <button id="btn-sedinta" class="btn-sec" onclick="toggleSedinta()">🎧 Ședință</button>
         <button id="btn-pauza" class="btn-sec" onclick="togglePauzaManual()">⏸️ Pauză</button>
         <button id="btn-exercitii" class="btn-sec" onclick="cereKinetoAI()">🏋️ Kineto AI</button>
-        <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PiP Modern (HTML)</button>
+        <button id="btn-pip" class="btn-sec" onclick="activeazaModFundal()">📺 PiP Micro-Widget</button>
         <button id="btn-analytics" class="btn-sec" onclick="deschideAnalytics()">📊 Raport Medical</button>
         <button id="btn-calib" class="btn-sec" onclick="pornesteCalibrare()">🎯 Calibrare</button>
     </div>
@@ -350,7 +350,6 @@
     </div>
 
     <script>
-        // --- TOOLTIP CONTENT EXTINS (MEDICAL + AI) ---
         const tooltips = {
             lombar: "<h4>🛡️ Indexul de Compresie Lombară</h4><strong>Semnificație Medicală:</strong> Indică procentul de timp în care presiunea intervertebrală este în cote sigure.<br><ul><li>Un scor > 80% reduce presiunea pe inelul fibros L4-L5 cu până la 65%.</li><li>Previne inflamarea nervului sciatic (sciatica).</li></ul><strong>Logica AI:</strong> Calculează un raport global ponderat între cadrele perfecte și totalul de cadre analizate la 30 FPS.",
             cervical: "<h4>🦒 Analiză Anterior Head Carriage</h4><strong>Semnificație Medicală:</strong> Identifică sindromul de 'Gât de corporatist'.<br><ul><li>Pentru fiecare 2.5 cm în care capul este dus în față, presiunea pe cervicală crește cu 4.5 kg.</li><li>Afectează curba lordotică naturală a gâtului.</li></ul><strong>Logica AI:</strong> Măsoară distanța euclidiană pe axa Y dintre <span class='code-block'>pose.nose.y</span> și mediana umerilor.",
@@ -435,18 +434,20 @@
         let timerPauza = null, pipVideoElement;
         let bannerVizual = "", timerBanner = 0, sistemInPauza = false, sistemPornit = false, analizatorIstoricActiv = false;
         let misiuniPornite = false; 
-        let pipWindow = null; // Variabila pentru noul Document PiP API
+        
+        // VARIABILA PENTRU NOUA FEREASTRA PIP MICRO
+        let pipWindow = null; 
 
         let timpStartSesiune = null, totalTimpPauza = 0, momentInceputPauzaManual = 0;
         let sistemInExercitii = false, exercitiuCurentText = "", timerExercitii = null;
         let culoareHUDPip = "#00ff88", statusHUDPip = "OPTIMĂ";
-        let stareGatHUDPip = "OK", stareOchiHUDPip = "OK", stareUmeriHUDPip = "OK";
         let cacheScor = -1, cacheStareGat = "", cacheStareUmeri = "", cacheStareOchi = "", cacheStareMediu = "";
         let historyChartInstance = null, errorChartInstance = null, updateLiveStatsInterval = null;
 
         function setup() {
             let cnv = createCanvas(640, 480);
             cnv.parent('camera-wrapper');
+            // Pastram conexiunea cu video-ul vechi in caz ca noul API nu e suportat de browser
             pipVideoElement = document.getElementById('pip-video');
             pipVideoElement.srcObject = cnv.elt.captureStream(30);
 
@@ -486,11 +487,10 @@
             video.parent('video-container');
         }
 
-        // --- MODIFICARE: DOCUMENT PICTURE-IN-PICTURE API ---
+        // --- MODIFICARE: DEEP SLEEP & MICRO-WIDGET PENTRU PiP ---
         async function activeazaModFundal() {
-            // Verificam daca browserul suporta noul API HTML pentru PiP (ex: Chrome, Edge desktop)
             if (!('documentPictureInPicture' in window)) {
-                // FALLBACK: PiP Clasic Video (Doar imagine) pt Safari / Firefox
+                // Fallback pentru Safari/Firefox
                 if (document.pictureInPictureElement) await document.exitPictureInPicture(); 
                 else await pipVideoElement.requestPictureInPicture();
                 return;
@@ -502,72 +502,122 @@
             }
 
             try {
-                // Deschidem o fereastra HTML reala, totdeauna deasupra
+                // Dimensiuni minuscule pentru a nu deranja spatiul de lucru
                 pipWindow = await window.documentPictureInPicture.requestWindow({
-                    width: 320, height: 420
+                    width: 320, height: 110 
                 });
 
-                // Inseram CSS-ul ferestrei PiP
                 const style = pipWindow.document.createElement('style');
                 style.textContent = `
-                    body { margin: 0; background: #050508; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; flex-direction: column; height: 100vh; }
-                    .video-container { position: relative; width: 100%; height: 240px; background: #000; flex-shrink: 0; border-bottom: 2px solid #1e293b;}
-                    canvas { width: 100%; height: 100%; object-fit: cover; }
-                    .hud-overlay { position: absolute; top:0; left:0; right:0; bottom:0; pointer-events: none; border: 2px solid #00b8ff; box-sizing: border-box; transition: border-color 0.3s; }
-                    .hud-overlay.alert { box-shadow: inset 0 0 30px rgba(255, 68, 68, 0.5); }
-                    .stats { padding: 15px; flex: 1; display: flex; flex-direction: column; gap: 8px; background: #0f172a; }
-                    .stat-row { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
-                    .stat-row:last-child { border-bottom: none; }
-                    .val-good { color: #00ff88; font-weight: 800;} .val-warn { color: #ffaa00; font-weight: 800;} .val-bad { color: #ff4444; font-weight: 800;}
-                    .controls { display: flex; gap: 10px; padding: 12px; background: #1e293b; flex-shrink: 0;}
-                    button { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.2s; }
-                    button:hover { transform: scale(1.02); }
-                    .btn-mute { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2);}
-                    .btn-mute.active { background: rgba(0, 255, 136, 0.15); color: #00ff88; border-color: rgba(0,255,136,0.3);}
-                    .btn-kineto { background: linear-gradient(135deg, #00b8ff, #0055ff); color: #fff; box-shadow: 0 5px 15px rgba(0,184,255,0.3);}
+                    body { margin: 0; background: #0f172a; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; display: flex; flex-direction: column; justify-content: center; height: 100vh; border: 2px solid #1e293b; box-sizing: border-box; transition: 0.3s;}
+                    body.alert { border-color: #ff4444; box-shadow: inset 0 0 20px rgba(255, 68, 68, 0.4); }
+                    .top-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; }
+                    .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 10px #00ff88; margin-right: 10px; transition: 0.3s; }
+                    .status-text { font-size: 0.9rem; font-weight: 800; flex: 1; letter-spacing: -0.5px; }
+                    .controls { display: flex; gap: 8px; padding: 0 15px 10px 15px; }
+                    button { flex: 1; padding: 6px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.75rem; transition: 0.2s; }
+                    button:hover { transform: scale(1.03); }
+                    .btn-mute { background: rgba(255,255,255,0.1); color: #fff; }
+                    .btn-mute.active { background: rgba(0, 255, 136, 0.15); color: #00ff88; }
+                    .btn-kineto { background: rgba(0, 184, 255, 0.15); color: #00b8ff; }
+                    .btn-pause { background: rgba(255, 170, 0, 0.15); color: #ffaa00; }
+                    .btn-pause.active { background: #ffaa00; color: #000; animation: pulse 2s infinite; }
+                    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
                 `;
                 pipWindow.document.head.appendChild(style);
 
-                // Inseram HTML-ul ferestrei PiP
                 pipWindow.document.body.innerHTML = `
-                    <div class="video-container">
-                        <canvas id="pip-canvas" width="640" height="480"></canvas>
-                        <div class="hud-overlay" id="pip-hud-border"></div>
-                    </div>
-                    <div class="stats">
-                        <div class="stat-row"><span>Status General:</span><span id="pip-status" class="val-good">OPTIM</span></div>
-                        <div class="stat-row"><span>Sarcină Cervicală:</span><span id="pip-gat" class="val-good">5.0 kg</span></div>
-                        <div class="stat-row"><span>Aliniament Umeri:</span><span id="pip-umeri" class="val-good">OK</span></div>
+                    <div class="top-row">
+                        <div class="status-dot" id="pip-dot"></div>
+                        <div class="status-text" id="pip-text">MONITORIZARE ACTIVĂ</div>
                     </div>
                     <div class="controls">
-                        <button class="btn-mute ${alarmeActive ? 'active' : ''}" id="pip-btn-mute">${alarmeActive ? '🔔 Alarme ON' : '🔕 Mute'}</button>
-                        <button class="btn-kineto" id="pip-btn-kineto">🏋️ Kineto AI</button>
+                        <button class="btn-mute ${alarmeActive ? 'active' : ''}" id="pip-btn-mute">${alarmeActive ? '🔔 ON' : '🔕 Mute'}</button>
+                        <button class="btn-kineto" id="pip-btn-kineto">🏋️ Kineto</button>
+                        <button class="btn-pause ${sistemInPauza ? 'active' : ''}" id="pip-btn-pause">${sistemInPauza ? '▶ Reluare' : '⏸ Pauză'}</button>
                     </div>
                 `;
 
-                // Logica butoanelor din PiP
+                // Logica butoanelor din micro-widget
                 let btnMutePip = pipWindow.document.getElementById('pip-btn-mute');
                 btnMutePip.addEventListener('click', () => {
-                    toggleAudio(); // Apelează funcția din fereastra principală
+                    toggleAudio(); 
                     btnMutePip.className = alarmeActive ? "btn-mute active" : "btn-mute";
-                    btnMutePip.innerText = alarmeActive ? "🔔 Alarme ON" : "🔕 Mute";
+                    btnMutePip.innerText = alarmeActive ? "🔔 ON" : "🔕 Mute";
                 });
                 
                 pipWindow.document.getElementById('pip-btn-kineto').addEventListener('click', () => {
-                    cereKinetoAI(); // Apelează funcția din fereastra principală
+                    cereKinetoAI(); 
                 });
 
-                // Când fereastra PiP se închide
-                pipWindow.addEventListener('pagehide', () => {
-                    pipWindow = null;
+                // BUTONUL MAGIC DE PAUZĂ (Deep Sleep)
+                let btnPausePip = pipWindow.document.getElementById('pip-btn-pause');
+                btnPausePip.addEventListener('click', () => {
+                    togglePauzaManual(); // Apelează logica din main window
+                    
+                    // Actualizează UI-ul butonului din PiP
+                    btnPausePip.className = sistemInPauza ? "btn-pause active" : "btn-pause";
+                    btnPausePip.innerText = sistemInPauza ? "▶ Reluare" : "⏸ Pauză";
+                    
+                    let dot = pipWindow.document.getElementById('pip-dot');
+                    let txt = pipWindow.document.getElementById('pip-text');
+                    
+                    if(sistemInPauza) {
+                        dot.style.background = "#ffaa00"; dot.style.boxShadow = "none";
+                        txt.innerText = "SISTEM OPRIT (SLEEP)";
+                        txt.style.color = "#ffaa00";
+                    } else {
+                        txt.style.color = "#fff";
+                    }
                 });
+
+                pipWindow.addEventListener('pagehide', () => { pipWindow = null; });
 
             } catch (error) {
                 console.error("Document PiP error:", error);
             }
         }
 
-        // --- RESET GRANULAR ---
+        // --- MODIFICARE DEEP SLEEP (OPRIRE CAMERĂ) ---
+        function togglePauzaManual() {
+            if(sistemInExercitii) return; 
+            sistemInPauza = !sistemInPauza; 
+            let btn = document.getElementById('btn-pauza');
+            
+            if (sistemInPauza) {
+                btn.className = "btn-sec in-pauza"; btn.innerHTML = "▶️ RELUARE CAMERĂ";
+                momentInceputPauzaManual = Date.now(); timpInceputOboseala = 0; 
+                
+                // DEEP SLEEP: Oprim fizic track-ul camerei pentru a stinge ledul si a salva bateria
+                if (video && video.elt && video.elt.srcObject) {
+                    let tracks = video.elt.srcObject.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+                
+            } else {
+                btn.className = "btn-sec"; btn.innerHTML = "⏸️ Pauză";
+                totalTimpPauza += (Date.now() - momentInceputPauzaManual);
+                
+                // WAKE UP: Re-initializam camera cand se reia
+                if (video) {
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+                        video.elt.srcObject = stream;
+                    }).catch(function(err) {
+                        console.log("Eroare la repornirea camerei: ", err);
+                    });
+                }
+            }
+            
+            // Sincronizare vizuala cu PiP
+            if(pipWindow) {
+                let btnPausePip = pipWindow.document.getElementById('pip-btn-pause');
+                if(btnPausePip) {
+                    btnPausePip.className = sistemInPauza ? "btn-pause active" : "btn-pause";
+                    btnPausePip.innerText = sistemInPauza ? "▶ Reluare" : "⏸ Pauză";
+                }
+            }
+        }
+
         function resetMetric(tip) {
             if(tip === 'scor') { cadreCorecte = 0; cadreTotale = 0; cacheScor = -1; }
             if(tip === 'gat') { eroriGat = 0; eroriTextNeck = 0; localStorage.setItem('zenEroriGat', 0); localStorage.setItem('zenEroriTextNeck', 0); cacheStareGat = ""; }
@@ -662,18 +712,6 @@
             }, 1000);
         }
 
-        function togglePauzaManual() {
-            if(sistemInExercitii) return; 
-            sistemInPauza = !sistemInPauza; let btn = document.getElementById('btn-pauza');
-            if (sistemInPauza) {
-                btn.className = "btn-sec in-pauza"; btn.innerHTML = "▶️ Reluare";
-                momentInceputPauzaManual = Date.now(); timpInceputOboseala = 0; 
-            } else {
-                btn.className = "btn-sec"; btn.innerHTML = "⏸️ Pauză";
-                totalTimpPauza += (Date.now() - momentInceputPauzaManual);
-            }
-        }
-
         function pornesteCalibrare() { modCalibrare = true; dateCalibrare = []; document.getElementById('status-msg').innerText = "🔄 CALIBRARE: Stai drept!"; }
         function finalizeazaCalibrare() {
             modCalibrare = false; let sumaGat = 0, sumaOchi = 0;
@@ -709,7 +747,7 @@
                 return; 
             }
             
-            if (video && video.loadedmetadata) {
+            if (video && video.loadedmetadata && !sistemInPauza) {
                 image(video, 0, 0, 640, 480);
                 
                 if (millis() - ultimulCheckSecunda > 1000 && !sistemInPauza && !sistemInExercitii) {
@@ -765,8 +803,8 @@
                 fill(0, 184, 255); textSize(80); textStyle(BOLD); text(secundeRamasePauza + "s", 320, 360); 
             }
             else if (sistemInPauza) {
-                push(); fill(0, 0, 0, 200); rect(0, 0, 640, 480); pop();
-                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ PAUZĂ", 320, 240); 
+                push(); fill(0, 0, 0, 255); rect(0, 0, 640, 480); pop();
+                fill(255, 170, 0); noStroke(); textAlign(CENTER, CENTER); textSize(40); textStyle(BOLD); text("⏸️ CAMERĂ OPRITĂ (SLEEP)", 320, 240); 
             }
             else if (esteInZenBreak) {
                 push(); fill(15, 23, 42, 230); rect(0, 0, 640, 480); pop();
@@ -775,13 +813,12 @@
             }
             else if (asteaptaRaspunsPauza || asteaptaRaspunsOra) { push(); fill(0, 0, 0, 180); rect(0, 0, 640, 480); pop(); }
 
-            stareGatHUDPip = "OK"; stareOchiHUDPip = "OK"; stareUmeriHUDPip = "OK";
+            let statusHUD = "OPTIMĂ"; let culoareHUD = "#00ff88";
 
-            let cUX = 0, cUY = 0;
             if (!sistemInPauza && !sistemInExercitii && !esteInZenBreak && !asteaptaRaspunsPauza && !asteaptaRaspunsOra && poses.length > 0) {
                 let p = poses[0];
                 if (p.nose && p.left_shoulder && p.right_shoulder && p.left_eye && p.right_eye) {
-                    cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2; cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
+                    let cUX = (p.left_shoulder.x + p.right_shoulder.x) / 2; let cUY = (p.left_shoulder.y + p.right_shoulder.y) / 2;
                     let dGat = cUY - p.nose.y; let dOchi = dist(p.left_eye.x, p.left_eye.y, p.right_eye.x, p.right_eye.y);
                     let diffUm = Math.abs(p.left_shoulder.y - p.right_shoulder.y);
 
@@ -792,17 +829,17 @@
                     let dOk = dOchi < PRAG_DISTANTA; let uOk = diffUm < PRAG_UMERI;
 
                     if (gOk && dOk && uOk) {
-                        cadreCorecte++; timpInceputOboseala = 0; culoareHUDPip = "#00ff88"; statusHUDPip = "STARE OPTIMĂ";
+                        cadreCorecte++; timpInceputOboseala = 0; culoareHUD = "#00ff88"; statusHUD = "MONITORIZARE ACTIVĂ";
                         if(modSedinta) document.body.classList.remove('sedinta-alert'); 
                     } else {
                         if (timpInceputOboseala === 0) timpInceputOboseala = millis();
                         if (millis() - timpInceputOboseala > 15000 && !modSedinta) { timpInceputOboseala = 0; document.getElementById('modal-intrebare').style.display = "flex"; asteaptaRaspunsPauza = true; return; }
                         
-                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUDPip = "#ff4444"; statusHUDPip = "PERICOL CERVICAL"; stareGatHUDPip = "TEXT NECK"; }
-                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareGatHUDPip = "APLECAT"; }
+                        if (isTextNeck) { declanseazaAlarma('textneck'); culoareHUD = "#ff4444"; statusHUD = "PERICOL CERVICAL"; }
+                        else if (isAplecat) { declanseazaAlarma('gat'); culoareHUD = "#ffaa00"; statusHUD = "AVERTISMENT"; }
                         
-                        if (!dOk) { declanseazaAlarma('distanta'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareOchiHUDPip = "APROAPE"; }
-                        if (!uOk) { declanseazaAlarma('umeri'); culoareHUDPip = "#ffaa00"; statusHUDPip = "AVERTISMENT"; stareUmeriHUDPip = "ASIMETRIE"; }
+                        if (!dOk) { declanseazaAlarma('distanta'); culoareHUD = "#ffaa00"; statusHUD = "AVERTISMENT"; }
+                        if (!uOk) { declanseazaAlarma('umeri'); culoareHUD = "#ffaa00"; statusHUD = "AVERTISMENT"; }
                     }
 
                     let scor = Math.floor((cadreCorecte / cadreTotale) * 100);
@@ -820,50 +857,40 @@
                     let stareMediuAsteptata = (alertaOchiUscati ? "HOLBAT / " : "") + stareDinamism;
                     if (stareMediuAsteptata !== cacheStareMediu) { document.getElementById('v-mediu').innerText = stareMediuAsteptata; document.getElementById('c-mediu').className = (alertaOchiUscati || stareDinamism.includes("STATIC")) ? "card warn" : "card info"; cacheStareMediu = stareMediuAsteptata; }
 
-                    stroke(culoareHUDPip); strokeWeight(3); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y); line(p.nose.x, p.nose.y, cUX, cUY);
-                    noStroke(); fill(culoareHUDPip); ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8); ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8); ellipse(p.nose.x, p.nose.y, 8, 8);
+                    stroke(culoHUD); strokeWeight(3); line(p.left_shoulder.x, p.left_shoulder.y, p.right_shoulder.x, p.right_shoulder.y); line(p.nose.x, p.nose.y, cUX, cUY);
+                    noStroke(); fill(culoareHUD); ellipse(p.left_shoulder.x, p.left_shoulder.y, 8, 8); ellipse(p.right_shoulder.x, p.right_shoulder.y, 8, 8); ellipse(p.nose.x, p.nose.y, 8, 8);
                 }
             }
 
             if (bannerVizual !== "" && millis() - timerBanner < 4000) { push(); rectMode(CENTER); fill(255, 68, 68, 220); noStroke(); rect(320, 240, 400, 50, 10); fill(255); textSize(20); textAlign(CENTER, CENTER); textStyle(BOLD); text(bannerVizual, 320, 240); pop(); }
 
-            // --- ACTUALIZARE DOCUMENT PIP WINDOW ---
+            // --- ACTUALIZARE MICRO-WIDGET PIP ---
             if (pipWindow) {
-                const mainCanvas = document.querySelector('#camera-wrapper canvas');
-                const pipCanvas = pipWindow.document.getElementById('pip-canvas');
-                if (mainCanvas && pipCanvas) {
-                    const ctx = pipCanvas.getContext('2d');
-                    ctx.drawImage(mainCanvas, 0, 0, 640, 480);
-                }
+                let dot = pipWindow.document.getElementById('pip-dot');
+                let txt = pipWindow.document.getElementById('pip-text');
                 
-                let s = cadreTotale > 0 ? Math.floor((cadreCorecte / cadreTotale) * 100) : 0;
-                let elemScor = pipWindow.document.getElementById('pip-status');
-                if(elemScor) {
-                    elemScor.innerText = statusHUDPip;
-                    elemScor.className = statusHUDPip === "STARE OPTIMĂ" ? "val-good" : (statusHUDPip.includes("AVERTISMENT") ? "val-warn" : "val-bad");
-                }
-
-                let kg = 5 + (eroriTextNeck * 0.1) + (eroriGat * 0.05); if(kg>22) kg=22;
-                let elemGat = pipWindow.document.getElementById('pip-gat');
-                if(elemGat) {
-                    elemGat.innerText = kg.toFixed(1) + " kg";
-                    elemGat.className = kg < 6 ? "val-good" : (kg < 12 ? "val-warn" : "val-bad");
-                }
-
-                let elemUmeri = pipWindow.document.getElementById('pip-umeri');
-                if(elemUmeri) {
-                    elemUmeri.innerText = stareUmeriHUDPip;
-                    elemUmeri.className = stareUmeriHUDPip === "OK" ? "val-good" : "val-warn";
-                }
-
-                let overlay = pipWindow.document.getElementById('pip-hud-border');
-                if(overlay) {
-                    overlay.style.borderColor = culoareHUDPip;
-                    if(culoareHUDPip === "#ff4444") overlay.classList.add('alert');
-                    else overlay.classList.remove('alert');
+                if (!sistemInPauza) {
+                    if (dot && txt) {
+                        dot.style.background = culoareHUD;
+                        dot.style.boxShadow = `0 0 10px ${culoareHUD}`;
+                        txt.innerText = statusHUD;
+                        
+                        if(culoareHUD === "#ff4444") {
+                            txt.style.color = "#ff4444";
+                            pipWindow.document.body.classList.add('alert');
+                        } else if(culoareHUD === "#ffaa00") {
+                            txt.style.color = "#ffaa00";
+                            pipWindow.document.body.classList.remove('alert');
+                        } else {
+                            txt.style.color = "#fff";
+                            pipWindow.document.body.classList.remove('alert');
+                        }
+                    }
                 }
             }
         }
+
+        function raspunsPauza(vrea) { document.getElementById('modal-intrebare').style.display = "none"; asteaptaRaspunsPauza = false; if (vrea) cereKinetoAI(); else timpInceputOboseala = 0; }
 
         function salveazaProgresul() {
             if (cadreTotale < 50 || sistemInPauza || sistemInExercitii) return; 
